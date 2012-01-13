@@ -195,6 +195,24 @@ configuration file."
   "Default title sub type, see `adoc-title-descriptor'."
   :group 'adoc  )
 
+(defcustom adoc-enable-two-line-title t
+  "Wether or not two line titles shall be fontified.
+
+nil means never fontify. t means always fontify. A number means
+only fontify if the line below has NOT the lenght of the given
+number. You could use a number for example when all your
+delimited block lines have a certain length.
+
+This is usefull because adoc-mode has troubles to properly
+distinguish between two line titles and a line of text before a
+delimited block. Note however that adoc-mode knows the AsciiDoc
+rule that the length of a two line title underline can differ at
+most 3 chars from the length of the title text."
+  :type '(choice (const nil)
+		 (const t)
+		 number)
+  :group 'adoc)
+
 (defface adoc-orig-default
   '((t (:inherit (default))))
   "The default face before buffer-face-mode was in effect.
@@ -915,8 +933,11 @@ subgroups:
   `(list
     ;; matcher function
     (lambda (end)
-      (and (re-search-forward ,(adoc-re-two-line-title del) end t)
-           (< (abs (- (length (match-string 1)) (length (match-string 2)))) 3) 
+      (and adoc-enable-two-line-title
+           (re-search-forward ,(adoc-re-two-line-title del) end t)
+           (< (abs (- (length (match-string 1)) (length (match-string 2)))) 3)
+	   (or (not (numberp adoc-enable-two-line-title))
+	       (not (equal adoc-enable-two-line-title (length (match-string 2)))))
            (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
     ;; highlighers
     '(1 ,text-face t)
