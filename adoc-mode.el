@@ -108,6 +108,8 @@
 ;;
 ;;; Variables:
 
+(require 'markup-faces)
+
 (defconst adoc-mode-version "0.4.0"
   "Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are taken from
 that version's asciidoc.conf/manual.")
@@ -115,16 +117,6 @@ that version's asciidoc.conf/manual.")
 (defgroup adoc nil
   "Support for AsciiDoc documents."
   :group 'wp)
-
-(defgroup adoc-faces nil
-  "Faces used in adoc mode.
-
-Note that what is really used to highlight is the content of the
-corresponding variables. E.g. for titles not really the face
-adoc-title-0 is used, but the content of the variable
-adoc-title-0."
-  :group 'adoc
-  :group 'faces )
 
 (defcustom adoc-script-raise '(-0.3 0.3)
   "How much to lower and raise subscript and superscript content.
@@ -213,227 +205,74 @@ most 3 chars from the length of the title text."
 		 number)
   :group 'adoc)
 
-(defface adoc-orig-default
-  '((t (:inherit (default))))
-  "The default face before buffer-face-mode was in effect.
+(define-obsolete-face-alias 'adoc-orig-default 'adoc-align "23.3")
+(defface adoc-align
+  '((t (:inherit (markup-meta-face))))
+  "Face used so the text looks left aligned.
 
-This face is only a kludge. If I understood the face-remap
-library better, it probably woudn't be needed."
-  :group 'adoc-faces)
+Is applied to whitespaces at the beginning of a line. You want to
+set it to a fixed width face. This is useful if your default face
+is a variable with face. Because for e.g. in a variable with
+face, '- ' and ' ' (two spaces) don't have equal with, with
+`adoc-align' in the following example the item's text looks
+aligned.
 
-(defface adoc-generic
-  '((((background light))
-     (:foreground "blue"))
-    (((background dark))
-     (:foreground "skyblue")))
-  "For things that don't have their dedicated face.
+- lorem ipsum
+  dolor ..."
+  :group 'adoc)
 
-Many important AsciiDoc constructs have their dedicated face in
-adoc-mode like e.g. adoc-title-0, adoc-strong etc.
-
-For all other, less often used constructs, where it wasn't deemed
-necessary to create an own dedicated face, adoc-generic is used.
-E.g. #...#, the label text of a labeled list item, block titles.
-
-Beside that it servers as a base face from which other adoc
-faces, at least their default value, inherit."
-  :group 'adoc-faces)
-
-(defface adoc-title-0
-  '((t (:inherit adoc-generic :weight bold :height 2.0)))
-  ""
-  :group 'adoc-faces)
-
-(defface adoc-title-1
-  '((t (:inherit adoc-generic :weight bold :height 1.8)))
-  ""
-  :group 'adoc-faces)
-
-(defface adoc-title-2
-  '((t (:inherit adoc-generic :weight bold :height 1.4)))
-  ""
-  :group 'adoc-faces)
-
-(defface adoc-title-3
-  '((t (:inherit adoc-generic :slant italic :weight bold)))
-  ""
-  :group 'adoc-faces)
-
-(defface adoc-title-4
-  '((t (:inherit adoc-generic :slant italic :weight bold)))
-  ""
-  :group 'adoc-faces)
-
-(defface adoc-monospace
-  '((t (:inherit (fixed-pitch adoc-generic))))
-  "For monospace, literal or pass through text"
-  :group 'adoc-faces)
-
-(defface adoc-strong
-  '((t (:inherit (adoc-generic bold))))
-  ""
-  :group 'adoc-faces)
-
-(defface adoc-emphasis
-  '((t (:inherit (adoc-generic italic))))
-  ""
-  :group 'adoc-faces)
-
-(defface adoc-superscript
-  '((t (:inherit adoc-generic :height 0.8)))
-  "How much to raise it is defined by adoc-script-raise.
-
-Note that the example here in the customization buffer is not
-correctly highlighted the raising by adoc-script-raise part is
-missing."
-  :group 'adoc-faces)
-
-(defface adoc-subscript
-  '((t (:inherit adoc-generic :height 0.8)))
-  "How much to lower it is defined by adoc-script-raise.
-
-Note that the example here in the customization buffer is not
-correctly highlighted, the lowering by adoc-script-raise part is
-missing."
-  :group 'adoc-faces) 
-
-(defface adoc-secondary-text
-  '((t (:height 0.8)))
-  "Text that is not part of the running text in the output.
-
-E.g. captions or footnotes."
-  :group 'adoc-faces)
-
-(defface adoc-replacement
-  '((default (:inherit adoc-orig-default))
-    (((background light))
-     (:foreground "purple1"))
-    (((background dark))
-     (:foreground "plum1")))
-  "For things that will be replaced by something simple/similar.
-
-A text phrase that is replaced by another phrase.
-
-E.g. AsciiDoc replacements ('(C)' for the copy right sign),
-entity references ('&#182' for a carriage return sign),
-single/double quoted text (that is, the quotes in `...' , ``...''
-are replaced by actual single/double quotation marks.)"
-  :group 'adoc-faces)
-
-(defface adoc-complex-replacement
-  '((default (:inherit adoc-orig-default))
-    (((background light))
-     (:background "plum1" :foreground "purple3" :box (:line-width 2 :color "plum1" :style released-button)))
-    (((background dark))
-     (:background "purple3" :foreground "plum1" :box (:line-width 2 :color "purple3" :style released-button))))
-  "For things that will be replaced by something complex (e.g an image).
-
-E.g. adominition paragraphs ('WARNING: '), images ('image::images/tiger.png'), rulers, ..."
-  :group 'adoc-faces)
-
-(defface adoc-list-item
-  '((default (:inherit adoc-orig-default))
-    (((background light))
-     (:background "plum1" :foreground "purple3" ))
-    (((background dark))
-     (:background "purple3" :foreground "plum1" )))
-  "For the bullets and numbers of list items.
-
-However not for the label text of a labeled list item. That is
-highlighted with adoc-generic-face."
-  :group 'adoc-faces)
-
-(defface adoc-table-del
-  '((default (:inherit adoc-orig-default))
-    (((background light))
-     (:background "light steel blue" :foreground "blue" ))
-    (((background dark))
-     (:background "purple3" :foreground "plum1" )))
-  "For table ('|===...')and cell ('|') delimiters "
-  :group 'adoc-faces)
-
-(defface adoc-reference
-  '((t (:inherit (adoc-generic link))))
-  "For references, e.g. URLs, references to other sections etc."
-  :group 'adoc-faces)
-
-;; todo: inherit 'specialized' delimiters from it.
-(defface adoc-delimiter
-  '((default (:inherit adoc-orig-default))
-    (((background light))
-     (:background "gray95" :foreground "gray60"))
-    (((background dark))
-     (:background "gray20" :foreground "gray50")))
-  "For generic delimiters (meta characters) not having their own
-dedicated face."
-
-  :group 'adoc-faces)
-
-(defface adoc-hide-delimiter 
-  '((default (:inherit adoc-orig-default))
-    (((background light))
-     (:foreground "gray85"))
-    (((background dark))
-     (:foreground "gray40")))
-  "For delimiters you don't really need to see.
-
-When the enclosed text, due to highlighting, already indicates
-what the delimiter is you don't need to see the delimiter
-properly. E.g. in 'bla *foo* bli' foo will be highlighted with
-adoc-strong, thus you know that the delimiter must be an
-astrisk, and thus you don't need to properly see it. That also
-makes the whole text look more like the final output, where you
-can't see the delimiters at all of course."
-  :group 'adoc-faces)
-
-(defface adoc-anchor
-  '((t (:underline t :inherit (adoc-delimiter))))
-  "For the anchor id"
-  :group 'adoc-faces)
-
-(defface adoc-comment
-  '((t (:inherit font-lock-comment-face adoc-orig-default)))
-  ""
-  :group 'adoc-faces)
-
-(defface adoc-warning
-  '((t (:inherit font-lock-warning-face adoc-orig-default)))
-  ""
-  :group 'adoc-faces)
-
-(defface adoc-preprocessor
-  '((t (:inherit font-lock-preprocessor-face adoc-orig-default)))
-  ""
-  :group 'adoc-faces)
+(define-obsolete-face-alias 'adoc-generic 'markup-gen-face "23.3")
+(define-obsolete-face-alias 'adoc-title-0 'markup-title-0-face "23.3")
+(define-obsolete-face-alias 'adoc-title-1 'markup-title-1-face "23.3")
+(define-obsolete-face-alias 'adoc-title-2 'markup-title-2-face "23.3")
+(define-obsolete-face-alias 'adoc-title-3 'markup-title-3-face "23.3")
+(define-obsolete-face-alias 'adoc-title-4 'markup-title-4-face "23.3")
+(define-obsolete-face-alias 'adoc-monospace 'markup-typewriter-face "23.3")
+(define-obsolete-face-alias 'adoc-strong 'markup-strong-face "23.3")
+(define-obsolete-face-alias 'adoc-emphasis 'markup-emphasis-face "23.3")
+(define-obsolete-face-alias 'adoc-superscript 'markup-superscript-face "23.3")
+(define-obsolete-face-alias 'adoc-subscript 'markup-subscript-face "23.3")
+(define-obsolete-face-alias 'adoc-secondary-text 'markup-secondary-text-face "23.3")
+(define-obsolete-face-alias 'adoc-replacement 'markup-replacement-face "23.3")
+(define-obsolete-face-alias 'adoc-complex-replacement 'markup-complex-replacement-face "23.3")
+(define-obsolete-face-alias 'adoc-list-item 'markup-list-face "23.3")
+(define-obsolete-face-alias 'adoc-table-del 'markup-table-face "23.3")
+(define-obsolete-face-alias 'adoc-reference 'markup-reference-face "23.3")
+(define-obsolete-face-alias 'adoc-delimiter 'markup-meta-face "23.3")
+(define-obsolete-face-alias 'adoc-hide-delimiter 'markup-hide-delimiter-face "23.3")
+(define-obsolete-face-alias 'adoc-anchor 'markup-anchor-face "23.3")
+(define-obsolete-face-alias 'adoc-comment 'markup-comment-face "23.3")
+(define-obsolete-face-alias 'adoc-warning 'markup-error-face "23.3")
+(define-obsolete-face-alias 'adoc-preprocessor 'markup-preprocessor-face "23.3")
 
 ;; Despite the comment in font-lock.el near 'defvar font-lock-comment-face', it
 ;; seems I still need variables to refer to faces in adoc-font-lock-keywords.
 ;; Not having variables and only referring to face names in
 ;; adoc-font-lock-keywords does not work.
-(defvar adoc-orig-default 'adoc-orig-default)
-(defvar adoc-generic 'adoc-generic)
-(defvar adoc-title-0 'adoc-title-0)
-(defvar adoc-title-1 'adoc-title-1)
-(defvar adoc-title-2 'adoc-title-2)
-(defvar adoc-title-3 'adoc-title-3)
-(defvar adoc-title-4 'adoc-title-4)
-(defvar adoc-monospace 'adoc-monospace)
-(defvar adoc-strong 'adoc-strong)
-(defvar adoc-emphasis 'adoc-emphasis)
-(defvar adoc-superscript 'adoc-superscript)
-(defvar adoc-subscript 'adoc-subscript)
-(defvar adoc-replacement 'adoc-replacement)
-(defvar adoc-complex-replacement 'adoc-complex-replacement)
-(defvar adoc-list-item 'adoc-list-item)
-(defvar adoc-table-del 'adoc-table-del)
-(defvar adoc-reference 'adoc-reference)
-(defvar adoc-secondary-text 'adoc-secondary-text)
-(defvar adoc-delimiter 'adoc-delimiter)
-(defvar adoc-hide-delimiter 'adoc-hide-delimiter)
-(defvar adoc-anchor 'adoc-anchor)
-(defvar adoc-comment 'adoc-comment)
-(defvar adoc-warning 'adoc-warning)
-(defvar adoc-preprocessor 'adoc-preprocessor)
+(defvar adoc-align 'adoc-align)
+(defvar adoc-generic 'markup-gen-face)
+(defvar adoc-title-0 'markup-title-0-face)
+(defvar adoc-title-1 'markup-title-1-face)
+(defvar adoc-title-2 'markup-title-2-face)
+(defvar adoc-title-3 'markup-title-3-face)
+(defvar adoc-title-4 'markup-title-4-face)
+(defvar adoc-monospace 'markup-typewriter-face)
+(defvar adoc-strong 'markup-strong-face)
+(defvar adoc-emphasis 'markup-emphasis-face)
+(defvar adoc-superscript 'markup-superscript-face)
+(defvar adoc-subscript 'markup-subscript-face)
+(defvar adoc-replacement 'markup-replacement-face)
+(defvar adoc-complex-replacement 'markup-complex-replacement-face)
+(defvar adoc-list-item 'markup-list-face)
+(defvar adoc-table-del 'markup-table-face)
+(defvar adoc-reference 'markup-reference-face)
+(defvar adoc-secondary-text 'markup-secondary-text-face)
+(defvar adoc-delimiter 'markup-meta-face)
+(defvar adoc-hide-delimiter 'markup-hide-delimiter-face)
+(defvar adoc-anchor 'markup-anchor-face)
+(defvar adoc-comment 'markup-comment-face)
+(defvar adoc-warning 'markup-error-face)
+(defvar adoc-preprocessor 'markup-preprocessor-face)
 
 (defconst adoc-title-max-level 4
   "Max title level, counting starts at 0.")
@@ -829,12 +668,12 @@ subgroups:
 
 ;; adoc-lexxer will set these faces when it finds a match. The numbers are the
 ;; regexp group numbers of the match.
-(defvar adoc-lex-face-1 adoc-orig-default)
-(defvar adoc-lex-face-2 adoc-orig-default)
-(defvar adoc-lex-face-3 adoc-orig-default)
-(defvar adoc-lex-face-4 adoc-orig-default)
-(defvar adoc-lex-face-5 adoc-orig-default)
-(defvar adoc-lex-face-6 adoc-orig-default)
+(defvar adoc-lex-face-1 adoc-align)
+(defvar adoc-lex-face-2 adoc-align)
+(defvar adoc-lex-face-3 adoc-align)
+(defvar adoc-lex-face-4 adoc-align)
+(defvar adoc-lex-face-5 adoc-align)
+(defvar adoc-lex-face-6 adoc-align)
 
 (defvar adoc-lexems `(
   ;; the order of lexems is given by AsciiDoc, see source code Lex.next
@@ -953,9 +792,9 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-oulisti'"
            (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
     ;; highlighers
     '(0 '(face nil adoc-reserved t) t)
-    '(1 adoc-orig-default t)
+    '(1 adoc-align t)
     '(2 adoc-list-item t) 
-    '(3 adoc-orig-default t)))
+    '(3 adoc-align t)))
 
 (defmacro adoc-kw-llisti (sub-type &optional level)
   "Creates a keyword for font-lock which highlights labeled list elements.
@@ -966,10 +805,10 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
       (and (re-search-forward ,(adoc-re-llisti sub-type level) end t)
            (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
     ;; highlighers
-    '(1 adoc-orig-default t)
+    '(1 adoc-align t)
     '(2 adoc-generic t)
     '(3 '(face adoc-list-item adoc-reserved t) t) 
-    '(4 adoc-orig-default t)))
+    '(4 adoc-align t)))
 
 (defmacro adoc-kw-delimited-block (del text-face text-prop text-prop-val)
   "Creates a keyword for font-lock which highlights a delimited block."
@@ -1008,7 +847,7 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
            (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
     ;; highlighers
     '(1 '(face adoc-complex-replacement adoc-reserved t))
-    '(2 '(face adoc-orig-default adoc-reserved t))))
+    '(2 '(face adoc-align adoc-reserved t))))
 
 (defmacro adoc-kw-verbatim-paragraph-sequence ()
   "Creates a keyword which highlights a sequence of verbatim paragraphs."
@@ -1579,7 +1418,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; BUG: should not be applyied in literal paragraphs (because there typically
    ;; the surrounding font has another pitch)
    ;; (list "\\([ \t]*\n\\)" '(1 adoc-text t)) 
-   (list "\\(^[ \t]+\\)" '(1 adoc-orig-default t)) 
+   (list "\\(^[ \t]+\\)" '(1 adoc-align t)) 
 
    ;; -- warnings 
    ;; todo: add tooltip explaining what is the warning all about
