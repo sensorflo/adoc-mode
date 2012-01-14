@@ -222,11 +222,6 @@ aligned.
   :group 'adoc)
 
 (define-obsolete-face-alias 'adoc-generic 'markup-gen-face "23.3")
-(define-obsolete-face-alias 'adoc-title-0 'markup-title-0-face "23.3")
-(define-obsolete-face-alias 'adoc-title-1 'markup-title-1-face "23.3")
-(define-obsolete-face-alias 'adoc-title-2 'markup-title-2-face "23.3")
-(define-obsolete-face-alias 'adoc-title-3 'markup-title-3-face "23.3")
-(define-obsolete-face-alias 'adoc-title-4 'markup-title-4-face "23.3")
 (define-obsolete-face-alias 'adoc-monospace 'markup-typewriter-face "23.3")
 (define-obsolete-face-alias 'adoc-strong 'markup-strong-face "23.3")
 (define-obsolete-face-alias 'adoc-emphasis 'markup-emphasis-face "23.3")
@@ -251,11 +246,6 @@ aligned.
 ;; adoc-font-lock-keywords does not work.
 (defvar adoc-align 'adoc-align)
 (defvar adoc-generic 'markup-gen-face)
-(defvar adoc-title-0 'markup-title-0-face)
-(defvar adoc-title-1 'markup-title-1-face)
-(defvar adoc-title-2 'markup-title-2-face)
-(defvar adoc-title-3 'markup-title-3-face)
-(defvar adoc-title-4 'markup-title-4-face)
 (defvar adoc-monospace 'markup-typewriter-face)
 (defvar adoc-strong 'markup-strong-face)
 (defvar adoc-emphasis 'markup-emphasis-face)
@@ -268,7 +258,7 @@ aligned.
 (defvar adoc-reference 'markup-reference-face)
 (defvar adoc-secondary-text 'markup-secondary-text-face)
 (defvar adoc-delimiter 'markup-meta-face)
-(defvar adoc-hide-delimiter 'markup-hide-delimiter-face)
+(defvar adoc-hide-delimiter 'markup-meta-hide-face)
 (defvar adoc-anchor 'markup-anchor-face)
 (defvar adoc-comment 'markup-comment-face)
 (defvar adoc-warning 'markup-error-face)
@@ -352,8 +342,8 @@ match-data has his this sub groups:
   (when (not (eq (length del) 2))
     (error "two line title delimiters must be 2 chars long"))
   (concat
-   ;; title must contain at least one \w character. You don't see that in
-   ;; asciidoc.conf, only in asciidoc source code.
+   ;; title text (the first line) must contain at least one \w character. You
+   ;; don't see that in asciidoc.conf, only in asciidoc source code.
    "\\(^.*?[a-zA-Z0-9_].*?\\)[ \t]*\n" 
    "\\("
      "\\(?:" (regexp-quote del) "\\)+"
@@ -682,17 +672,17 @@ subgroups:
   ;; attribute list
   ;; title
   ;;   single line
-  ,(list (adoc-re-one-line-title 0) adoc-hide-delimiter adoc-title-0 adoc-hide-delimiter)
-  ,(list (adoc-re-one-line-title 1) adoc-hide-delimiter adoc-title-1 adoc-hide-delimiter)
-  ,(list (adoc-re-one-line-title 2) adoc-hide-delimiter adoc-title-2 adoc-hide-delimiter)
-  ,(list (adoc-re-one-line-title 3) adoc-hide-delimiter adoc-title-3 adoc-hide-delimiter)
-  ,(list (adoc-re-one-line-title 4) adoc-hide-delimiter adoc-title-4 adoc-hide-delimiter)
+  ,(list (adoc-re-one-line-title 0) adoc-hide-delimiter markup-title-0-face adoc-hide-delimiter)
+  ,(list (adoc-re-one-line-title 1) adoc-hide-delimiter markup-title-1-face adoc-hide-delimiter)
+  ,(list (adoc-re-one-line-title 2) adoc-hide-delimiter markup-title-2-face adoc-hide-delimiter)
+  ,(list (adoc-re-one-line-title 3) adoc-hide-delimiter markup-title-3-face adoc-hide-delimiter)
+  ,(list (adoc-re-one-line-title 4) adoc-hide-delimiter markup-title-4-face adoc-hide-delimiter)
   ;;   double line
-  ,(list (adoc-re-two-line-title "==") adoc-title-0 adoc-hide-delimiter)
-  ,(list (adoc-re-two-line-title "--") adoc-title-1 adoc-hide-delimiter)
-  ,(list (adoc-re-two-line-title "~~") adoc-title-2 adoc-hide-delimiter)
-  ,(list (adoc-re-two-line-title "^^") adoc-title-3 adoc-hide-delimiter)
-  ,(list (adoc-re-two-line-title "++") adoc-title-4 adoc-hide-delimiter)
+  ,(list (adoc-re-two-line-title (nth 0 adoc-two-line-title-del)) markup-title-0-face adoc-hide-delimiter)
+  ,(list (adoc-re-two-line-title (nth 1 adoc-two-line-title-del)) markup-title-1-face adoc-hide-delimiter)
+  ,(list (adoc-re-two-line-title (nth 2 adoc-two-line-title-del)) markup-title-2-face adoc-hide-delimiter)
+  ,(list (adoc-re-two-line-title (nth 3 adoc-two-line-title-del)) markup-title-3-face adoc-hide-delimiter)
+  ,(list (adoc-re-two-line-title (nth 4 adoc-two-line-title-del)) markup-title-4-face adoc-hide-delimiter)
   ;; macros
   ;; lists
   ;; blocks
@@ -754,33 +744,34 @@ subgroups:
 ;; match because of adoc-reserved, following quotes of the same type which
 ;; should be highlighed are not, because font-lock abandons that keyword.
 
-(defmacro adoc-kw-one-line-title (level text-face)
+(defun adoc-kw-one-line-title (level text-face)
   "Creates a keyword for font-lock which highlights one line titles"
-  `(list
+  (list
     ;; matcher function
-    (lambda (end)
+    `(lambda (end)
       (and (re-search-forward ,(adoc-re-one-line-title level) end t)
            (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
     ;; highlighers
-    '(1 '(face adoc-hide-delimiter adoc-reserved t) t)
-    '(2 ,text-face t) 
-    '(3 '(face adoc-hide-delimiter adoc-reserved t) t)))
+    '(1 '(face markup-meta-hide-face adoc-reserved t) t)
+    `(2 ,text-face t) 
+    '(3 '(face markup-meta-hide-face adoc-reserved t) t)))
 
 ;; todo: highlight bogous 'two line titles' with warning face
-(defmacro adoc-kw-two-line-title (del text-face)
+;; todo: completly remove keyword when adoc-enable-two-line-title is nil
+(defun adoc-kw-two-line-title (del text-face)
   "Creates a keyword for font-lock which highlights two line titles"
-  `(list
-    ;; matcher function
-    (lambda (end)
+  (list
+   ;; matcher function
+   `(lambda (end)
       (and adoc-enable-two-line-title
            (re-search-forward ,(adoc-re-two-line-title del) end t)
            (< (abs (- (length (match-string 1)) (length (match-string 2)))) 3)
 	   (or (not (numberp adoc-enable-two-line-title))
 	       (not (equal adoc-enable-two-line-title (length (match-string 2)))))
            (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
-    ;; highlighers
-    '(1 ,text-face t)
-    '(2 '(face adoc-hide-delimiter adoc-reserved t) t)))
+   ;; highlighers
+   `(1 ,text-face t)
+   `(2 '(face markup-meta-hide-face adoc-reserved t) t)))
 
 (defmacro adoc-kw-oulisti (type &optional level sub-type)
   "Creates a keyword for font-lock which highlights both (un)ordered list elements.
@@ -958,22 +949,16 @@ When LITERAL-P is non-nil, the contained text is literal text."
 
    ;; sections / document structure
    ;; ------------------------------
-   (adoc-kw-one-line-title 0 adoc-title-0)
-   (adoc-kw-one-line-title 1 adoc-title-1)
-   (adoc-kw-one-line-title 2 adoc-title-2)
-   (adoc-kw-one-line-title 3 adoc-title-3)
-   (adoc-kw-one-line-title 4 adoc-title-4)
-   ;; todo: bring that to work
-   ;; (adoc-kw-two-line-title ,(nth 0 adoc-two-line-title-del) adoc-title-0)
-   ;; (adoc-kw-two-line-title (nth 1 adoc-two-line-title-del) adoc-title-1)
-   ;; (adoc-kw-two-line-title (nth 2 adoc-two-line-title-del) adoc-title-2)
-   ;; (adoc-kw-two-line-title (nth 3 adoc-two-line-title-del) adoc-title-3)
-   ;; (adoc-kw-two-line-title (nth 4 adoc-two-line-title-del) adoc-title-4)
-   (adoc-kw-two-line-title "==" adoc-title-0)
-   (adoc-kw-two-line-title "--" adoc-title-1)
-   (adoc-kw-two-line-title "~~" adoc-title-2)
-   (adoc-kw-two-line-title "^^" adoc-title-3)
-   (adoc-kw-two-line-title "++" adoc-title-4)
+   (adoc-kw-one-line-title 0 markup-title-0-face)
+   (adoc-kw-one-line-title 1 markup-title-1-face)
+   (adoc-kw-one-line-title 2 markup-title-2-face)
+   (adoc-kw-one-line-title 3 markup-title-3-face)
+   (adoc-kw-one-line-title 4 markup-title-4-face)
+   (adoc-kw-two-line-title (nth 0 adoc-two-line-title-del) markup-title-0-face)
+   (adoc-kw-two-line-title (nth 1 adoc-two-line-title-del) markup-title-1-face)
+   (adoc-kw-two-line-title (nth 2 adoc-two-line-title-del) markup-title-2-face)
+   (adoc-kw-two-line-title (nth 3 adoc-two-line-title-del) markup-title-3-face)
+   (adoc-kw-two-line-title (nth 4 adoc-two-line-title-del) markup-title-4-face)
 
 
    ;; block macros 
