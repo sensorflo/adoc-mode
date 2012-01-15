@@ -177,6 +177,58 @@ configuration file."
           (string :tag "level 4") )
   :group 'adoc)
 
+(defcustom adoc-delimited-block-del
+  '("^/\\{4,\\}"	 ; 0 comment
+    "^\\+\\{4,\\}"	 ; 1 pass
+    "^-\\{4,\\}"	 ; 2 listing
+    "^\\.\\{4,\\}"	 ; 3 literal
+    "^_\\{4,\\}"	 ; 4 quote
+    "^=\\{4,\\}"	 ; 5 example
+    "^\\*\\{4,\\}"	 ; 6 sidebar
+    "^--")        	 ; 7 open block
+  "WITHOUT $!"
+  :type '(list
+	  (choice :tag "comment"
+		  (regexp :tag "start/end regexp")
+		  (list :tag "separate regexp"
+			(regexp :tag "start regexp")
+			(regexp :tag "end regexp")))
+	  (choice :tag "pass"
+		  (regexp :tag "start/end regexp")
+		  (list :tag "separate regexp"
+			(regexp :tag "start regexp")
+			(regexp :tag "end regexp")))
+	  (choice :tag "listing"
+		  (regexp :tag "start/end regexp")
+		  (list :tag "separate regexp"
+			(regexp :tag "start regexp")
+			(regexp :tag "end regexp")))
+	  (choice :tag "literal"
+		  (regexp :tag "start/end regexp")
+		  (list :tag "separate regexp"
+			(regexp :tag "start regexp")
+			(regexp :tag "end regexp")))
+	  (choice :tag "quote"
+		  (regexp :tag "start/end regexp")
+		  (list :tag "separate regexp"
+			(regexp :tag "start regexp")
+			(regexp :tag "end regexp")))
+	  (choice :tag "example"
+		  (regexp :tag "start/end regexp")
+		  (list :tag "separate regexp"
+			(regexp :tag "start regexp")
+			(regexp :tag "end regexp")))
+	  (choice :tag "sidebar"
+		  (regexp :tag "start/end regexp")
+		  (list :tag "separate regexp"
+			(regexp :tag "start regexp")
+			(regexp :tag "end regexp")))
+	   (choice :tag "open"
+		  (regexp :tag "start/end regexp")
+		  (list :tag "separate regexp"
+			(regexp :tag "start regexp")
+			(regexp :tag "end regexp")))))
+
 ;; todo: limit value range to 1 or 2
 (defcustom adoc-default-title-type 1
   "Default title type, see `adoc-title-descriptor'."
@@ -458,15 +510,23 @@ Subgroups:
     "^\\(\\)\\(.*[^ \t\n]\\)\\(:-\\)\\(\\)$")
    (t (error "Unknown type/level"))))
 
-;; Ala ^\*{4,}$
-(defun adoc-re-delimited-block-line (charset)
-  (concat "^\\(\\(" charset "\\)\\2\\{3,\\}\\)[ \t]*\n"))
+(defun adoc-re-delimited-block-line ()
+  (concat
+   "\\(?:"
+   (mapconcat
+    (lambda (x)
+      (concat "\\(?:" x "\\)[ \t]*$"))
+    adoc-delimited-block-del "\\|")
+   "\\)"))
 
 (defun adoc-re-delimited-block (del)
-  (concat
-   "\\(^" (regexp-quote del) "\\{4,\\}\\)[ \t]*\n"
-   "\\(\\(?:.*\n\\)*?\\)"
-   "\\(" (regexp-quote del) "\\{4,\\}\\)[ \t]*$"))
+  (let* ((tmp (nth del adoc-delimited-block-del))
+	 (start (if (consp tmp) (car tmp) tmp))
+	 (end (if (consp tmp) (cdr tmp) tmp)))
+    (concat
+     "\\(" start "\\)[ \t]*\n"
+     "\\(\\(?:.*\n\\)*?\\)"
+     "\\(" end "\\)[ \t]*$")))
 
 ;; TODO: since its multiline, it doesn't yet work properly.
 (defun adoc-re-verbatim-paragraph-sequence ()
@@ -650,6 +710,30 @@ subgroups:
          (style "[demshalv]"))
     (concat "\\(?:" fullspan "\\)?\\(?:" align "\\)?\\(?:" style "\\)?")))
 
+(defun adoc-kwf-std (end regexp &rest must-free-groups)
+  "Standart function for keywords
+
+Intendent to be called from font lock keyword functions. END is
+the limit of the search. REXEXP the regexp to be searched.
+MUST-FREE-GROUPS a list of regexp group numbers which may not
+match text that has an adoc-reserved text-property with a non-nil
+value."
+  (let ((found t) (prevented t) saved-point)
+    (while (and found prevented)
+      (setq saved-point (point))
+      (setq found (re-search-forward regexp end t))
+      (setq prevented ; prevented is only meaningfull wenn found is non-nil
+	    (or (not found) ; the following is only needed when found
+		(some (lambda(x)
+			(and (match-beginning x)
+			     (text-property-not-all (match-beginning 1)
+						    (match-end 1)
+						    'adoc-reserved nil)))
+		      must-free-groups)))
+      (when (and found prevented)
+	(goto-char (1+ saved-point))))
+    (and found (not prevented))))
+
 (defun adoc-facespec-subscript ()
   `(face adoc-subscript display (raise ,(nth 0 adoc-script-raise))))
 
@@ -686,14 +770,14 @@ subgroups:
   ;; macros
   ;; lists
   ;; blocks
-  ,(list (adoc-re-delimited-block "/") adoc-delimiter adoc-hide-delimiter adoc-comment adoc-delimiter adoc-hide-delimiter) ; comment
-  ,(list (adoc-re-delimited-block "+") adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; pass through
-  ,(list (adoc-re-delimited-block "-") adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; listing
-  ,(list (adoc-re-delimited-block ".") adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; literal
-  ,(list (adoc-re-delimited-block "*") adoc-delimiter adoc-hide-delimiter adoc-secondary-text adoc-delimiter adoc-hide-delimiter) ; sidebar
-  ,(list (adoc-re-delimited-block "_") adoc-delimiter adoc-hide-delimiter adoc-generic adoc-delimiter adoc-hide-delimiter) ; quote
-  ,(list (adoc-re-delimited-block "=") adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; example
-  ("^--[ \t]*$" adoc-delimiter)             ; open block
+  ,(list (adoc-re-delimited-block 0) adoc-delimiter adoc-hide-delimiter adoc-comment adoc-delimiter adoc-hide-delimiter) ; comment
+  ,(list (adoc-re-delimited-block 1) adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; pass through
+  ,(list (adoc-re-delimited-block 2) adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; listing
+  ,(list (adoc-re-delimited-block 3) adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; literal
+  ,(list (adoc-re-delimited-block 6) adoc-delimiter adoc-hide-delimiter adoc-secondary-text adoc-delimiter adoc-hide-delimiter) ; sidebar
+  ,(list (adoc-re-delimited-block 4) adoc-delimiter adoc-hide-delimiter adoc-generic adoc-delimiter adoc-hide-delimiter) ; quote
+  ,(list (adoc-re-delimited-block 5) adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; example
+  ((nth 7 adoc-delimited-block-del) adoc-delimiter)             ; open block
   ;; tables OLD
   ;; tables 
   ;; block title
@@ -801,31 +885,28 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
     '(3 '(face adoc-list-item adoc-reserved t) t) 
     '(4 adoc-align t)))
 
-(defmacro adoc-kw-delimited-block (del text-face text-prop text-prop-val)
+(defun adoc-kw-delimited-block (del &optional text-face inhibit-text-reserved)
   "Creates a keyword for font-lock which highlights a delimited block."
-  `(list
-    ;; matcher function
-    (lambda (end)
-      (and (re-search-forward ,(adoc-re-delimited-block del) end t)
-           (not (text-property-not-all (match-beginning 1) (match-end 1) 'adoc-reserved nil))
-           (not (text-property-not-all (match-beginning 3) (match-end 3) 'adoc-reserved nil))))
-    ;; highlighers
-    '(0 '(face nil font-lock-multiline t) t)
-    '(1 '(face adoc-hide-delimiter adoc-reserved t) t)
-    '(2 '(face ,text-face ,text-prop ,text-prop-val) t)
-    '(3 '(face adoc-hide-delimiter adoc-reserved t) t)))
+  (list
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-delimited-block del) 1 3))
+   '(0 '(face nil font-lock-multiline t) t)
+   '(1 '(face markup-meta-hide-face adoc-reserved t) t)
+   (if (not inhibit-text-reserved)
+       `(2 '(face ,text-face adoc-reserved t) t)
+     `(2 ,text-face t))
+   '(3 '(face markup-meta-hide-face adoc-reserved t) t)))
 
 ;; if adoc-kw-delimited-block, adoc-kw-two-line-title don't find the whole
 ;; delimited block / two line title, at least 'use up' the delimiter line so it
 ;; is later not conused as a funny serries of unconstrained quotes
-(defmacro adoc-kw-delimtier-line-fallback (charset)
-  `(list
+(defun adoc-kw-delimtier-line-fallback ()
+  (list
     ;; matcher function
-    (lambda (end)
-      (and (re-search-forward ,(adoc-re-delimited-block-line charset) end t)
-           (not (text-property-not-all (match-beginning 1) (match-end 1) 'adoc-reserved nil))))
+    `(lambda (end)
+      (and (re-search-forward ,(adoc-re-delimited-block-line) end t)
+           (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
     ;; highlighters
-    '(1 '(face adoc-hide-delimiter adoc-reserved t) t)))
+    '(0 '(face adoc-hide-delimiter adoc-reserved t) t)))
 
 ;; admonition paragraph. Note that there is also the style with the leading attribute list.
 ;; (?s)^\s*(?P<style>NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s+(?P<text>.+)
@@ -1061,16 +1142,15 @@ When LITERAL-P is non-nil, the contained text is literal text."
 
    ;; Delimited blocks
    ;; ------------------------------
-   (adoc-kw-delimited-block "/" adoc-comment adoc-reserved t)   ; comment
-   (adoc-kw-delimited-block "+" adoc-monospace adoc-reserved t) ; passthrough
-   (adoc-kw-delimited-block "." adoc-monospace adoc-reserved t) ; literal
-   (adoc-kw-delimited-block "-" adoc-monospace adoc-reserved t) ; listing
-   (adoc-kw-delimited-block "*" adoc-secondary-text nil nil) ; sidebar
-   (adoc-kw-delimited-block "_" nil nil nil) ; quote    
-   (adoc-kw-delimited-block "=" nil nil nil) ; example  
-   (list "^\\(--\\)[ \t]*$" '(1 '(face adoc-delimiter adoc-reserved t))) ; open block
-
-   (adoc-kw-delimtier-line-fallback "[-/+.*_=~^]")  
+   (adoc-kw-delimited-block 0 markup-comment-face)   ; comment
+   (adoc-kw-delimited-block 1 markup-passthrough-face) ; passthrough
+   (adoc-kw-delimited-block 2 markup-code-face) ; listing
+   (adoc-kw-delimited-block 3 markup-verbatim-face) ; literal
+   (adoc-kw-delimited-block 4 nil t) ; quote    
+   (adoc-kw-delimited-block 5 nil t) ; example  
+   (adoc-kw-delimited-block 6 adoc-secondary-text) ; sidebar
+   (adoc-kw-delimited-block 7 nil t) ; open block
+   (adoc-kw-delimtier-line-fallback)  
 
 
    ;; tables

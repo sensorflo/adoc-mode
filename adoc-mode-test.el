@@ -21,6 +21,8 @@
   ;;  Lock Support Mode must be set to nil
   ;;  !!!!!!!!!!!!!
 
+  ;; todo: test for presence of adoc-reserved (we do white-box testing here)
+  
 
   ;; the white after = really is part of the delimiter
   (adoctest-make-buffer
@@ -62,6 +64,39 @@
    "\n" nil
    "chapter 4" markup-title-4-face "\n" nil
    "+++++++++" markup-meta-hide-face "\n" nil
+   "\n" nil
+
+   "////////" markup-meta-hide-face "\n" nil
+   "comment line 1\ncomment line 2" markup-comment-face "\n" nil
+   "////////" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "++++++++" markup-meta-hide-face "\n" nil
+   "passthrouh line 1\npassthrouh line 2" markup-passthrough-face "\n" nil
+   "++++++++" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "--------" markup-meta-hide-face "\n" nil
+   "listing line 1\nlisting line 2" markup-code-face "\n" nil
+   "--------" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "........" markup-meta-hide-face "\n" nil
+   "literal line 1\nliteral line 2" markup-verbatim-face "\n" nil
+   "........" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "________" markup-meta-hide-face "\n" nil
+   "quote line 1\nquote line 2" nil "\n" nil
+   "________" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "========" markup-meta-hide-face "\n" nil
+   "example line 1\nexample line 2" nil "\n" nil
+   "========" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "********" markup-meta-hide-face "\n" nil
+   "sidebar line 1\nsidebar line 2" markup-secondary-text-face "\n" nil
+   "********" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "--" markup-meta-hide-face "\n" nil
+   "open block line 1\nopen block line 2" nil "\n" nil
+   "--" markup-meta-hide-face "\n" nil
    "\n" nil
    )
 
