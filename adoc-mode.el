@@ -186,7 +186,22 @@ configuration file."
     "^=\\{4,\\}"	 ; 5 example
     "^\\*\\{4,\\}"	 ; 6 sidebar
     "^--")        	 ; 7 open block
-  "WITHOUT $!"
+  "Regexp used for delimited blocks.
+
+WARNING: They should not contain a $. It is implied that they
+match up to end of the line;
+
+They correspond to delimiter variable blockdef-xxx sections in
+the AsciiDoc configuration file.
+
+However contrary to the AsciiDoc configuration file a separate
+regexp can be given for the start line and for the end line. You
+may want to do that because adoc-mode often can't properly
+distinguish between a) a two line tile b) start of a delimited
+block and c) end of a delimited block. If you start a listing
+delimited block with '>----' and end it with '<----', then all
+three cases can easily be distinguished. The regexp in your
+AsciiDoc config file would the probably be '^[<>]-{4,}$'"
   :type '(list
 	  (choice :tag "comment"
 		  (regexp :tag "start/end regexp")
