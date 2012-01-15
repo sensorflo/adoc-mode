@@ -999,7 +999,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(1 '(face adoc-delimiter adoc-reserved t))) 
    ;; comment
    ;; ^//(?P<passtext>[^/].*|)$=#comment[normal]
-   (list "^\\(//.*\n\\)"
+   (list "^\\(//\\(?:[^/].*\\|\\)\n\\)"
          '(1 '(face adoc-comment adoc-reserved t)))    
    ;; image
    (list "^\\(\\(image::\\)\\([^ \t\n]*?\\)\\(\\[.*?\\]\\)\\)[ \t]*$"
