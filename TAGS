@@ -1,0 +1,124 @@
+
+adoc-mode.el,5334
+(defconst adoc-mode-version 113,4643
+(defgroup adoc 117,4796
+(defcustom adoc-script-raise 121,4866
+(defcustom adoc-insert-replacement 133,5368
+(defcustom adoc-unichar-name-resolver 147,5898
+(defcustom adoc-two-line-title-del 167,6780
+(defcustom adoc-delimited-block-del180,7251
+(defcustom adoc-default-title-type 248,9581
+(defcustom adoc-default-title-sub-type 253,9725
+(defcustom adoc-enable-two-line-title 257,9842
+(define-obsolete-face-alias 'adoc-orig-default adoc-orig-default275,10537
+(defface adoc-align276,10604
+(define-obsolete-face-alias 'adoc-generic adoc-generic291,11076
+(define-obsolete-face-alias 'adoc-monospace adoc-monospace292,11143
+(define-obsolete-face-alias 'adoc-strong adoc-strong293,11219
+(define-obsolete-face-alias 'adoc-emphasis adoc-emphasis294,11288
+(define-obsolete-face-alias 'adoc-superscript adoc-superscript295,11361
+(define-obsolete-face-alias 'adoc-subscript adoc-subscript296,11440
+(define-obsolete-face-alias 'adoc-secondary-text adoc-secondary-text297,11515
+(define-obsolete-face-alias 'adoc-replacement adoc-replacement298,11600
+(define-obsolete-face-alias 'adoc-complex-replacement adoc-complex-replacement299,11679
+(define-obsolete-face-alias 'adoc-list-item adoc-list-item300,11774
+(define-obsolete-face-alias 'adoc-table-del adoc-table-del301,11844
+(define-obsolete-face-alias 'adoc-reference adoc-reference302,11915
+(define-obsolete-face-alias 'adoc-delimiter adoc-delimiter303,11990
+(define-obsolete-face-alias 'adoc-hide-delimiter adoc-hide-delimiter304,12060
+(define-obsolete-face-alias 'adoc-anchor adoc-anchor305,12145
+(define-obsolete-face-alias 'adoc-comment adoc-comment306,12214
+(define-obsolete-face-alias 'adoc-warning adoc-warning307,12285
+(define-obsolete-face-alias 'adoc-preprocessor adoc-preprocessor308,12354
+(defvar adoc-align 314,12696
+(defvar adoc-generic 315,12728
+(defvar adoc-monospace 316,12767
+(defvar adoc-strong 317,12815
+(defvar adoc-emphasis 318,12856
+(defvar adoc-superscript 319,12901
+(defvar adoc-subscript 320,12952
+(defvar adoc-replacement 321,12999
+(defvar adoc-complex-replacement 322,13050
+(defvar adoc-list-item 323,13117
+(defvar adoc-table-del 324,13159
+(defvar adoc-reference 325,13202
+(defvar adoc-secondary-text 326,13249
+(defvar adoc-delimiter 327,13306
+(defvar adoc-hide-delimiter 328,13348
+(defvar adoc-anchor 329,13400
+(defvar adoc-comment 330,13441
+(defvar adoc-warning 331,13484
+(defvar adoc-preprocessor 332,13525
+(defconst adoc-title-max-level 334,13579
+(defconst adoc-uolist-max-level 337,13657
+(defconst adoc-summarize-re-uolisti 342,13913
+(defconst adoc-summarize-re-olisti 346,14113
+(defconst adoc-summarize-re-llisti 349,14216
+(defvar adoc-unichar-alist 352,14319
+(defvar adoc-mode-hook 355,14421
+(defvar adoc-mode-abbrev-table 358,14500
+(defvar adoc-font-lock-keywords 361,14583
+(defvar adoc-replacement-failed 364,14666
+(define-abbrev-table 'adoc-mode-abbrev-table adoc-mode-abbrev-table366,14705
+(defun adoc-re-attribute-entry 372,14865
+(defun adoc-re-one-line-title 377,15031
+(defun adoc-make-one-line-title 394,15657
+(defun adoc-re-two-line-title 401,15987
+(defun adoc-make-two-line-title 420,16705
+(defun adoc-re-oulisti 433,17254
+(defun adoc-make-uolisti 491,20083
+(defun adoc-re-llisti 508,20940
+(defun adoc-re-delimited-block-line 528,21624
+(defun adoc-re-delimited-block 537,21801
+(defun adoc-re-verbatim-paragraph-sequence 547,22132
+(defun adoc-re-precond 569,22965
+(defun adoc-re-quote-precondition 581,23314
+(defun adoc-re-unconstrained-quote 608,24257
+(defun adoc-re-constrained-quote 627,24977
+(defun adoc-re-quote 649,25778
+(defun adoc-re-paragraph-separate 659,26068
+(defun adoc-re-paragraph-start 684,26561
+(defun adoc-re-aor(713,27183
+(defun adoc-re-ror(717,27311
+(defun adoc-re-cell-specifier 722,27566
+(defun adoc-kwf-std 728,27828
+(defun adoc-facespec-subscript 752,28763
+(defun adoc-facespec-superscript 755,28867
+(defvar adoc-lex-face-1 760,29092
+(defvar adoc-lex-face-2 761,29128
+(defvar adoc-lex-face-3 762,29164
+(defvar adoc-lex-face-4 763,29200
+(defvar adoc-lex-face-5 764,29236
+(defvar adoc-lex-face-6 765,29272
+(defvar adoc-lexems 767,29309
+(defun adoc-lexxer 811,32067
+(defun adoc-kw-one-line-title 846,33688
+(defun adoc-kw-two-line-title 860,34315
+(defmacro adoc-kw-oulisti 875,34984
+(defmacro adoc-kw-llisti 889,35540
+(defun adoc-kw-delimited-block 903,36084
+(defun adoc-kw-delimtier-line-fallback 917,36805
+(defmacro adoc-kw-admonition-paragraph 928,37306
+(defmacro adoc-kw-verbatim-paragraph-sequence 939,37796
+(defun adoc-kw-quote 949,38234
+(defmacro adoc-kw-replacement 969,39279
+(defun adoc-unfontify-region-function 1007,41052
+(defun adoc-font-lock-mark-block-function 1012,41213
+(defun adoc-get-font-lock-keywords 1016,41306
+(defun adoc-show-version 1506,64936
+(defun adoc-goto-ref-label 1511,65083
+(defun adoc-title-descriptor(1529,65663
+(defun adoc-make-title(1571,67181
+(defun adoc-modify-title 1580,67511
+(defun adoc-promote-title 1658,71133
+(defun adoc-denote-title 1667,71440
+(defun adoc-adjust-title-del 1680,71750
+(defun adoc-toggle-title-type 1688,71993
+(defun adoc-make-unichar-alist(1698,72289
+(defun adoc-unichar-by-name 1711,72729
+(defun adoc-entity-to-string 1715,72864
+(defun adoc-calc 1739,73793
+(define-derived-mode adoc-mode 1760,74537
+
+adoc-mode-test.el,34
+(defun adoctest-make-buffer 7,88

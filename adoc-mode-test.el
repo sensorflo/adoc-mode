@@ -98,6 +98,13 @@
    "open block line 1\nopen block line 2" nil "\n" nil
    "--" markup-meta-hide-face "\n" nil
    "\n" nil
+
+   "Lorem " nil "*" markup-meta-hide-face "ipsum" markup-strong-face "*" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "**" markup-meta-hide-face "ipsum" markup-strong-face "**" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "``" markup-replacement-face "ipsum" nil "''" markup-replacement-face " dolor\n" nil
+   "Lorem " nil "'" markup-meta-hide-face "ipsum" markup-emphasis-face "'" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "`" markup-replacement-face "ipsum" nil "'" markup-replacement-face " dolor\n" nil
+   "Lorem " nil "++" markup-meta-hide-face "ipsum" nil "++" markup-meta-hide-face " dolor\n" nil
    )
 
   (goto-char (point-min))
@@ -106,10 +113,12 @@
       (let* ((tmp (get-text-property (point) 'adoctest))
 	     (tmp2 (get-text-property (point) 'face)))
 	(when tmp
-	  (ert-should (equal tmp2 tmp))))
-      (if (< (point) (point-max))
-	  (forward-char 1)
-	(setq not-done nil)))))
+	  (if (listp tmp2)
+	      (ert-should (member tmp tmp2))
+	    (ert-should (equal tmp tmp2))))
+	(if (< (point) (point-max))
+	    (forward-char 1)
+	  (setq not-done nil))))))
 
 (ert-run-tests-interactively "^adoctest-")
 

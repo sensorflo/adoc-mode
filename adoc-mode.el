@@ -734,18 +734,20 @@ MUST-FREE-GROUPS a list of regexp group numbers which may not
 match text that has an adoc-reserved text-property with a non-nil
 value."
   (let ((found t) (prevented t) saved-point)
-    (while (and found prevented)
+    (while (and found prevented (<= (point) end) (not (eobp)))
       (setq saved-point (point))
       (setq found (re-search-forward regexp end t))
-      (setq prevented ; prevented is only meaningfull wenn found is non-nil
-	    (or (not found) ; the following is only needed when found
-		(some (lambda(x)
-			(and (match-beginning x)
-			     (text-property-not-all (match-beginning 1)
-						    (match-end 1)
-						    'adoc-reserved nil)))
-		      must-free-groups)))
-      (when (and found prevented)
+      ;; it is prevented if some/any of the must free groups contain text which
+      ;; has a non-nil adoc-reserved text property
+      (setq prevented 
+	    (and found
+		 (some (lambda(x)
+			 (and (match-beginning x)
+			      (text-property-not-all (match-beginning x)
+						     (match-end x)
+						     'adoc-reserved nil)))
+		       must-free-groups)))
+      (when (and found prevented (<= (point) end))
 	(goto-char (1+ saved-point))))
     (and found (not prevented))))
 
@@ -907,7 +909,7 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
    '(0 '(face nil font-lock-multiline t) t)
    '(1 '(face markup-meta-hide-face adoc-reserved t) t)
    (if (not inhibit-text-reserved)
-       `(2 '(face ,text-face adoc-reserved t) t)
+       `(2 '(face ,text-face face markup-verbatim-face adoc-reserved t) t)
      `(2 ,text-face t))
    '(3 '(face markup-meta-hide-face adoc-reserved t) t)))
 
@@ -946,37 +948,20 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
     ;; highlighers
     '(1 '(face adoc-monospace adoc-reserved t font-lock-multiline t))))
 
-(defmacro adoc-kw-quote (type ldel text-face &optional del-face rdel literal-p)
-  "Creates a keyword which highlights (un)constrained quotes.
+(defun adoc-kw-quote (type ldel text-face-spec &optional del-face rdel literal-p)
+  "Return a keyword which highlights (un)constrained quotes.
 When LITERAL-P is non-nil, the contained text is literal text."
-  `(list
-    ;; matcher function
-    (lambda (end)
-      (let ((found t) (prevented t) saved-point)
-        (while (and found prevented)
-          (setq saved-point (point))
-          (setq found
-                (re-search-forward ,(adoc-re-quote type ldel rdel) end t))
-          (setq prevented ; prevented is only meaningfull wenn found is non-nil
-                (or
-                 (not found) ; the following is only needed when found
-                 (and (match-beginning 1)
-                      (text-property-not-all (match-beginning 1) (match-end 1) 'adoc-reserved nil))
-                 (text-property-not-all (match-beginning 2) (match-end 2) 'adoc-reserved nil)
-                 (text-property-not-all (match-beginning 4) (match-end 4) 'adoc-reserved nil)))
-          (when (and found prevented)
-            (goto-char (+ saved-point 1))))
-        (and found (not prevented))))
-    ;; highlighers
-    ;; there two facespec for subexpression 3 (text), because text-face can evaluate to
-    ;; a facespec being a list
-    '(1 '(face adoc-delimiter adoc-reserved t) t t)                    ; attribute list
-    '(2 '(face ,(or del-face adoc-hide-delimiter) adoc-reserved t) t)  ; open del
-    '(3 ,text-face append)                                             ; text 1)
-    ,(if literal-p
-         '(list 3 ''(face nil adoc-reserved t))
-       '(list 3 nil))     
-    '(4 '(face ,(or del-face adoc-hide-delimiter) adoc-reserved t) t))); close del
+  (list
+   ;; matcher function
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-quote type ldel rdel) 1 2 4))
+   ;; highlighers
+   '(1 '(face markup-meta-face adoc-reserved t) t t)                    ; attribute list
+   `(2 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t)  ; open del
+   `(3 ,text-face-spec append)                                               ; text 
+   (if literal-p
+	`(3 '(face ,markup-verbatim-face adoc-reserved t) append)
+      '(3 nil)) ; grumbl, I dont know how to get rid of it
+   `(4 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t))); close del
 
 ;; bug: escapes are not handled yet
 ;; todo: give the inserted character a specific face. But I fear that is not
@@ -1163,7 +1148,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    (adoc-kw-delimited-block 3 markup-verbatim-face) ; literal
    (adoc-kw-delimited-block 4 nil t) ; quote    
    (adoc-kw-delimited-block 5 nil t) ; example  
-   (adoc-kw-delimited-block 6 adoc-secondary-text) ; sidebar
+   (adoc-kw-delimited-block 6 adoc-secondary-text t) ; sidebar
    (adoc-kw-delimited-block 7 nil t) ; open block
    (adoc-kw-delimtier-line-fallback)  
 
@@ -1263,31 +1248,41 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; todo. look in asciidoc source how exactly asciidoc does it
    ;; 1) BUG: actually only ifdef::no-inline-literal[]
    ;; 2) TODO: in asciidod.conf (but not yet here) also in inline macro section
-   (adoc-kw-quote adoc-constrained "`" adoc-monospace nil nil t)     ;1)
-   (adoc-kw-quote adoc-unconstrained "+++" adoc-monospace nil nil t) ;2)
-   (adoc-kw-quote adoc-unconstrained "$$" adoc-monospace nil nil t)  ;2)
+
+   ;; AsciiDoc Manual: constitutes an inline literal passthrough. The enclosed
+   ;; text is rendered in a monospaced font and is only subject to special
+   ;; character substitution.
+   (adoc-kw-quote 'adoc-constrained "`" markup-typewriter-face nil nil t)     ;1)
+   ;; AsciiDoc Manual: The triple-plus passthrough is functionally identical to
+   ;; the pass macro but you don’t have to escape ] characters and you can
+   ;; prefix with quoted attributes in the inline version
+   (adoc-kw-quote 'adoc-unconstrained "+++" markup-typewriter-face nil nil t) ;2)
+   ;;The double-dollar passthrough is functionally identical to the triple-plus
+   ;;passthrough with one exception: special characters are escaped.
+   (adoc-kw-quote 'adoc-unconstrained "$$" markup-typewriter-face nil nil t)  ;2)
 
    ;; special characters
    ;; ------------------
    ;; no highlighting for them
 
 
-   ;; quotes. unconstrained and constrained. order given by asciidoc.conf
+   ;; quotes: unconstrained and constrained
+   ;; order given by asciidoc.conf
    ;; ------------------------------
-   (adoc-kw-quote adoc-unconstrained "**" adoc-strong)
-   (adoc-kw-quote adoc-constrained "*" adoc-strong)
-   (adoc-kw-quote adoc-constrained "``" nil adoc-replacement "''")
-   (adoc-kw-quote adoc-constrained "'" adoc-emphasis)
-   (adoc-kw-quote adoc-constrained "`" nil adoc-replacement "'")
-   ;; `...` , +++...+++, $$...$$ are moved to passthrough stuff above
-   (adoc-kw-quote adoc-unconstrained "++" adoc-monospace)
-   (adoc-kw-quote adoc-constrained "+" adoc-monospace) 
-   (adoc-kw-quote adoc-unconstrained  "__" adoc-emphasis)
-   (adoc-kw-quote adoc-constrained "_" adoc-emphasis)
-   (adoc-kw-quote adoc-unconstrained "##" adoc-generic) ; unquoted
-   (adoc-kw-quote adoc-constrained "#" adoc-generic) ; unquoted
-   (adoc-kw-quote adoc-unconstrained "~" (adoc-facespec-subscript))
-   (adoc-kw-quote adoc-unconstrained"^" (adoc-facespec-superscript))
+   (adoc-kw-quote 'adoc-unconstrained "**" markup-strong-face)
+   (adoc-kw-quote 'adoc-constrained "*" markup-strong-face)
+   (adoc-kw-quote 'adoc-constrained "``" nil adoc-replacement "''") ; double quoted text
+   (adoc-kw-quote 'adoc-constrained "'" markup-emphasis-face)	   ; single quoted text
+   (adoc-kw-quote 'adoc-constrained "`" nil adoc-replacement "'")
+   ;; `...` , +++...+++, $$...$$ are within passthrough stuff above
+   (adoc-kw-quote 'adoc-unconstrained "++" markup-typewriter-face) ; AsciiDoc manual: really onl '..are rendered in a monospaced font.'
+   (adoc-kw-quote 'adoc-constrained "+" markup-typewriter-face) 
+   (adoc-kw-quote 'adoc-unconstrained  "__" markup-emphasis-face)
+   (adoc-kw-quote 'adoc-constrained "_" markup-emphasis-face)
+   (adoc-kw-quote 'adoc-unconstrained "##" markup-gen-face) ; unquoted text
+   (adoc-kw-quote 'adoc-constrained "#" markup-gen-face)    ; unquoted text
+   (adoc-kw-quote 'adoc-unconstrained "~" (adoc-facespec-subscript)) ; subscript
+   (adoc-kw-quote 'adoc-unconstrained "^" (adoc-facespec-superscript)) ; superscript
     
 
    ;; special words
