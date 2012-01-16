@@ -1014,6 +1014,26 @@ When LITERAL-P is non-nil, the contained text is literal text."
         '(1 '(face adoc-hide-delimiter adoc-reserved t) t)
       '(1 '(face adoc-replacement adoc-reserved t) t))))
 
+;; - To ensure that indented lines are nicely aligned. They only look aligned if
+;;   the whites at line beginning have a fixed with font.
+;; - Some faces have properties which are also visbile on whites
+;;   (underlines/backgroundcolor/...), for example links typically gave
+;;   underlines. If now a link in an indented paragraph (e.g. because its a list
+;;   item), spawns multiple lines, then without countermeasures the blanks at
+;;   line beginning would also be underlined, which looks akward.
+(defun adoc-flf-first-whites-fixed-width(end)
+  (and (re-search-forward "\\(^[ \t]+\\)" end t)
+       ;; dont replace adoc-monospace with adoc-orig-default because that is
+       ;; already a fixed with font, and the semantic context might expext
+       ;; that the blanks have equal widht as the context
+       (text-property-not-all (match-beginning 0) (match-end 0) 'face 'adoc-monospace)))
+
+;; See adoc-flf-first-whites-fixed-width
+(defun adoc-kw-first-whites-fixed-width ()
+  (list
+   'adoc-flf-first-whites-fixed-width
+   '(1 adoc-orig-default t)))
+
 (defun adoc-unfontify-region-function (beg end) 
   ;; 
   (font-lock-default-unfontify-region beg end)
@@ -1512,14 +1532,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(1 adoc-secondary-text t)) 
    (list "\\[[^]\n]*?\\(?:id\\)=\"\\([^\"\n]*?\\)\"[^]\n]*?\\]"
          '(1 adoc-anchor t)) 
-   ;; - If e.g. in a list item a reference/link continues over new line, then
-   ;; the following prevents the trailing whites from having underlines (that
-   ;; is adoc-reference face)
-   ;; - It also aligns better if the other text is variable pitch
-   ;; BUG: should not be applyied in literal paragraphs (because there typically
-   ;; the surrounding font has another pitch)
-   ;; (list "\\([ \t]*\n\\)" '(1 adoc-text t)) 
-   (list "\\(^[ \t]+\\)" '(1 adoc-align t)) 
+   (adoc-kw-first-whites-fixed-width)
 
    ;; -- warnings 
    ;; todo: add tooltip explaining what is the warning all about
