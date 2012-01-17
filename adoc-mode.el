@@ -125,7 +125,9 @@ This is a list of two floats. The first is negative and specifies
 how much subscript is lowered, the second is positive and
 specifies how much superscript is raised. Heights are measured
 relative to that of the normal text. The faces used are
-adoc-superscript and adoc-subscript respectively."
+adoc-superscript and adoc-subscript respectively.
+
+You need to call `adoc-calc' after a change."
   :type '(list (float :tag "Subscript")
                (float :tag "Superscript"))
   :group 'adoc)
@@ -752,10 +754,16 @@ value."
     (and found (not prevented))))
 
 (defun adoc-facespec-subscript ()
-  `(face adoc-subscript display (raise ,(nth 0 adoc-script-raise))))
+  (list 'quote
+	(append '(face markup-subscript-face)
+		(when (not (= 0 (car adoc-script-raise)))
+		  `(display (raise ,(car adoc-script-raise)))))))
 
 (defun adoc-facespec-superscript ()
-  `(face adoc-superscript display (raise ,(nth 1 adoc-script-raise))))
+  (list 'quote
+	(append '(face markup-superscript-face)
+		(when (not (= 0 (car adoc-script-raise)))
+		  `(display (raise ,(cadr adoc-script-raise)))))))
 
 ;; adoc-lexxer will set these faces when it finds a match. The numbers are the
 ;; regexp group numbers of the match.
@@ -1007,9 +1015,26 @@ When LITERAL-P is non-nil, the contained text is literal text."
       '(1 '(face adoc-replacement adoc-reserved t) t))))
 
 (defun adoc-unfontify-region-function (beg end) 
+  ;; 
+  (font-lock-default-unfontify-region beg end)
+  
+  ;; remove overlays. Currently only used by AsciiDoc replacements
+  ;; todo: this is an extremly brute force solution and interacts very badly
+  ;; with many (minor) modes using overlays such as flyspell or ediff
   (when adoc-insert-replacement
     (remove-overlays beg end))
-  (font-lock-default-unfontify-region beg end))
+
+  ;; text properties. Currently only display raise used for sub/superscripts.
+  ;; code snipped copied from tex-mode
+  (when (not (and (= 0 (car adoc-script-raise)) (= 0 (cadr adoc-script-raise))))
+    (while (< beg end)
+      (let ((next (next-single-property-change beg 'display nil end))
+	    (prop (get-text-property beg 'display)))
+	(if (and (eq (car-safe prop) 'raise)
+		 (member (car-safe (cdr prop)) adoc-script-raise)
+		 (null (cddr prop)))
+	    (put-text-property beg next 'display nil))
+	(setq beg next)))))
 
 (defun adoc-font-lock-mark-block-function ()
   (mark-paragraph 2)
@@ -1801,7 +1826,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
 	 (font-lock-multiline . t)
 	 (font-lock-mark-block-function . adoc-font-lock-mark-block-function)))
   (make-local-variable 'font-lock-extra-managed-props)
-  (setq font-lock-extra-managed-props (list 'display 'adoc-reserved))
+  (setq font-lock-extra-managed-props '(adoc-reserved))
   (make-local-variable 'font-lock-unfontify-region-function)
   (setq font-lock-unfontify-region-function 'adoc-unfontify-region-function)
   
