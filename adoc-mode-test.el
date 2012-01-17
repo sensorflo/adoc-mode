@@ -99,12 +99,24 @@
    "--" markup-meta-hide-face "\n" nil
    "\n" nil
 
+   ;; note that in unconstraned quotes cases " ipsum " has spaces around, in
+   ;; constrained quotes case it doesn't
+   "Lorem " nil "`" markup-meta-hide-face "ipsum" '(markup-typewriter-face markup-verbatim-face) "`" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "+++" markup-meta-hide-face " ipsum " '(markup-typewriter-face markup-verbatim-face) "+++" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "$$" markup-meta-hide-face " ipsum " '(markup-typewriter-face markup-verbatim-face) "$$" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "**" markup-meta-hide-face " ipsum " markup-strong-face "**" markup-meta-hide-face " dolor\n" nil
    "Lorem " nil "*" markup-meta-hide-face "ipsum" markup-strong-face "*" markup-meta-hide-face " dolor\n" nil
-   "Lorem " nil "**" markup-meta-hide-face "ipsum" markup-strong-face "**" markup-meta-hide-face " dolor\n" nil
    "Lorem " nil "``" markup-replacement-face "ipsum" nil "''" markup-replacement-face " dolor\n" nil
    "Lorem " nil "'" markup-meta-hide-face "ipsum" markup-emphasis-face "'" markup-meta-hide-face " dolor\n" nil
    "Lorem " nil "`" markup-replacement-face "ipsum" nil "'" markup-replacement-face " dolor\n" nil
-   "Lorem " nil "++" markup-meta-hide-face "ipsum" nil "++" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "++" markup-meta-hide-face " ipsum " markup-typewriter-face "++" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "+" markup-meta-hide-face "ipsum" markup-typewriter-face "+" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "__" markup-meta-hide-face " ipsum " markup-emphasis-face "__" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "_" markup-meta-hide-face "ipsum" markup-emphasis-face "_" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "##" markup-meta-hide-face " ipsum " markup-gen-face "##" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "#" markup-meta-hide-face "ipsum" markup-gen-face "#" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "~" markup-meta-hide-face " ipsum " markup-subscript-face "~" markup-meta-hide-face " dolor\n" nil
+   "Lorem " nil "^" markup-meta-hide-face " ipsum " markup-superscript-face "^" markup-meta-hide-face " dolor\n" nil
    )
 
   (goto-char (point-min))
@@ -113,8 +125,8 @@
       (let* ((tmp (get-text-property (point) 'adoctest))
 	     (tmp2 (get-text-property (point) 'face)))
 	(when tmp
-	  (if (listp tmp2)
-	      (ert-should (member tmp tmp2))
+	  (if (and (listp tmp2) (not (listp tmp)))
+	      (ert-should (and (= 1 (length tmp2)) (equal tmp (car tmp2))))
 	    (ert-should (equal tmp tmp2))))
 	(if (< (point) (point-max))
 	    (forward-char 1)
