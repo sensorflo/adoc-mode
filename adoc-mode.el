@@ -623,7 +623,7 @@ NOT-ALLOWED-CHARS are chars not allowed before the quote."
 ;; # Non-word (\W) characters are allowed at boundaries to accommodate
 ;; # enveloping quotes.
 ;;
-;; reo = re.compile(r'(?msu)(^|[^\w;:])(\[(?P<attrlist>[^[\]]+?)\])?' \
+;; reo = re.compile(r'(?msu)(^|[^\w;:}])(\[(?P<attrlist>[^[\]]+?)\])?' \
 ;;     + r'(?:' + re.escape(lq) + r')' \
 ;;     + r'(?P<content>\S|\S.*?\S)(?:'+re.escape(rq)+r')(?=\W|$)')
 (defun adoc-re-constrained-quote (ldel &optional rdel)
@@ -639,7 +639,7 @@ subgroups:
     (concat
      ;; added &<> because those are special chars which are substituted by a
      ;; entity, which ends in ;, which is prohibited in the ascidoc.conf regexp
-     (adoc-re-quote-precondition "A-Za-z0-9;:&<>")  
+     (adoc-re-quote-precondition "A-Za-z0-9;:}&<>")  
      "\\(\\[[^][]+?\\]\\)?"
      "\\(" qldel "\\)"
      "\\([^ \t\n]\\|[^ \t\n].*?\\(?:\n.*?\\)\\{,1\\}?[^ \t\n]\\)"
