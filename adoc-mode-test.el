@@ -77,22 +77,25 @@
 
 (ert-deftest adoctest-test-delimited-blocks-simple ()
   (adoctest-faces
+
+   ;; note that the leading spaces are NOT allowed to have adoc-align face
    "////////" markup-meta-hide-face "\n" nil
-   "comment line 1\ncomment line 2" markup-comment-face "\n" nil
+   " comment line 1\n comment line 2" markup-comment-face "\n" nil
    "////////" markup-meta-hide-face "\n" nil
    "\n" nil
    "++++++++" markup-meta-hide-face "\n" nil
-   "passthrouh line 1\npassthrouh line 2" markup-passthrough-face "\n" nil
+   " passthrouh line 1\n passthrouh line 2" markup-passthrough-face "\n" nil
    "++++++++" markup-meta-hide-face "\n" nil
    "\n" nil
    "--------" markup-meta-hide-face "\n" nil
-   "listing line 1\nlisting line 2" markup-code-face "\n" nil
+   " listing line 1\n listing line 2" markup-code-face "\n" nil
    "--------" markup-meta-hide-face "\n" nil
    "\n" nil
    "........" markup-meta-hide-face "\n" nil
-   "literal line 1\nliteral line 2" markup-verbatim-face "\n" nil
+   " literal line 1\n literal line 2" markup-verbatim-face "\n" nil
    "........" markup-meta-hide-face "\n" nil
    "\n" nil
+
    "________" markup-meta-hide-face "\n" nil
    "quote line 1\nquote line 2" nil "\n" nil
    "________" markup-meta-hide-face "\n" nil
