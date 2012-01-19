@@ -760,79 +760,6 @@ value."
 		(when (not (= 0 (car adoc-script-raise)))
 		  `(display (raise ,(cadr adoc-script-raise)))))))
 
-;; adoc-lexxer will set these faces when it finds a match. The numbers are the
-;; regexp group numbers of the match.
-(defvar adoc-lex-face-1 adoc-align)
-(defvar adoc-lex-face-2 adoc-align)
-(defvar adoc-lex-face-3 adoc-align)
-(defvar adoc-lex-face-4 adoc-align)
-(defvar adoc-lex-face-5 adoc-align)
-(defvar adoc-lex-face-6 adoc-align)
-
-(defvar adoc-lexems `(
-  ;; the order of lexems is given by AsciiDoc, see source code Lex.next
-  ;; 
-  ;; attribute entry
-  ;; attribute list
-  ;; title
-  ;;   single line
-  ,(list (adoc-re-one-line-title 0) adoc-hide-delimiter markup-title-0-face adoc-hide-delimiter)
-  ,(list (adoc-re-one-line-title 1) adoc-hide-delimiter markup-title-1-face adoc-hide-delimiter)
-  ,(list (adoc-re-one-line-title 2) adoc-hide-delimiter markup-title-2-face adoc-hide-delimiter)
-  ,(list (adoc-re-one-line-title 3) adoc-hide-delimiter markup-title-3-face adoc-hide-delimiter)
-  ,(list (adoc-re-one-line-title 4) adoc-hide-delimiter markup-title-4-face adoc-hide-delimiter)
-  ;;   double line
-  ,(list (adoc-re-two-line-title (nth 0 adoc-two-line-title-del)) markup-title-0-face adoc-hide-delimiter)
-  ,(list (adoc-re-two-line-title (nth 1 adoc-two-line-title-del)) markup-title-1-face adoc-hide-delimiter)
-  ,(list (adoc-re-two-line-title (nth 2 adoc-two-line-title-del)) markup-title-2-face adoc-hide-delimiter)
-  ,(list (adoc-re-two-line-title (nth 3 adoc-two-line-title-del)) markup-title-3-face adoc-hide-delimiter)
-  ,(list (adoc-re-two-line-title (nth 4 adoc-two-line-title-del)) markup-title-4-face adoc-hide-delimiter)
-  ;; macros
-  ;; lists
-  ;; blocks
-  ,(list (adoc-re-delimited-block 0) adoc-delimiter adoc-hide-delimiter adoc-comment adoc-delimiter adoc-hide-delimiter) ; comment
-  ,(list (adoc-re-delimited-block 1) adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; pass through
-  ,(list (adoc-re-delimited-block 2) adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; listing
-  ,(list (adoc-re-delimited-block 3) adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; literal
-  ,(list (adoc-re-delimited-block 6) adoc-delimiter adoc-hide-delimiter adoc-secondary-text adoc-delimiter adoc-hide-delimiter) ; sidebar
-  ,(list (adoc-re-delimited-block 4) adoc-delimiter adoc-hide-delimiter adoc-generic adoc-delimiter adoc-hide-delimiter) ; quote
-  ,(list (adoc-re-delimited-block 5) adoc-delimiter adoc-hide-delimiter adoc-monospace adoc-delimiter adoc-hide-delimiter) ; example
-  ((nth 7 adoc-delimited-block-del) adoc-delimiter)             ; open block
-  ;; tables OLD
-  ;; tables 
-  ;; block title
-  (list "^\\(\\.\\)\\(\\.?[^. \t\n].*\\)$" adoc-delimiter adoc-generic)
-  ;; paragraph
-  ))
-
-;; Todo:
-;; - 'compile' adoc-lexems. So the concat "\\=" below and the evals doesn't have
-;;   to be done all the time.
-;; 
-;; - instead of setting a face variable, do it more general
-;;   (1 '(face face-1 prop-11 prop-val11 prop-12 prop-val12) override-1 laxmatch-1)
-;;   (2 '(face face-2 prop-21 prop-val21 prop-22 prop-val22) override-2 laxmatch-2)
-;;   ...
-(defun adoc-lexxer (end)
-  (let* (item
-         found)
-    (while (and (< (point) end) (not found))
-      (setq item adoc-lexems)
-      (while (and item (not found))
-        (setq found (re-search-forward (concat "\\=" (nth 0 (car item))) end t))
-        (when found
-          (setq adoc-lex-face-1 (eval (nth 1 (car item))))
-          (setq adoc-lex-face-2 (eval (nth 2 (car item))))
-          (setq adoc-lex-face-3 (eval (nth 3 (car item))))
-          (setq adoc-lex-face-4 (eval (nth 4 (car item))))
-          (setq adoc-lex-face-5 (eval (nth 5 (car item))))
-          (setq adoc-lex-face-6 (eval (nth 6 (car item))))
-          )
-        (setq item (cdr item)))
-      (when (not found)
-        (forward-line 1)))
-    found))
-
 ;; todo: use & learn some more macro magic so adoc-kw-unconstrained-quote and
 ;; adoc-kw-constrained-quote are less redundant and have common parts in one
 ;; macro. E.g. at least such 'lists'
@@ -1059,8 +986,6 @@ When LITERAL-P is non-nil, the contained text is literal text."
 (defun adoc-get-font-lock-keywords ()
   (list
    
-   ;; (list 'adoc-lexxer '(1 adoc-lex-face-1 t t) '(2 adoc-lex-face-2 t t) '(3 adoc-lex-face-3 t t) '(4 adoc-lex-face-4 t t) '(5 adoc-lex-face-5 t t) '(6 adoc-lex-face-6 t t))
-
    ;; Asciidoc BUG: Lex.next has a different order than the following extract
    ;; from the documentation states.
    ;;
