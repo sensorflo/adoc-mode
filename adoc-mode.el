@@ -125,7 +125,7 @@ This is a list of two floats. The first is negative and specifies
 how much subscript is lowered, the second is positive and
 specifies how much superscript is raised. Heights are measured
 relative to that of the normal text. The faces used are
-adoc-superscript and adoc-subscript respectively.
+markup-superscript-face and markup-subscript-face respectively.
 
 You need to call `adoc-calc' after a change."
   :type '(list (float :tag "Subscript")
@@ -316,10 +316,6 @@ aligned.
 (defvar adoc-align 'adoc-align)
 (defvar adoc-generic 'markup-gen-face)
 (defvar adoc-monospace 'markup-typewriter-face)
-(defvar adoc-strong 'markup-strong-face)
-(defvar adoc-emphasis 'markup-emphasis-face)
-(defvar adoc-superscript 'markup-superscript-face)
-(defvar adoc-subscript 'markup-subscript-face)
 (defvar adoc-replacement 'markup-replacement-face)
 (defvar adoc-complex-replacement 'markup-complex-replacement-face)
 (defvar adoc-table-del 'markup-table-face)
