@@ -1288,7 +1288,8 @@ When LITERAL-P is non-nil, the contained text is literal text."
 
    ;; special characters
    ;; ------------------
-   ;; no highlighting for them
+   ;; no highlighting for them, since they are a property of the backend markup,
+   ;; not of AsciiDoc syntax
 
 
    ;; quotes: unconstrained and constrained
