@@ -322,7 +322,6 @@ aligned.
 (defvar adoc-subscript 'markup-subscript-face)
 (defvar adoc-replacement 'markup-replacement-face)
 (defvar adoc-complex-replacement 'markup-complex-replacement-face)
-(defvar adoc-list-item 'markup-list-face)
 (defvar adoc-table-del 'markup-table-face)
 (defvar adoc-reference 'markup-reference-face)
 (defvar adoc-secondary-text 'markup-secondary-text-face)
@@ -438,7 +437,7 @@ match-data has his this sub groups:
 match-data his this sub groups:
 1 leading whites
 2 delimiter
-3 trailing white between delimiter and item's text
+3 trailing whites between delimiter and item's text
 0 only chars belonging to delimiter/whites. I.e. none of text.
 
 WARNING: See warning about list item nesting level in `adoc-list-descriptor'."
@@ -455,7 +454,7 @@ WARNING: See warning about list item nesting level in `adoc-list-descriptor'."
       (let ((r (cond ((numberp level) (if (eq level 0) "-" (make-string level ?\*)))
                      ((or (null level) (eq level 'adoc-all-levels)) "-\\|\\*\\{1,5\\}")
                      (t (error "adoc-unordered/adoc-normal: invalid level")))))
-        (concat "^\\([ \t]*\\)\\(" r  "\\)\\([ \t]\\)")))
+        (concat "^\\([ \t]*\\)\\(" r "\\)\\([ \t]+\\)")))
      ((and (eq sub-type 'adoc-bibliography) (null level))
       "^\\(\\)\\(\\+\\)\\([ \t]+\\)")
      (t (error "adoc-unordered: invalid sub-type/level combination"))))
@@ -471,7 +470,7 @@ WARNING: See warning about list item nesting level in `adoc-list-descriptor'."
            (r (cond ((numberp sub-type) (nth sub-type l))
                     ((or (null sub-type) (eq sub-type 'adoc-all-subtypes)) (mapconcat 'identity l "\\|"))
                     (t (error "adoc-explicitly-numbered: invalid subtype")))))
-      (concat "^\\([ \t]*\\)\\(" r "\\)\\([ \t]\\)")))
+      (concat "^\\([ \t]*\\)\\(" r "\\)\\([ \t]+\\)")))
 
    ;;   ^\s*\. +(?P<text>.+)$                    normal 0
    ;;   ^\s*\.{2} +(?P<text>.+)$                 normal 1
@@ -480,12 +479,12 @@ WARNING: See warning about list item nesting level in `adoc-list-descriptor'."
     (let ((r (cond ((numberp level) (number-to-string (+ level 1)))
                    ((or (null level) (eq level 'adoc-all-levels)) "1,5")
                    (t (error "adoc-implicitly-numbered: invalid level")))))
-      (concat "^\\([ \t]*\\)\\(\\.\\{" r "\\}\\)\\([ \t]\\)")))
+      (concat "^\\([ \t]*\\)\\(\\.\\{" r "\\}\\)\\([ \t]+\\)")))
 
    ;;   ^<?(?P<index>\d*>) +(?P<text>.+)$        callout
    ((eq type 'adoc-callout)
     (when (or level sub-type) (error "adoc-callout invalid level/sub-type"))
-    "^\\(\\)\\(<?[0-9]*>\\)\\([ t]+\\)")
+    "^\\(\\)\\(<?[0-9]*>\\)\\([ \t]+\\)")
 
    ;; invalid
    (t (error "invalid (un)ordered list type"))))
@@ -513,14 +512,14 @@ Subgroups:
 1 leading blanks
 2 label text
 3 delimiter
-4 white between delimiter and paragraph-text
+4 whites between delimiter and paragraph-text
 0 no"
   (cond
    ((eq type 'adoc-labeled-normal)
     (let* ((deluq (nth level '("::" ";;" ":::" "::::"))) ; unqutoed
            (del (regexp-quote deluq))
            (del1st (substring deluq 0 1)))
-      (concat "^\\([ \t]*\\)\\(.*[^" del1st "\n]\\)\\(" del "\\)\\([ \t]+\\|[ \t]*$\\)")))
+      (concat "^\\([ \t]*\\)\\(.*[^" del1st "\n]\\)\\(" del "\\)\\([ \t]+\\|$\\)")))
    ((eq type 'adoc-labeled-qanda)
     "^\\([ \t]*\\)\\(.*[^ \t\n]\\)\\(\\?\\?\\)\\(\\)$")
    ((eq type 'adoc-labeled-glossary)
@@ -882,33 +881,31 @@ value."
    `(1 ,text-face t)
    `(2 '(face markup-meta-hide-face adoc-reserved t) t)))
 
-(defmacro adoc-kw-oulisti (type &optional level sub-type)
-  "Creates a keyword for font-lock which highlights both (un)ordered list elements.
+(defun adoc-kw-oulisti (type &optional level sub-type)
+  "Creates a keyword for font-lock which highlights both (un)ordered list item.
 Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-oulisti'"
-  `(list
-    ;; matcher function
-    (lambda (end)
-      (and (re-search-forward ,(adoc-re-oulisti type level sub-type) end t)
-           (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
-    ;; highlighers
-    '(0 '(face nil adoc-reserved t) t)
-    '(1 adoc-align t)
-    '(2 adoc-list-item t) 
-    '(3 adoc-align t)))
+  (list
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-oulisti type level sub-type) 0))
+   '(0 '(face nil adoc-reserved t) t)
+   '(2 markup-list-face t) 
+   '(3 adoc-align t)))
 
-(defmacro adoc-kw-llisti (sub-type &optional level)
-  "Creates a keyword for font-lock which highlights labeled list elements.
+(defun adoc-kw-llisti (sub-type &optional level)
+  "Creates a keyword for font-lock which highlights labeled list item.
 Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
-  `(list
-    ;; matcher function
-    (lambda (end)
-      (and (re-search-forward ,(adoc-re-llisti sub-type level) end t)
-           (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
-    ;; highlighers
-    '(1 adoc-align t)
-    '(2 adoc-generic t)
-    '(3 '(face adoc-list-item adoc-reserved t) t) 
-    '(4 adoc-align t)))
+  (list
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-llisti sub-type level) 0))
+   '(1 '(face nil adoc-reserved t) t)
+   '(2 markup-gen-face t)
+   '(3 '(face markup-list-face adoc-reserved t) t) 
+   '(4 '(face adoc-align adoc-reserved t) t)))
+
+(defun adoc-kw-list-continuation ()
+  (list 
+   ;; see also regexp of forced line break, which is similar. it is not directly
+   ;; obvious from asciidoc sourcecode what the exact rules are.
+   '(lambda (end) (adoc-kwf-std end "^\\(\\+\\)[ \t]*$" 1))
+   '(1 '(face markup-meta-face adoc-reserved t) t))) 
 
 (defun adoc-kw-delimited-block (del &optional text-face inhibit-text-reserved)
   "Creates a keyword for font-lock which highlights a delimited block."
@@ -1022,17 +1019,20 @@ When LITERAL-P is non-nil, the contained text is literal text."
 ;;   item), spawns multiple lines, then without countermeasures the blanks at
 ;;   line beginning would also be underlined, which looks akward.
 (defun adoc-flf-first-whites-fixed-width(end)
-  (and (re-search-forward "\\(^[ \t]+\\)" end t)
-       ;; dont replace adoc-monospace with adoc-orig-default because that is
-       ;; already a fixed with font, and the semantic context might expext
-       ;; that the blanks have equal widht as the context
-       (text-property-not-all (match-beginning 0) (match-end 0) 'face 'adoc-monospace)))
+  ;; it makes no sense to do something with a blank line, so require at least one non blank char. 
+  (and (re-search-forward "\\(^[ \t]+\\)[^ \t\n]" end t)
+       ;; dont replace a face with with adoc-align which already is a fixed with
+       ;; font (most probably), because then it also won't look aligned
+       (text-property-not-all (match-beginning 1) (match-end 1) 'face 'markup-typewriter-face)
+       (text-property-not-all (match-beginning 1) (match-end 1) 'face 'markup-code-face)
+       (text-property-not-all (match-beginning 1) (match-end 1) 'face 'markup-passthrough-face)
+       (text-property-not-all (match-beginning 1) (match-end 1) 'face 'markup-comment-face)))
 
 ;; See adoc-flf-first-whites-fixed-width
 (defun adoc-kw-first-whites-fixed-width ()
   (list
    'adoc-flf-first-whites-fixed-width
-   '(1 adoc-orig-default t)))
+   '(1 adoc-align t)))
 
 (defun adoc-unfontify-region-function (beg end) 
   ;; 
@@ -1171,19 +1171,18 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;;
    ;; bug: the text of labelleled items gets inline macros such as anchor not
    ;; highlighted. See for example [[X80]] in asciidoc manual source.
-   (adoc-kw-oulisti adoc-unordered adoc-all-levels) 
-   (adoc-kw-oulisti adoc-unordered nil adoc-bibliography) 
-   (adoc-kw-oulisti adoc-explicitly-numbered ) 
-   (adoc-kw-oulisti adoc-implicitly-numbered adoc-all-levels) 
-   (adoc-kw-oulisti adoc-callout) 
-   (adoc-kw-llisti adoc-labeled-normal 0) 
-   (adoc-kw-llisti adoc-labeled-normal 1) 
-   (adoc-kw-llisti adoc-labeled-normal 2) 
-   (adoc-kw-llisti adoc-labeled-normal 3) 
-   (adoc-kw-llisti adoc-labeled-qanda) 
-   (adoc-kw-llisti adoc-labeled-glossary) 
-
-   (list "^\\(\\+\\)[ \t]*$" '(1 adoc-delimiter))
+   (adoc-kw-oulisti 'adoc-unordered 'adoc-all-levels) 
+   (adoc-kw-oulisti 'adoc-unordered nil 'adoc-bibliography) 
+   (adoc-kw-oulisti 'adoc-explicitly-numbered ) 
+   (adoc-kw-oulisti 'adoc-implicitly-numbered 'adoc-all-levels) 
+   (adoc-kw-oulisti 'adoc-callout) 
+   (adoc-kw-llisti 'adoc-labeled-normal 0) 
+   (adoc-kw-llisti 'adoc-labeled-normal 1) 
+   (adoc-kw-llisti 'adoc-labeled-normal 2) 
+   (adoc-kw-llisti 'adoc-labeled-normal 3) 
+   (adoc-kw-llisti 'adoc-labeled-qanda) 
+   (adoc-kw-llisti 'adoc-labeled-glossary) 
+   (adoc-kw-list-continuation) 
 
    ;; Delimited blocks
    ;; ------------------------------
