@@ -957,6 +957,29 @@ When LITERAL-P is non-nil, the contained text is literal text."
    'adoc-flf-first-whites-fixed-width
    '(1 adoc-align t)))
 
+;; ensures that faces from the markup-text group don't overwrite faces from the
+;; markup-meta group
+(defun adoc-flf-meta-face-cleanup (end)
+  (while (< (point) end)
+    (let* ((next-pos (next-single-property-change (point) 'face nil end))
+	   (faces-raw (get-text-property (point) 'face))
+	   (faces (if (listp faces-raw) faces-raw (list faces-raw)))
+	   newfaces
+	   meta-p)
+      (while faces
+	(if (member (car faces) '(markup-meta-hide-face markup-command-face markup-attribute-face markup-value-face markup-complex-replacement-face markup-list-face markup-table-face markup-table-row-face markup-table-cell-face markup-anchor-face markup-internal-reference-face markup-comment-face markup-preprocessor-face))
+	    (progn
+	      (setq meta-p t)
+	      (setq newfaces (cons (car faces) newfaces)))
+	  (if (not (string-match "markup-" (symbol-name (car faces))))
+	      (setq newfaces (cons (car faces) newfaces))))
+	(setq faces (cdr faces)))
+      (if meta-p
+	  (put-text-property (point) next-pos 'face
+			     (if (= 1 (length newfaces)) (car newfaces) newfaces)))
+      (goto-char next-pos)))
+  nil)
+
 (defun adoc-unfontify-region-function (beg end) 
   ;; 
   (font-lock-default-unfontify-region beg end)
@@ -1462,6 +1485,9 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; wanted to add a normal paragraph. List paragraphs are appended
    ;; implicitely.
    (list "^\\(\\+[ \t]*\\)\n\\([ \t]+\\)[^ \t\n]" '(1 adoc-warning t) '(2 adoc-warning t)) 
+
+   ;; cleanup
+   (list 'adoc-flf-meta-face-cleanup)
    ))
 
 (defun adoc-show-version ()

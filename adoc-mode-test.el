@@ -168,4 +168,21 @@
    "+" markup-meta-face "\n" nil
    "2nd list paragraph\n" nil ))
 
+(ert-deftest adoctest-test-meta-face-cleanup ()
+  ;; begin with a few simple explicit cases which are easier to debug in case of troubles
+  (adoctest-faces
+    "*" markup-meta-hide-face "lorem " markup-strong-face
+        "_" markup-meta-hide-face "ipsum" '(markup-strong-face markup-emphasis-face) "_" markup-meta-hide-face
+    " dolor" markup-strong-face "*" markup-meta-hide-face "\n" nil)
+  (adoctest-faces
+    "_" markup-meta-hide-face "lorem " markup-emphasis-face
+        "*" markup-meta-hide-face "ipsum" '(markup-strong-face markup-emphasis-face) "*" markup-meta-hide-face
+    " dolor" markup-emphasis-face "_" markup-meta-hide-face "\n" nil)
+
+  ;; now test all possible cases
+  ;; mmm, that is all possible cases inbetween constrained/unconstrained quotes
+
+  ;; .... todo
+  )
+
 (ert-run-tests-interactively "^adoctest-test-")
