@@ -197,6 +197,32 @@
   ;; .... todo
   )
 
+;; inline substitutions only within the block they belong to. I.e. don't cross
+;; block boundaries.
+(ert-deftest adoctest-test-inline-subst-boundaries ()
+  (adoctest-faces "inline-subst-boundaries"
+
+   "== " markup-meta-hide-face "chapter ** 1" markup-title-1-face "\n" nil
+   "lorem ** ipsum\n" 'no-face
+   "\n" nil
+
+   "== " markup-meta-hide-face "chapter ** 1" markup-title-1-face " ==" markup-meta-hide-face "\n" nil
+   "lorem ** ipsum\n" 'no-face
+   "\n" nil
+
+   ;; "chapter ** 1" markup-title-1-face "\n" nil
+   ;; "------------" markup-meta-hide-face "\n" nil
+   ;; "lorem ** ipsum\n" 'no-face
+   ;; "\n" nil
+
+
+  ;; test also
+  ;; - over beginning of labeled
+  ;; - over end of block title
+  ;; - over beginning of two line title
+  ;; - over end of one line title
+  ))
+
 ;; todo: also test for warnings
 (ert-deftest adoctest-test-byte-compile ()
   (ert-should (byte-compile-file (locate-library "adoc-mode.el" t))))
@@ -204,7 +230,7 @@
 (defun adoc-test-run()
   (interactive)
   (save-buffer "adoc-mode.el")
-  (load-library "adoc-mode")
+  (load "adoc-mode.el" nil nil t) ; really .el, not .elc
   (save-buffer "adoc-mode-test.el")
   (load-library "adoc-mode-test")
   (ert-run-tests-interactively "^adoctest-test-"))

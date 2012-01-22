@@ -377,17 +377,22 @@ To become a customizable variable when regexps for list items become customizabl
 When LEVEL is nil, a one line title of any level is matched.
 
 match-data has this sub groups:
-1 leading delimiter inclusive whites
+1 leading delimiter inclusive whites between delimiter and title text
 2 title's text exclusive leading/trailing whites
-3 trailing delimiter inclusive whites
-0 only chars that belong to the title block element"
+3 trailing delimiter with all whites 
+4 trailing delimiter only inclusive whites between title text and delimiter
+0 only chars that belong to the title block element
+
+== my title ==  n
+--12------23----
+             4-4"
   (let* ((del (if level
                  (make-string (+ level 1) ?=)
                (concat "=\\{1," (+ adoc-title-max-level 1) "\\}"))))
     (concat
-     "^\\("  del "[ \t]+\\)"
-     "\\([^ \t\n].*?\\)"
-     "\\(\\(?:[ \t]+" del "\\)?\\)[ \t]*$")))
+     "^\\("  del "[ \t]+\\)"		      ; 1
+     "\\([^ \t\n].*?\\)"		      ; 2
+     "\\(\\([ \t]+" del "\\)?[ \t]*\n\\)" ))) ; 3 & 4
 
 (defun adoc-make-one-line-title (sub-type level text)
   "Returns a one line title of LEVEL and SUB-TYPE containing the given text."
@@ -497,30 +502,46 @@ WARNING: See warning about list item nesting level in `adoc-list-descriptor'."
         (concat white-1st del " ")
       white-rest)))
 
-;; ^\s*(?P<label>.*[^:])::(\s+(?P<text>.+))?$    normal 0
-;; ^\s*(?P<label>.*[^;]);;(\s+(?P<text>.+))?$    normal 1
-;; ^\s*(?P<label>.*[^:]):{3}(\s+(?P<text>.+))?$  normal 2
-;; ^\s*(?P<label>.*[^:]):{4}(\s+(?P<text>.+))?$  normal 3
-;; ^\s*(?P<label>.*\S)\?\?$                      qanda (DEPRECATED)
-;; ^(?P<label>.*\S):-$                           glossary (DEPRECATED)
 (defun adoc-re-llisti (type level)
   "Returns a regexp matching a labeled list item.
 Subgroups:
 1 leading blanks
-2 label text
-3 delimiter
-4 whites between delimiter and paragraph-text
-0 no"
+2 label text, incl whites before delimiter
+3 delimiter incl trailing whites
+4 delimiter only
+
+  foo :: bar
+-12--23-3
+      44"
   (cond
+   ;; ^\s*(?P<label>.*[^:])::(\s+(?P<text>.+))?$    normal 0
+   ;; ^\s*(?P<label>.*[^;]);;(\s+(?P<text>.+))?$    normal 1
+   ;; ^\s*(?P<label>.*[^:]):{3}(\s+(?P<text>.+))?$  normal 2
+   ;; ^\s*(?P<label>.*[^:]):{4}(\s+(?P<text>.+))?$  normal 3
    ((eq type 'adoc-labeled-normal)
     (let* ((deluq (nth level '("::" ";;" ":::" "::::"))) ; unqutoed
            (del (regexp-quote deluq))
            (del1st (substring deluq 0 1)))
-      (concat "^\\([ \t]*\\)\\(.*[^" del1st "\n]\\)\\(" del "\\)\\([ \t]+\\|$\\)")))
+      (concat
+       "^\\([ \t]*\\)"			; 1
+       "\\(.*[^" del1st "\n]\\)"	; 2
+       "\\(\\(" del "\\)\\(?:[ \t]+\\|$\\)\\)"))) ; 3 & 4
+
+   ;; glossary (DEPRECATED)
+   ;; ^(?P<label>.*\S):-$                        
    ((eq type 'adoc-labeled-qanda)
-    "^\\([ \t]*\\)\\(.*[^ \t\n]\\)\\(\\?\\?\\)\\(\\)$")
+    (concat
+     "^\\([ \t]*\\)"			; 1
+     "\\(.*[^ \t\n]\\)"			; 2
+     "\\(\\(\\?\\?\\)\\)$"))		; 3 & 4
+
+   ;; qanda (DEPRECATED)
+   ;; ^\s*(?P<label>.*\S)\?\?$                      
    ((eq type 'adoc-labeled-glossary)
-    "^\\(\\)\\(.*[^ \t\n]\\)\\(:-\\)\\(\\)$")
+    (concat
+     "^\\(\\)"				; 1
+     "\\(.*[^ \t\n]\\)"			; 2
+     "\\(\\(:-\\)\\)$"))		; 3 & 4
    (t (error "Unknown type/level"))))
 
 (defun adoc-re-delimited-block-line ()
@@ -723,7 +744,7 @@ subgroups:
          (style "[demshalv]"))
     (concat "\\(?:" fullspan "\\)?\\(?:" align "\\)?\\(?:" style "\\)?")))
 
-(defun adoc-kwf-std (end regexp &rest must-free-groups)
+(defun adoc-kwf-std (end regexp &optional must-free-groups no-block-del-groups)
   "Standart function for keywords
 
 Intendent to be called from font lock keyword functions. END is
@@ -735,19 +756,65 @@ value."
     (while (and found prevented (<= (point) end) (not (eobp)))
       (setq saved-point (point))
       (setq found (re-search-forward regexp end t))
-      ;; it is prevented if some/any of the must free groups contain text which
-      ;; has a non-nil adoc-reserved text property
       (setq prevented 
 	    (and found
-		 (some (lambda(x)
-			 (and (match-beginning x)
-			      (text-property-not-all (match-beginning x)
-						     (match-end x)
-						     'adoc-reserved nil)))
-		       must-free-groups)))
+		 (or
+		  (some (lambda(x)
+			  (and (match-beginning x)
+			       (text-property-not-all (match-beginning x)
+						      (match-end x)
+						      'adoc-reserved nil)))
+			must-free-groups)
+		  (some (lambda(x)
+			  (and (match-beginning x))
+			  (text-property-any (match-beginning x)
+					     (match-end x)
+					     'adoc-reserved 'block-del))
+			no-block-del-groups))))
       (when (and found prevented (<= (point) end))
 	(goto-char (1+ saved-point))))
     (and found (not prevented))))
+
+;; (defun adoc-kwf-std (end regexp &rest must-free-groups)
+;;   "adoc's standart matcher function for keywords.
+
+;; Intendent to be called from font lock keyword functions. END is
+;; the limit of the search. REXEXP the regexp to be searched.
+;; MUST-FREE-GROUPS a list of regexp group numbers which may not
+;; match text that has an adoc-reserved text-property with a non-nil
+;; value."
+;;   (let ((found t) (prevented t) ; start value's are semantically not true, but make the loop condition simpler
+;; 	saved-point
+;; 	(continue t)
+;; 	(end2 end))
+;;     (while continue
+;;       (when (eq (get-text-property (point) 'adoc-reserved) 'block-del)
+;; 	(goto-char (next-single-property-change (point) 'adoc-reserved nil end)))
+;;       (setq end2 (min (if (eq (get-text-property end 'adoc-reserved) 'block-del)
+;; 			  (1+ (previous-single-property-change (point) 'adoc-reserved nil end))
+;; 			end)
+;; 		      (text-property-any (point) end 'adoc-reserved 'block-del)))
+;;       (setq saved-point (point))
+;;       (setq found (and (> end2 (point))
+;; 		       (re-search-forward regexp end2 t)))
+
+;;       ;; it is prevented if some/any of the must free groups contain text which
+;;       ;; has a non-nil adoc-reserved text property
+;;       (setq prevented 
+;; 	    (and found
+;; 		 (some (lambda(x)
+;; 			 (and (match-beginning x)
+;; 			      (text-property-not-all (match-beginning x)
+;; 						     (match-end x)
+;; 						     'adoc-reserved nil)))
+;; 		       must-free-groups)))
+;;       (setq continue
+;; 	    (and (or (and found prevented)
+;; 		     (and (not found) (< end2 end)))
+;; 		 (< (point) (1- end))))
+;;       (when continue
+;; 	(goto-char (1+ saved-point))))
+;;     (and found (not prevented))))
 
 (defun adoc-facespec-subscript ()
   (list 'quote
@@ -779,14 +846,11 @@ value."
 (defun adoc-kw-one-line-title (level text-face)
   "Creates a keyword for font-lock which highlights one line titles"
   (list
-    ;; matcher function
-    `(lambda (end)
-      (and (re-search-forward ,(adoc-re-one-line-title level) end t)
-           (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
-    ;; highlighers
-    '(1 '(face markup-meta-hide-face adoc-reserved t) t)
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-one-line-title level) '(0)))
+    '(1 '(face markup-meta-hide-face adoc-reserved block-del) t)
     `(2 ,text-face t) 
-    '(3 '(face markup-meta-hide-face adoc-reserved t) t)))
+    '(3  '(face nil adoc-reserved block-del) t)
+    '(4 '(face markup-meta-hide-face) t t)))
 
 ;; todo: highlight bogous 'two line titles' with warning face
 ;; todo: completly remove keyword when adoc-enable-two-line-title is nil
@@ -803,14 +867,14 @@ value."
            (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
    ;; highlighers
    `(1 ,text-face t)
-   `(2 '(face markup-meta-hide-face adoc-reserved t) t)))
+   `(2 '(face markup-meta-hide-face adoc-reserved block-del) t)))
 
 (defun adoc-kw-oulisti (type &optional level sub-type)
   "Creates a keyword for font-lock which highlights both (un)ordered list item.
 Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-oulisti'"
   (list
-   `(lambda (end) (adoc-kwf-std end ,(adoc-re-oulisti type level sub-type) 0))
-   '(0 '(face nil adoc-reserved t) t)
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-oulisti type level sub-type) '(0)))
+   '(0 '(face nil adoc-reserved block-del) t)
    '(2 markup-list-face t) 
    '(3 adoc-align t)))
 
@@ -818,41 +882,37 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-oulisti'"
   "Creates a keyword for font-lock which highlights labeled list item.
 Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
   (list
-   `(lambda (end) (adoc-kwf-std end ,(adoc-re-llisti sub-type level) 0))
-   '(1 '(face nil adoc-reserved t) t)
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-llisti sub-type level) '(0)))
+   '(1 '(face nil adoc-reserved block-del) t)
    '(2 markup-gen-face t)
-   '(3 '(face markup-list-face adoc-reserved t) t) 
-   '(4 '(face adoc-align adoc-reserved t) t)))
+   '(3 '(face adoc-align adoc-reserved block-del) t)
+   '(4 markup-list-face t)))
 
 (defun adoc-kw-list-continuation ()
   (list 
    ;; see also regexp of forced line break, which is similar. it is not directly
    ;; obvious from asciidoc sourcecode what the exact rules are.
-   '(lambda (end) (adoc-kwf-std end "^\\(\\+\\)[ \t]*$" 1))
-   '(1 '(face markup-meta-face adoc-reserved t) t))) 
+   '(lambda (end) (adoc-kwf-std end "^\\(\\+\\)[ \t]*$" '(1)))
+   '(1 '(face markup-meta-face adoc-reserved block-del) t))) 
 
 (defun adoc-kw-delimited-block (del &optional text-face inhibit-text-reserved)
   "Creates a keyword for font-lock which highlights a delimited block."
   (list
-   `(lambda (end) (adoc-kwf-std end ,(adoc-re-delimited-block del) 1 3))
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-delimited-block del) '(1 3)))
    '(0 '(face nil font-lock-multiline t) t)
-   '(1 '(face markup-meta-hide-face adoc-reserved t) t)
+   '(1 '(face markup-meta-hide-face adoc-reserved block-del) t)
    (if (not inhibit-text-reserved)
        `(2 '(face ,text-face face markup-verbatim-face adoc-reserved t) t)
      `(2 ,text-face t))
-   '(3 '(face markup-meta-hide-face adoc-reserved t) t)))
+   '(3 '(face markup-meta-hide-face adoc-reserved block-del) t)))
 
 ;; if adoc-kw-delimited-block, adoc-kw-two-line-title don't find the whole
 ;; delimited block / two line title, at least 'use up' the delimiter line so it
-;; is later not conused as a funny serries of unconstrained quotes
+;; is later not misinterpreted as a funny serries of unconstrained quotes
 (defun adoc-kw-delimtier-line-fallback ()
   (list
-    ;; matcher function
-    `(lambda (end)
-      (and (re-search-forward ,(adoc-re-delimited-block-line) end t)
-           (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
-    ;; highlighters
-    '(0 '(face adoc-hide-delimiter adoc-reserved t) t)))
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-delimited-block-line) '(0)))
+   '(0 '(face markup-meta-face adoc-reserved block-del) t)))
 
 ;; admonition paragraph. Note that there is also the style with the leading attribute list.
 ;; (?s)^\s*(?P<style>NOTE|TIP|IMPORTANT|WARNING|CAUTION):\s+(?P<text>.+)
@@ -882,7 +942,7 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
 When LITERAL-P is non-nil, the contained text is literal text."
   (list
    ;; matcher function
-   `(lambda (end) (adoc-kwf-std end ,(adoc-re-quote type ldel rdel) 1 2 4))
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-quote type ldel rdel) '(1 2 4) '(3)))
    ;; highlighers
    '(1 '(face markup-meta-face adoc-reserved t) t t)                    ; attribute list
    `(2 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t)  ; open del
@@ -1012,7 +1072,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    
    ;; Asciidoc BUG: Lex.next has a different order than the following extract
    ;; from the documentation states.
-   ;;
+   
    ;; When a block element is encountered asciidoc(1) determines the type of
    ;; block by checking in the following order (first to last): (section)
    ;; Titles, BlockMacros, Lists, DelimitedBlocks, Tables, AttributeEntrys,
@@ -1042,14 +1102,14 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;;          r'(\[(?P<attrlist>.*?)\])$'
    ;; conditional inclusion
    (list "^\\(\\(?:ifn?def\\|endif\\)::\\)\\([^ \t\n]*?\\)\\(\\[\\).+?\\(\\]\\)[ \t]*$"
-         '(1 '(face adoc-preprocessor adoc-reserved t))    ; macro name
-         '(2 '(face adoc-delimiter adoc-reserved t))       ; condition
-         '(3 '(face adoc-hide-delimiter adoc-reserved t))  ; [
+         '(1 '(face adoc-preprocessor adoc-reserved block-del))    ; macro name
+         '(2 '(face adoc-delimiter adoc-reserved block-del))       ; condition
+         '(3 '(face adoc-hide-delimiter adoc-reserved block-del))  ; [
          ; ... attribute list content = the conditionaly included text
-         '(4 '(face adoc-hide-delimiter adoc-reserved t))) ; ]
+         '(4 '(face adoc-hide-delimiter adoc-reserved block-del))) ; ]
    ;; include
    (list "^\\(\\(include1?::\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(\\]\\)\\)[ \t]*$"
-         '(1 '(face nil adoc-reserved t)) ; the whole match
+         '(1 '(face nil adoc-reserved block-del)) ; the whole match
          '(2 adoc-preprocessor)           ; macro name
          '(3 adoc-delimiter)              ; file name
          '(4 adoc-hide-delimiter)         ; [
@@ -1062,19 +1122,19 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; Is a block marcro in asciidoc.conf, altough manual has it in the "text formatting" section 
    ;; ^'{3,}$=#ruler
    (list "^\\('\\{3,\\}+\\)[ \t]*$"
-         '(1 '(face adoc-complex-replacement adoc-reserved t))) 
+         '(1 '(face adoc-complex-replacement adoc-reserved block-del))) 
    ;; forced pagebreak
    ;; Is a block marcro in asciidoc.conf, altough manual has it in the "text formatting" section 
    ;; ^<{3,}$=#pagebreak
    (list "^\\(<\\{3,\\}+\\)[ \t]*$"
-         '(1 '(face adoc-delimiter adoc-reserved t))) 
+         '(1 '(face adoc-delimiter adoc-reserved block-del))) 
    ;; comment
    ;; ^//(?P<passtext>[^/].*|)$=#comment[normal]
    (list "^\\(//\\(?:[^/].*\\|\\)\n\\)"
-         '(1 '(face adoc-comment adoc-reserved t)))    
+         '(1 '(face adoc-comment adoc-reserved block-del)))    
    ;; image
    (list "^\\(\\(image::\\)\\([^ \t\n]*?\\)\\(\\[.*?\\]\\)\\)[ \t]*$"
-         '(1 '(face nil adoc-reserved t)) ; whole match
+         '(1 '(face nil adoc-reserved block-del)) ; whole match
          '(2 adoc-hide-delimiter)         ; macro name
          '(3 adoc-complex-replacement)    ; file name
          '(4 adoc-delimiter))             ; attribute list inlcl. []
@@ -1150,10 +1210,10 @@ When LITERAL-P is non-nil, the contained text is literal text."
                  "\\(?:[^|\n]*?[ \t]" "\\(" (adoc-re-cell-specifier) "\\)" "\\(|\\)"
                  "\\(?:[^|\n]*?[ \t]" "\\(" (adoc-re-cell-specifier) "\\)" "\\(|\\)"
                  "\\(?:[^|\n]*?[ \t]" "\\(" (adoc-re-cell-specifier) "\\)" "\\(|\\)" "\\)?\\)?\\)?")
-         '(1 '(face adoc-delimiter adoc-reserved t) nil t) '(2 '(face adoc-table-del adoc-reserved t) nil t)
-         '(3 '(face adoc-delimiter adoc-reserved t) nil t) '(4 '(face adoc-table-del adoc-reserved t) nil t)
-         '(5 '(face adoc-delimiter adoc-reserved t) nil t) '(6 '(face adoc-table-del adoc-reserved t) nil t)
-         '(7 '(face adoc-delimiter adoc-reserved t) nil t) '(8 '(face adoc-table-del adoc-reserved t) nil t))
+         '(1 '(face adoc-delimiter adoc-reserved block-del) nil t) '(2 '(face adoc-table-del adoc-reserved block-del) nil t)
+         '(3 '(face adoc-delimiter adoc-reserved block-del) nil t) '(4 '(face adoc-table-del adoc-reserved block-del) nil t)
+         '(5 '(face adoc-delimiter adoc-reserved block-del) nil t) '(6 '(face adoc-table-del adoc-reserved block-del) nil t)
+         '(7 '(face adoc-delimiter adoc-reserved block-del) nil t) '(8 '(face adoc-table-del adoc-reserved block-del) nil t))
    
 
    ;; attribute entry
@@ -1173,7 +1233,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
             "\\(?:\\(,\\)\\(.*?\\)\\(?:\\(,\\)\\(.*?\\)\\)?\\)?"
             "\\(\\]\\)"
           "\\)[ \t]*$")
-         '(1 '(face nil adoc-reserved t)) ; whole match
+         '(1 '(face nil adoc-reserved block-del)) ; whole match
          '(2 adoc-hide-delimiter)         ; [
          '(3 adoc-delimiter)              ;   quote|verse
          '(4 adoc-hide-delimiter nil t)   ;   ,
@@ -1183,11 +1243,11 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(8 adoc-hide-delimiter))        ; ]
    ;; admonition block
    (list "^\\(\\[\\(?:CAUTION\\|WARNING\\|IMPORTANT\\|TIP\\|NOTE\\)\\]\\)[ \t]*$"
-         '(1 '(face adoc-complex-replacement adoc-reserved t)))
+         '(1 '(face adoc-complex-replacement adoc-reserved block-del)))
    ;; block id = 1st alternation from asciidoc's regex (see general section below)
    ;; see also anchor inline macro
    (list "^\\(\\(\\[\\[\\)\\([-a-zA-Z0-9_]+\\)\\(?:\\(,\\)\\(.*?\\)\\)?\\(\\]\\]\\)[ \t]*\\)$"
-         '(1 '(face nil adoc-reserved t)) ; whole match
+         '(1 '(face nil adoc-reserved block-del)) ; whole match
          '(2 adoc-hide-delimiter)         ; [[
          '(3 adoc-anchor)                 ;   anchor-id
          '(4 adoc-hide-delimiter nil t)   ;   ,
@@ -1197,7 +1257,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; --- general attribute list = 2nd alternation from ascidoc's regex
    ;; (?u)(^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$)|(^\[(?P<attrlist>.*)\]$)
    (list "^\\(\\[.*\\]\\)[ \t]*$"
-         '(1 '(face adoc-delimiter adoc-reserved t)))
+         '(1 '(face adoc-delimiter adoc-reserved block-del)))
 
 
 
@@ -1210,13 +1270,15 @@ When LITERAL-P is non-nil, the contained text is literal text."
          ; insertion: so that this whole regex doesn't mistake a line starting with a cell specifier like .2+| as a block title 
           "[0-9]+[^+*]"                  
           "\\|[^. \t\n]\\).*\\)$")
-         '(1 adoc-delimiter) '(2 adoc-generic))
+         '(1 '(face adoc-delimiter adoc-reserved block-del))
+   	 '(2 adoc-generic))
 
 
    ;; paragraphs
    ;; --------------------------
    (adoc-kw-verbatim-paragraph-sequence)
    (adoc-kw-admonition-paragraph)
+   (list "^[ \t]+$" '(0 '(face nil adoc-reserved block-del) t))
 
    ;; Inline substitutions
    ;; ==========================================
