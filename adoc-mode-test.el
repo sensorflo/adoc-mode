@@ -1,3 +1,4 @@
+
 (require 'ert)
 (require 'adoc-mode)
 
@@ -77,7 +78,10 @@
    "^^^^^^^^^" markup-meta-hide-face "\n" nil
    "\n" nil
    "chapter 4" markup-title-4-face "\n" nil
-   "+++++++++" markup-meta-hide-face "\n" nil))
+   "+++++++++" markup-meta-hide-face "\n" nil
+   "\n" nil
+
+   "." markup-meta-face "Block title" markup-gen-face "\n" nil ))
 
 (ert-deftest adoctest-test-delimited-blocks-simple ()
   (adoctest-faces "delimited-blocks-simple"
@@ -210,10 +214,14 @@
    "lorem ** ipsum\n" 'no-face
    "\n" nil
 
-   ;; "chapter ** 1" markup-title-1-face "\n" nil
-   ;; "------------" markup-meta-hide-face "\n" nil
-   ;; "lorem ** ipsum\n" 'no-face
-   ;; "\n" nil
+   "chapter ** 1" markup-title-1-face "\n" nil
+   "------------" markup-meta-hide-face "\n" nil
+   "lorem ** ipsum\n" 'no-face
+   "\n" nil
+
+   "." markup-meta-face "block ** title" markup-gen-face "\n" nil
+   "lorem ** ipsum\n" 'no-face
+   "\n" nil
 
 
   ;; test also

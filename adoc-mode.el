@@ -585,6 +585,26 @@ Subgroups:
 
    "\\)" ))
 
+;; ^\.(?P<title>([^.\s].*)|(\.[^.\s].*))$
+;; Isn't that asciidoc.conf regexp the same as: ^\.(?P<title>(.?[^.\s].*))$
+;; insertion: so that this whole regex doesn't mistake a line starting with a cell specifier like .2+| as a block title 
+(defun adoc-re-block-title ()
+  "Returns a regexp matching an block title
+
+Subgroups:
+1 delimiter
+2 title's text incl trailing whites
+3 newline 
+
+.foo n
+12--23"
+  (concat
+   "^\\(\\.\\)"
+   "\\(\\.?\\(?:"	
+   "[0-9]+[^+*]" ; inserted part, see above
+   "\\|[^. \t\n]\\).*\\)"
+   "\\(\n\\)"))
+
 (defun adoc-re-precond (&optional unwanted-chars backslash-allowed disallowed-at-bol)
   (concat
           (when disallowed-at-bol ".")
@@ -937,6 +957,13 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
     ;; highlighers
     '(1 '(face adoc-monospace adoc-reserved t font-lock-multiline t))))
 
+(defun adoc-kw-block-title ()
+  (list
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-title) '(1)))
+   '(1 '(face markup-meta-face adoc-reserved block-del))
+   '(2 markup-gen-face)
+   '(3 '(face nil adoc-reserved block-del))))
+
 (defun adoc-kw-quote (type ldel text-face-spec &optional del-face rdel literal-p)
   "Return a keyword which highlights (un)constrained quotes.
 When LITERAL-P is non-nil, the contained text is literal text."
@@ -1260,18 +1287,9 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(1 '(face adoc-delimiter adoc-reserved block-del)))
 
 
-
    ;; block title
    ;; -----------------------------------
-   ;; ^\.(?P<title>([^.\s].*)|(\.[^.\s].*))$
-   ;; Isn't that asciidoc.conf regexp the same as: ^\.(?P<title>(.?[^.\s].*))$
-   (list (concat
-          "^\\(\\.\\)\\(\\.?\\("
-         ; insertion: so that this whole regex doesn't mistake a line starting with a cell specifier like .2+| as a block title 
-          "[0-9]+[^+*]"                  
-          "\\|[^. \t\n]\\).*\\)$")
-         '(1 '(face adoc-delimiter adoc-reserved block-del))
-   	 '(2 adoc-generic))
+   (adoc-kw-block-title)
 
 
    ;; paragraphs
