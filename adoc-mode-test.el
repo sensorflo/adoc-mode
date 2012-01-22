@@ -201,4 +201,12 @@
 (ert-deftest adoctest-test-byte-compile ()
   (ert-should (byte-compile-file (locate-library "adoc-mode.el" t))))
 
-(ert-run-tests-interactively "^adoctest-test-")
+(defun adoc-test-run()
+  (interactive)
+  (save-buffer "adoc-mode.el")
+  (load-library "adoc-mode")
+  (save-buffer "adoc-mode-test.el")
+  (load-library "adoc-mode-test")
+  (ert-run-tests-interactively "^adoctest-test-"))
+
+(global-set-key [(f5)] 'adoc-test-run)
