@@ -185,4 +185,8 @@
   ;; .... todo
   )
 
+;; todo: also test for warnings
+(ert-deftest adoctest-test-byte-compile ()
+  (ert-should (byte-compile-file (locate-library "adoc-mode.el" t))))
+
 (ert-run-tests-interactively "^adoctest-test-")

@@ -109,6 +109,7 @@
 ;;; Variables:
 
 (require 'markup-faces)
+(require 'cl)
 
 (defconst adoc-mode-version "0.4.0"
   "Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are taken from
@@ -1721,7 +1722,7 @@ knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
                (string-match "&\\(.+?\\);" entity))
           (funcall adoc-unichar-name-resolver
                    (match-string 1 entity)))))
-      (when (char-valid-p ch) (make-string 1 ch)))))
+      (when (characterp ch) (make-string 1 ch)))))
 
 (defun adoc-calc ()
   "(Re-)calculates variables used in adoc-mode.
