@@ -11,8 +11,8 @@
 ;; todo: test for presence of adoc-reserved (we do white-box testing here)
 
 
-(defun adoctest-faces (&rest args)
-  (set-buffer (get-buffer-create "adoctest")) 
+(defun adoctest-faces (name &rest args)
+  (set-buffer (get-buffer-create (concat "adoctest-" name))) 
   (delete-region (point-min) (point-max))
 
   (while args
@@ -26,16 +26,20 @@
     (while not-done
       (let* ((tmp (get-text-property (point) 'adoctest))
 	     (tmp2 (get-text-property (point) 'face)))
-	(when tmp
+	(cond
+	 ((null tmp)) ; nop
+	 ((eq tmp 'no-face)
+	  (ert-should (null tmp2)))
+	 (t
 	  (if (and (listp tmp2) (not (listp tmp)))
 	      (ert-should (and (= 1 (length tmp2)) (equal tmp (car tmp2))))
-	    (ert-should (equal tmp tmp2))))
+	    (ert-should (equal tmp tmp2)))))
 	(if (< (point) (point-max))
 	    (forward-char 1)
 	  (setq not-done nil))))))
 
 (ert-deftest adoctest-test-titles-simple ()
-  (adoctest-faces
+  (adoctest-faces "titles-simple"
    "= " markup-meta-hide-face "document title" markup-title-0-face "\n" nil
    "\n" nil
    "== " markup-meta-hide-face "chapter 1" markup-title-1-face "\n" nil
@@ -76,7 +80,7 @@
    "+++++++++" markup-meta-hide-face "\n" nil))
 
 (ert-deftest adoctest-test-delimited-blocks-simple ()
-  (adoctest-faces
+  (adoctest-faces "delimited-blocks-simple"
 
    ;; note that the leading spaces are NOT allowed to have adoc-align face
    "////////" markup-meta-hide-face "\n" nil
@@ -113,7 +117,7 @@
    "--" markup-meta-hide-face "\n" nil))
 
 (ert-deftest adoctest-test-quotes-simple ()
-  (adoctest-faces
+  (adoctest-faces "test-quotes-simple"
    ;; note that in unconstraned quotes cases " ipsum " has spaces around, in
    ;; constrained quotes case it doesn't
    "Lorem " nil "`" markup-meta-hide-face "ipsum" '(markup-typewriter-face markup-verbatim-face) "`" markup-meta-hide-face " dolor\n" nil
@@ -133,8 +137,16 @@
    "Lorem " nil "~" markup-meta-hide-face " ipsum " markup-subscript-face "~" markup-meta-hide-face " dolor\n" nil
    "Lorem " nil "^" markup-meta-hide-face " ipsum " markup-superscript-face "^" markup-meta-hide-face " dolor\n" nil))
 
+(ert-deftest adoctest-test-quotes-medium ()
+  (adoctest-faces "test-quotes-medium"
+   ;; test wheter constrained/unconstrained quotes can spawn multiple lines
+   "Lorem " 'no-face "*" markup-meta-hide-face "ipsum" markup-strong-face "\n" nil
+   "dolor" markup-strong-face "*" markup-meta-hide-face " sit" 'no-face "\n" nil
+   "Lorem " 'no-face "__" markup-meta-hide-face "ipsum" markup-emphasis-face "\n" nil
+   "dolor" markup-emphasis-face "__" markup-meta-hide-face " sit" 'no-face "\n" nil))
+
 (ert-deftest adoctest-test-lists-simple ()
-  (adoctest-faces
+  (adoctest-faces "test-lists-simple"
    " " adoc-align "-" markup-list-face " " adoc-align "uo list item\n" nil
    " " adoc-align "*" markup-list-face " " adoc-align "uo list item\n" nil
    " " adoc-align "**" markup-list-face " " adoc-align "uo list item\n" nil
@@ -170,11 +182,11 @@
 
 (ert-deftest adoctest-test-meta-face-cleanup ()
   ;; begin with a few simple explicit cases which are easier to debug in case of troubles
-  (adoctest-faces
+  (adoctest-faces "meta-face-cleanup-1"
     "*" markup-meta-hide-face "lorem " markup-strong-face
         "_" markup-meta-hide-face "ipsum" '(markup-strong-face markup-emphasis-face) "_" markup-meta-hide-face
     " dolor" markup-strong-face "*" markup-meta-hide-face "\n" nil)
-  (adoctest-faces
+  (adoctest-faces "meta-face-cleanup-2"
     "_" markup-meta-hide-face "lorem " markup-emphasis-face
         "*" markup-meta-hide-face "ipsum" '(markup-strong-face markup-emphasis-face) "*" markup-meta-hide-face
     " dolor" markup-emphasis-face "_" markup-meta-hide-face "\n" nil)
