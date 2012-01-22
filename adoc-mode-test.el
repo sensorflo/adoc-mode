@@ -206,29 +206,53 @@
 (ert-deftest adoctest-test-inline-subst-boundaries ()
   (adoctest-faces "inline-subst-boundaries"
 
+   ;; 1) don't cross title boundaries. 
+   ;; 2) don't cross paragraph boundaries.
+   ;; 3) verify that the (un)constrained quotes would work however 
    "== " markup-meta-hide-face "chapter ** 1" markup-title-1-face "\n" nil
    "lorem ** ipsum\n" 'no-face
    "\n" nil
-
-   "== " markup-meta-hide-face "chapter ** 1" markup-title-1-face " ==" markup-meta-hide-face "\n" nil
-   "lorem ** ipsum\n" 'no-face
+   "lorem " 'no-face "**" markup-meta-hide-face " ipsum " markup-strong-face "**" markup-meta-hide-face "\n" nil
    "\n" nil
 
-   "chapter ** 1" markup-title-1-face "\n" nil
+   "== " markup-meta-hide-face "chapter __ 1" markup-title-1-face " ==" markup-meta-hide-face "\n" nil
+   "lorem __ ipsum\n" 'no-face
+   "\n" nil
+   "lorem " 'no-face "__" markup-meta-hide-face " ipsum " markup-emphasis-face "__" markup-meta-hide-face "\n" nil
+   "\n" nil
+
+   "chapter ++ 1" markup-title-1-face "\n" nil
    "------------" markup-meta-hide-face "\n" nil
-   "lorem ** ipsum\n" 'no-face
+   "lorem ++ ipsum\n" 'no-face
+   "\n" nil
+   "lorem " 'no-face "++" markup-meta-hide-face " ipsum " markup-typewriter-face "++" markup-meta-hide-face "\n" nil
    "\n" nil
 
-   "." markup-meta-face "block ** title" markup-gen-face "\n" nil
-   "lorem ** ipsum\n" 'no-face
+   "." markup-meta-face "block ^title" markup-gen-face "\n" nil
+   "lorem^ ipsum\n" 'no-face
+   "\n" nil
+   "lorem " 'no-face "^" markup-meta-hide-face " ipsum " markup-superscript-face "^" markup-meta-hide-face "\n" nil
    "\n" nil
 
+   ;; Being able to use a ** that potentially could be mistaken as an end
+   ;; delimiter as start delimiter
+   "== " markup-meta-hide-face "chapter ** 1" markup-title-1-face "\n" nil
+   "lorem " 'no-face "**" markup-meta-hide-face " ipsum " markup-strong-face "**" markup-meta-hide-face "\n" nil
+   "\n" nil
+
+   ;; 1) don't cross list item boundaries
+   ;; 2) don't mistake a list item '**' as an unconstrained quote '**' (either start or end)
+   "-" markup-list-face " " nil "lorem ** ipsum\n" 'no-face
+   "-" markup-list-face " " nil "dolor ** sit\n" 'no-face
+   "**" markup-list-face " " nil "lorem ** ipsumt\n" 'no-face
+   "**" markup-list-face " " nil "dolor ** sit\n" 'no-face
+
+   ;; todo: not reaching into a labeled list item text does no yet work
+   ;; "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor\n" 'no-face
 
   ;; test also
   ;; - over beginning of labeled
-  ;; - over end of block title
-  ;; - over beginning of two line title
-  ;; - over end of one line title
+
   ))
 
 ;; todo: also test for warnings
