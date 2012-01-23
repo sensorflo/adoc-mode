@@ -37,7 +37,8 @@
 	    (ert-should (equal tmp tmp2)))))
 	(if (< (point) (point-max))
 	    (forward-char 1)
-	  (setq not-done nil))))))
+	  (setq not-done nil)))))
+  (kill-buffer (concat "adoctest-" name)))
 
 (ert-deftest adoctest-test-titles-simple ()
   (adoctest-faces "titles-simple"
@@ -147,7 +148,53 @@
    "Lorem " 'no-face "*" markup-meta-hide-face "ipsum" markup-strong-face "\n" nil
    "dolor" markup-strong-face "*" markup-meta-hide-face " sit" 'no-face "\n" nil
    "Lorem " 'no-face "__" markup-meta-hide-face "ipsum" markup-emphasis-face "\n" nil
-   "dolor" markup-emphasis-face "__" markup-meta-hide-face " sit" 'no-face "\n" nil))
+   "dolor" markup-emphasis-face "__" markup-meta-hide-face " sit" 'no-face "\n" nil
+   "\n" nil
+
+   ;; tests border case that delimiter is at the beginnin/end of an paragraph/line
+   ;; constrained at beginning
+   "*" markup-meta-hide-face "lorem" 'markup-strong-face "*" markup-meta-hide-face " ipsum\n" 'no-face
+   "\n" nil
+   ;; constrained at end
+   "lorem " 'no-face "*" markup-meta-hide-face "ipsum" markup-strong-face "*" markup-meta-hide-face "\n" nil
+   "\n" nil
+   ;; constrained from beginning to end
+   "*" markup-meta-hide-face "lorem" markup-strong-face "*" markup-meta-hide-face "\n" nil
+   "\n" nil
+   ;; unconstrained at beginning. Note that "** " at the beginning of a line would be a list item.
+   "__" markup-meta-hide-face " lorem " 'markup-emphasis-face "__" markup-meta-hide-face " ipsum\n" 'no-face
+   "\n" nil
+   ;; unconstrained at end
+   "lorem " 'no-face "__" markup-meta-hide-face " ipsum " markup-emphasis-face "__" markup-meta-hide-face "\n" nil
+   "\n" nil
+   ;; unconstrained from beginning to end
+   "__" markup-meta-hide-face " lorem " markup-emphasis-face "__" markup-meta-hide-face "\n" nil
+   "\n" nil
+   
+   ;; test wheter quotes can nest
+   ;; done by meta-face-cleanup
+
+   ;; tests that quotes work within titles / labeled lists
+   "== " markup-meta-hide-face "chapter " markup-title-1-face "*" markup-meta-hide-face "1" '(markup-title-1-face markup-strong-face) "*" markup-meta-hide-face " ==" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "chapter " markup-title-2-face "_" markup-meta-hide-face "2" '(markup-title-2-face markup-emphasis-face) "_" markup-meta-hide-face "\n" nil
+   "~~~~~~~~~~~" markup-meta-hide-face "\n" nil
+   "." markup-meta-face "lorem " 'markup-gen-face "_" markup-meta-hide-face "ipsum" '(markup-gen-face markup-emphasis-face) "_" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "lorem " markup-gen-face "+" markup-meta-hide-face "ipsum" '(markup-gen-face markup-typewriter-face) "+" markup-meta-hide-face " sit" markup-gen-face "::" markup-list-face " " adoc-align "\n" nil
+   ))
+
+;; test border cases where the quote delimiter is at the beginning and/or the
+;; end of the buffer
+(ert-deftest adoctest-test-quotes-medium-2 ()
+  (adoctest-faces "test-quotes-medium-2"
+    "*" markup-meta-hide-face "lorem" markup-strong-face "*" markup-meta-hide-face " ipsum" 'no-face))
+(ert-deftest adoctest-test-quotes-medium-3 ()
+  (adoctest-faces "test-quotes-medium-3"
+    "lorem " 'no-face "*" markup-meta-hide-face "ipsum" markup-strong-face "*" markup-meta-hide-face))
+(ert-deftest adoctest-test-quotes-medium-4 ()
+  (adoctest-faces "test-quotes-medium-4"
+    "*" markup-meta-hide-face "lorem" markup-strong-face "*" markup-meta-hide-face))
 
 (ert-deftest adoctest-test-lists-simple ()
   (adoctest-faces "test-lists-simple"
@@ -194,6 +241,11 @@
 
 (ert-deftest adoctest-test-meta-face-cleanup ()
   ;; begin with a few simple explicit cases which are easier to debug in case of troubles
+
+  ;; 1) test that meta characters always only have a single meta and don't get
+  ;;    markup-bold/-emphasis/... face just because they are within a
+  ;;    strongh/emphasis/... construct.
+  ;; 2) test that nested quotes really apply the faces of both quotes to the inner text 
   (adoctest-faces "meta-face-cleanup-1"
     "*" markup-meta-hide-face "lorem " markup-strong-face
         "_" markup-meta-hide-face "ipsum" '(markup-strong-face markup-emphasis-face) "_" markup-meta-hide-face
