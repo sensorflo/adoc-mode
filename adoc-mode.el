@@ -1161,21 +1161,23 @@ When LITERAL-P is non-nil, the contained text is literal text."
    (list "^\\(<\\{3,\\}+\\)[ \t]*$"
          '(1 '(face adoc-delimiter adoc-reserved block-del))) 
    ;; comment
-   ;; ^//(?P<passtext>[^/].*|)$=#comment[normal]
+   ;; (?mu)^[\\]?//(?P<passtext>[^/].*|)$
+   ;; I don't know what the [\\]? should mean
    (list "^\\(//\\(?:[^/].*\\|\\)\n\\)"
-         '(1 '(face adoc-comment adoc-reserved block-del)))    
+         '(1 '(face markup-comment-face adoc-reserved block-del)))    
    ;; image
+   ;; (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
    (list "^\\(\\(image::\\)\\([^ \t\n]*?\\)\\(\\[.*?\\]\\)\\)[ \t]*$"
          '(1 '(face nil adoc-reserved block-del)) ; whole match
          '(2 adoc-hide-delimiter)         ; macro name
          '(3 adoc-complex-replacement)    ; file name
          '(4 adoc-delimiter))             ; attribute list inlcl. []
-   ;; passthrough: (?u)^(?P<name>pass)::(?P<subslist>\S*?)(\[(?P<passtext>.*?)\])$=#
+   ;; passthrough: (?u)^(?P<name>pass)::(?P<subslist>\S*?)(\[(?P<passtext>.*?)\])$
    ;; todo
 
    ;; -- general block macro
    ;; also highlight yet unknown block macros
-   ;; general syntax: (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$=#
+   ;; general syntax: (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
    (list "^[a-zA-Z0-9_]+::\\([^ \t\n]*?\\)\\(\\[.*?\\]\\)[ \t]*$"
          'adoc-delimiter) 
 

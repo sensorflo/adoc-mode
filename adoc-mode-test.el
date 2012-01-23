@@ -121,6 +121,20 @@
    "open block line 1\nopen block line 2" nil "\n" nil
    "--" markup-meta-hide-face "\n" nil))
 
+(ert-deftest adoctest-test-comments ()
+  (adoctest-faces "comments"
+    ;; as block macro 
+    "// lorem ipsum\n" markup-comment-face
+    "\n" nil
+    ;; as inline macro
+    "lorem ipsum\n" 'no-face
+    "// dolor sit\n" markup-comment-face
+    "amen\n" 'no-face
+    "\n" nil
+    ;; as delimited block
+    ;; tested in delimited-blocks-simple
+    ))
+
 (ert-deftest adoctest-test-quotes-simple ()
   (adoctest-faces "test-quotes-simple"
    ;; note that in unconstraned quotes cases " ipsum " has spaces around, in
