@@ -240,20 +240,18 @@
    "lorem " 'no-face "**" markup-meta-hide-face " ipsum " markup-strong-face "**" markup-meta-hide-face "\n" nil
    "\n" nil
 
-   ;; 1) don't cross list item boundaries
-   ;; 2) don't mistake a list item '**' as an unconstrained quote '**' (either start or end)
+   ;; don't cross list item boundaries
    "-" markup-list-face " " nil "lorem ** ipsum\n" 'no-face
    "-" markup-list-face " " nil "dolor ** sit\n" 'no-face
-   "**" markup-list-face " " nil "lorem ** ipsumt\n" 'no-face
+   ;; test that a quote within the list element works
+   "-" markup-list-face " " nil "dolor " 'no-face "**" markup-meta-hide-face " sit " markup-strong-face "**" markup-meta-hide-face "\n" nil
+   ;; dont mistake '**' list elements for quote starters/enders 
+   "**" markup-list-face " " nil "lorem ** ipsum\n" 'no-face
    "**" markup-list-face " " nil "dolor ** sit\n" 'no-face
-
-   ;; todo: not reaching into a labeled list item text does no yet work
-   ;; "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor\n" 'no-face
-
-  ;; test also
-  ;; - over beginning of labeled
-
-  ))
+   "**" markup-list-face " " nil "dolor ** sit\n" 'no-face
+   ;; don't cross list item boundaries in the case of labeled lists
+   "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor\n" 'no-face
+   "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor\n" 'no-face))
 
 ;; todo: also test for warnings
 (ert-deftest adoctest-test-byte-compile ()

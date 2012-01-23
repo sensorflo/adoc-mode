@@ -902,7 +902,12 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-oulisti'"
   "Creates a keyword for font-lock which highlights labeled list item.
 Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
   (list
-   `(lambda (end) (adoc-kwf-std end ,(adoc-re-llisti sub-type level) '(0)))
+   `(lambda (end)
+      (when (adoc-kwf-std end ,(adoc-re-llisti sub-type level) '(0))
+	(let ((pos (match-beginning 0)))
+	  (when (> pos (point-min))
+	    (put-text-property (1- pos) pos 'adoc-reserved 'block-del)))
+	t))
    '(1 '(face nil adoc-reserved block-del) t)
    '(2 markup-gen-face t)
    '(3 '(face adoc-align adoc-reserved block-del) t)
