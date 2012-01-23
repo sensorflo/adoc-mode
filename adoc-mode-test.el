@@ -184,6 +184,14 @@
    "+" markup-meta-face "\n" nil
    "2nd list paragraph\n" nil ))
 
+(ert-deftest adoctest-test-lists-medium ()
+  (adoctest-faces "test-lists-medium"
+   ;; white box test: labeled list item font lock keyword is implemented
+   ;; specially in that it puts adoc-reserved text-property on the preceding
+   ;; newline. However it shall deal with the situation that there is no
+   ;; preceding newline, because we're at the beginning of the buffer
+   "lorem" markup-gen-face "::" markup-list-face " " nil "ipsum" 'no-face))
+
 (ert-deftest adoctest-test-meta-face-cleanup ()
   ;; begin with a few simple explicit cases which are easier to debug in case of troubles
   (adoctest-faces "meta-face-cleanup-1"
