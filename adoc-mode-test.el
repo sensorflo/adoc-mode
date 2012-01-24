@@ -135,18 +135,32 @@
     ;; tested in delimited-blocks-simple
     ))
 
-(ert-deftest adoctest-test- ()
-  (adoctest-faces "comments"
-    ;; as block macro 
-    "// lorem ipsum\n" markup-comment-face
-    "\n" nil
-    ;; as inline macro
-    "lorem ipsum\n" 'no-face
-    "// dolor sit\n" markup-comment-face
-    "amen\n" 'no-face
-    "\n" nil
-    ;; as delimited block
-    ;; tested in delimited-blocks-simple
+(ert-deftest adoctest-test-attribute-list ()
+  (adoctest-faces "attribute-list"
+    ;; positional attribute 
+    "[" markup-meta-face "hello" markup-value-face "]" markup-meta-face "\n" nil 		  
+    ;; positional attribute containing spaces
+    "[" markup-meta-face "hello world" markup-value-face "]" markup-meta-face "\n" nil 		  
+    ;; positional attribute as string
+    "[\"" markup-meta-face  "hello world" markup-value-face "\"]" markup-meta-face "\n" nil 		  
+
+    ;; multiple positional attributes
+    "[" markup-meta-face "hello" markup-value-face "," markup-meta-face "world" markup-value-face "]" markup-meta-face "\n" nil 		  
+
+    ;; keyword attribute
+    "[" markup-meta-face "salute" markup-attribute-face "=" markup-meta-face "hello" markup-value-face "]" markup-meta-face "\n" nil 		  
+    ;; keyword attribute where value is a string
+    "[" markup-meta-face "salute" markup-attribute-face "=\"" markup-meta-face "hello world" markup-value-face "\"]" markup-meta-face "\n" nil 		  
+
+    ;; multiple positional attributes, multiple keyword attributes
+    "[" markup-meta-face "lorem" markup-value-face "," markup-meta-face "ipsum" markup-value-face "," markup-meta-face
+        "dolor" markup-attribute-face "=" markup-meta-face "sit" markup-value-face "," markup-meta-face
+        "dolor" markup-attribute-face "=" markup-meta-face "sit" markup-value-face "]" markup-meta-face "\n" nil 		  
+
+    ;; is , within strings really part of the string and not mistaken as element separator
+    "[\"" markup-meta-face "lorem,ipsum=dolor" markup-value-face "\"]" markup-meta-face "\n" nil 		  
+    ;; does escaping " in strings work
+    "[\"" markup-meta-face "lorem \\\"ipsum\\\" dolor" markup-value-face "\"]" markup-meta-face "\n" nil 		  
     ))
 
 (ert-deftest adoctest-test-quotes-simple ()
@@ -358,5 +372,5 @@
   (save-buffer "adoc-mode.el")
   (save-buffer "adoc-mode-test.el")
   (ert-run-tests-interactively "^adoctest-pre-test-byte-compile")
-  (ert-run-tests-interactively "^adoctest-test-"))
+  (ert-run-tests-interactively "^adoctest-test"))
 

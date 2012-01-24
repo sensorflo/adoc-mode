@@ -617,7 +617,7 @@ Subgroups:
    "\\(?:"
      ;; regexp for string: See 'Mastering Regular Expressions', chapter 'The
      ;; Real "Unrolling-the-Loop" Pattern'.
-     "\"\\([^\"]*\\(?:\\.[^\"]*\\)*\\)\"[ \t\n]*" "\\|"	; 2 
+     "\"\\([^\"\\]*\\(?:\\\\.[^\"\\]*\\)*\\)\"[ \t\n]*" "\\|"	; 2 
      "\\([^,]+\\)"					; 3 
    "\\)"))
 
@@ -709,6 +709,19 @@ subgroups:
     (adoc-re-unconstrained-quote ldel rdel))
    (t
     (error "Invalid type"))))
+
+;; Macros using default syntax.
+;; (?<!\w)[\\]?(?P<name>http|https|ftp|file|irc|mailto|callto|image|link|anchor|xref|indexterm):(?P<target>\S*?)\[(?P<attrlist>.*?)\]
+;; Default (catchall) inline macro is not implemented
+;; #    [\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]
+(defun adoc-re-inline-macro (cmd-name)
+  "Returns regex matching an inline macro.
+Subgroups:
+1 cmd name
+2 target
+3 attribute list, exclusive brackets []"
+  ;; !!! \< is not exactly what AsciiDoc does, see regex above
+  (concat "\\<\\(" cmd-name "\\):\\([^ \t\n].*\\)[\\(.*?\\)]" ))
 
 ;; todo: use same regexps as for font lock
 (defun adoc-re-paragraph-separate ()
@@ -988,6 +1001,19 @@ When LITERAL-P is non-nil, the contained text is literal text."
       '(3 nil)) ; grumbl, I dont know how to get rid of it
    `(4 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t))); close del
 
+(defun adoc-kw-inline-image ()
+  (list
+   ;; matcher function
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro "image") '(1 2) '(0)))
+   ;; highlighers
+   '(0 '(face markup-meta-face adoc-reserved t) t)
+   '(1 markup-complex-replacement-face t)
+   '(2 markup-internal-reference-face t)
+   '(3 '(face markup-delimiter-face
+	     adoc-reserved nil	    
+	     adoc-attribute-list (((0 "alt") markup-secondary-text-face)
+				  ("title" markup-secondary-text-face))))))
+
 ;; bug: escapes are not handled yet
 ;; todo: give the inserted character a specific face. But I fear that is not
 ;; possible. The string inserted with the ovlerlay property after-string gets
@@ -1176,6 +1202,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(1 markup-complex-replacement-face t)	  ; macro name
          '(2 markup-internal-reference-face t)	  ; file name
          '(3 '(face markup-delimiter-face
+	       adoc-reserved nil	    
 	       adoc-attribute-list (((0 "alt") markup-secondary-text-face)
 			        ("title" markup-secondary-text-face)))
 	      t))			  ; attribute list
@@ -1297,8 +1324,8 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; --- general attribute list
    ;; ^\[(?P<attrlist>.*)\]$
    (list "^\\(\\[\\(.*\\)\\]\\)[ \t]*$"
-         '(1 '(face adoc-delimiter adoc-reserved block-del))
-	 '(2 '(face markup-delimiter-face 'adoc-attribute-list t)))
+         '(1 '(face markup-meta-face adoc-reserved block-del))
+	 '(2 '(face markup-delimiter-face adoc-attribute-list t)))
 
 
    ;; block title
@@ -1432,26 +1459,8 @@ When LITERAL-P is non-nil, the contained text is literal text."
    (list "\\b\\(xref:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
          '(1 adoc-hide-delimiter) '(2 adoc-delimiter) '(3 adoc-hide-delimiter) '(4 adoc-reference) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter)) 
 
-   ;; todo: fontify alt and title attribute value
-   ;; todo: one regexp for both inline/block image macro
-   ;;          1           2       3               4     5           6             7              8          9
-   (list "\\b\\(image:\\)\\(:?\\)\\([^ \t\n]*?\\)\\(\\[\\(\"?\\)\\)\\([^=\n]*?\\)\\(\\5[ \t]*,\\)\\(.*?\\)?\\(\\]\\)"
-         '(1 adoc-hide-delimiter)       ; macro name
-         '(2 adoc-warning)              ; if there are two colons, we have a bogous block macro
-         '(3 adoc-complex-replacement)  ; file name
-         '(4 adoc-hide-delimiter)       ; ["
-         '(6 adoc-secondary-text)       ;    first positional argument is caption
-         '(7 adoc-hide-delimiter)       ;    ",
-         '(8 adoc-delimiter nil t)      ;    rest of attribute list
-         '(9 adoc-hide-delimiter))      ; ]
-   (list "\\b\\(image:\\)\\(:?\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(\\]\\)"
-         '(1 adoc-hide-delimiter)       ; macro name
-         '(2 adoc-warning)              ; if there are two colons, we have a bogous block macro
-         '(3 adoc-complex-replacement)  ; file name
-         '(4 adoc-hide-delimiter)       ; [
-         '(5 adoc-delimiter)            ;   attribute list content
-         '(6 adoc-hide-delimiter))      ; ]
-
+   (adoc-kw-inline-image)
+   
    (list "\\(anchor:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\]\\)"
          '(1 adoc-hide-delimiter) '(2 adoc-anchor) '(3 adoc-hide-delimiter) '(4 adoc-secondary-text) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter)) 
    ;; standalone email, SIMPLE reglex! copied from http://www.regular-expressions.info/email.html
