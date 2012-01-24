@@ -201,6 +201,10 @@
     "[\"" markup-meta-face "lorem \\\"ipsum\\\" dolor" markup-value-face "\"]" markup-meta-face "\n" nil 		  
     ))
 
+(ert-deftest adoctest-test-block-macro ()
+  (adoctest-faces "block-macro"
+    "lorem" markup-command-face "::" markup-meta-face "ipsum[]" markup-meta-face))
+
 (ert-deftest adoctest-test-quotes-simple ()
   (adoctest-faces "test-quotes-simple"
    ;; note that in unconstraned quotes cases " ipsum " has spaces around, in

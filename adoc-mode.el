@@ -605,6 +605,15 @@ Subgroups:
    "\\|[^. \t\n]\\).*\\)"
    "\\(\n\\)"))
 
+;; (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
+(defun adoc-re-block-macro (&optional cmd-name)
+  "Returns a regexp matching an attribute list elment.
+Subgroups:
+1 cmd name
+2 target
+3 attribute list, exclusive brackets []"
+  (concat "^\\(" (or cmd-name "[a-zA-Z0-9_]+") "\\)::\\([^ \t\n]*?\\)\\[\\(.*?\\)\\][ \t]*$"))
+
 (defun adoc-re-attribute-list-elt ()
   "Returns a regexp matching an attribute list elment.
 Subgroups:
@@ -1196,24 +1205,23 @@ When LITERAL-P is non-nil, the contained text is literal text."
    (list "^\\(//\\(?:[^/].*\\|\\)\n\\)"
          '(1 '(face markup-comment-face adoc-reserved block-del)))    
    ;; image
-   ;; (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
-   (list "^\\(image\\)::\\([^ \t\n]*?\\)\\[\\(.*?\\)\\][ \t]*$"
+   (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro "image") '(0)))
          '(0 '(face markup-meta-face adoc-reserved block-del)) ; whole match
-         '(1 markup-complex-replacement-face t)	  ; macro name
-         '(2 markup-internal-reference-face t)	  ; file name
-         '(3 '(face markup-meta-face
+         '(1 markup-complex-replacement-face t)	; 'image'  
+         '(2 markup-internal-reference-face t)  ; file name
+         '(3 '(face markup-meta-face		; attribute list
 	       adoc-reserved nil	    
 	       adoc-attribute-list (((0 "alt") markup-secondary-text-face)
 			        ("title" markup-secondary-text-face)))
-	      t))			  ; attribute list
+	      t))			  
    ;; passthrough: (?u)^(?P<name>pass)::(?P<subslist>\S*?)(\[(?P<passtext>.*?)\])$
    ;; todo
 
    ;; -- general block macro
-   ;; also highlight yet unknown block macros
-   ;; general syntax: (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
-   (list "^[a-zA-Z0-9_]+::\\([^ \t\n]*?\\)\\(\\[.*?\\]\\)[ \t]*$"
-         'adoc-delimiter) 
+   (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro) '(0)))
+         '(0 '(face markup-meta-face adoc-reserved block-del)) ; whole match
+         '(1 markup-command-face t)			       ; command name
+         '(3 '(face markup-meta-face adoc-reserved nil adoc-attribute-list t) t)) ; attribute list
 
    ;; lists
    ;; ------------------------------
