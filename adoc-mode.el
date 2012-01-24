@@ -721,7 +721,7 @@ Subgroups:
 2 target
 3 attribute list, exclusive brackets []"
   ;; !!! \< is not exactly what AsciiDoc does, see regex above
-  (concat "\\<\\(" cmd-name "\\):\\([^ \t\n].*\\)[\\(.*?\\)]" ))
+  (concat "\\<\\(" cmd-name "\\):\\([^ \t\n].*\\)\\[\\(.*?\\)\\]" ))
 
 ;; todo: use same regexps as for font lock
 (defun adoc-re-paragraph-separate ()
@@ -1009,10 +1009,10 @@ When LITERAL-P is non-nil, the contained text is literal text."
    '(0 '(face markup-meta-face adoc-reserved t) t)
    '(1 markup-complex-replacement-face t)
    '(2 markup-internal-reference-face t)
-   '(3 '(face markup-delimiter-face
+   '(3 '(face markup-meta-face
 	     adoc-reserved nil	    
 	     adoc-attribute-list (((0 "alt") markup-secondary-text-face)
-				  ("title" markup-secondary-text-face))))))
+				  ("title" markup-secondary-text-face))) t)))
 
 ;; bug: escapes are not handled yet
 ;; todo: give the inserted character a specific face. But I fear that is not
@@ -1198,10 +1198,10 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; image
    ;; (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
    (list "^\\(image\\)::\\([^ \t\n]*?\\)\\[\\(.*?\\)\\][ \t]*$"
-         '(0 '(face markup-delimiter-face adoc-reserved block-del)) ; whole match
+         '(0 '(face markup-meta-face adoc-reserved block-del)) ; whole match
          '(1 markup-complex-replacement-face t)	  ; macro name
          '(2 markup-internal-reference-face t)	  ; file name
-         '(3 '(face markup-delimiter-face
+         '(3 '(face markup-meta-face
 	       adoc-reserved nil	    
 	       adoc-attribute-list (((0 "alt") markup-secondary-text-face)
 			        ("title" markup-secondary-text-face)))
@@ -1325,7 +1325,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; ^\[(?P<attrlist>.*)\]$
    (list "^\\(\\[\\(.*\\)\\]\\)[ \t]*$"
          '(1 '(face markup-meta-face adoc-reserved block-del))
-	 '(2 '(face markup-delimiter-face adoc-attribute-list t)))
+	 '(2 '(face markup-meta-face adoc-attribute-list t)))
 
 
    ;; block title

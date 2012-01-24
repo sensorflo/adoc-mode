@@ -1,4 +1,3 @@
-
 (require 'ert)
 (require 'adoc-mode)
 
@@ -134,6 +133,45 @@
     ;; as delimited block
     ;; tested in delimited-blocks-simple
     ))
+
+(ert-deftest adoctest-test-images ()
+  (adoctest-faces "images"
+     ;; block macros
+     ;; empty arglist
+     "image" markup-complex-replacement-face "::" markup-meta-face 
+       "./foo/bar.png" markup-internal-reference-face
+       "[]" markup-meta-face "\n" nil
+     ;; pos attribute 0 = alternate text 
+     "image" markup-complex-replacement-face "::" markup-meta-face 
+       "./foo/bar.png" markup-internal-reference-face
+       "[" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "\n" nil
+     ;; keyword title
+     "image" markup-complex-replacement-face "::" markup-meta-face 
+       "./foo/bar.png" markup-internal-reference-face
+       "[" markup-meta-face "alt" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "\n" nil
+     ;; keyword alt and title
+     "image" markup-complex-replacement-face "::" markup-meta-face 
+       "./foo/bar.png" markup-internal-reference-face
+       "[" markup-meta-face "alt" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "," markup-meta-face
+       "title" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "\n" nil
+
+     ;; no everything again with inline macros
+     "foo " 'no-face "image" markup-complex-replacement-face ":" markup-meta-face 
+       "./foo/bar.png" markup-internal-reference-face
+       "[]" markup-meta-face "bar" 'no-face "\n" nil
+
+     "foo " 'no-face "image" markup-complex-replacement-face ":" markup-meta-face 
+       "./foo/bar.png" markup-internal-reference-face
+       "[" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "bar" 'no-face "\n" nil
+
+     "foo " 'no-face "image" markup-complex-replacement-face ":" markup-meta-face 
+       "./foo/bar.png" markup-internal-reference-face
+       "[" markup-meta-face "alt" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "bar" 'no-face "\n" nil
+
+     "foo " 'no-face "image" markup-complex-replacement-face ":" markup-meta-face 
+       "./foo/bar.png" markup-internal-reference-face
+       "[" markup-meta-face "alt" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "," markup-meta-face
+       "title" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "bar" 'no-face "\n" nil))
 
 (ert-deftest adoctest-test-attribute-list ()
   (adoctest-faces "attribute-list"
@@ -372,5 +410,5 @@
   (save-buffer "adoc-mode.el")
   (save-buffer "adoc-mode-test.el")
   (ert-run-tests-interactively "^adoctest-pre-test-byte-compile")
-  (ert-run-tests-interactively "^adoctest-test"))
+  (ert-run-tests-interactively "^adoctest-test-"))
 
