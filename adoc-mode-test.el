@@ -135,6 +135,20 @@
     ;; tested in delimited-blocks-simple
     ))
 
+(ert-deftest adoctest-test- ()
+  (adoctest-faces "comments"
+    ;; as block macro 
+    "// lorem ipsum\n" markup-comment-face
+    "\n" nil
+    ;; as inline macro
+    "lorem ipsum\n" 'no-face
+    "// dolor sit\n" markup-comment-face
+    "amen\n" 'no-face
+    "\n" nil
+    ;; as delimited block
+    ;; tested in delimited-blocks-simple
+    ))
+
 (ert-deftest adoctest-test-quotes-simple ()
   (adoctest-faces "test-quotes-simple"
    ;; note that in unconstraned quotes cases " ipsum " has spaces around, in
@@ -328,15 +342,21 @@
    "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor\n" 'no-face))
 
 ;; todo: also test for warnings
-(ert-deftest adoctest-test-byte-compile ()
-  (ert-should (byte-compile-file (locate-library "adoc-mode.el" t))))
+(ert-deftest adoctest-pre-test-byte-compile ()
+  (ert-should (byte-compile-file (locate-library "adoc-mode.el" t)))
+  (ert-should (load "adoc-mode.el" nil nil t))
+  (ert-should (byte-compile-file (locate-library "adoc-mode-test.el" t)))
+  (ert-should (load "adoc-mode-test.el" nil nil t)))
+
+;; todo
+;; - test also for multiple versions of (X)Emacs
+;; - compare adoc-mode fontification with actuall output from AsciiDoc, being
+;;   almost the ultimative test for correctness
 
 (defun adoc-test-run()
   (interactive)
   (save-buffer "adoc-mode.el")
-  (load "adoc-mode.el" nil nil t) ; really .el, not .elc
   (save-buffer "adoc-mode-test.el")
-  (load-library "adoc-mode-test")
+  (ert-run-tests-interactively "^adoctest-pre-test-byte-compile")
   (ert-run-tests-interactively "^adoctest-test-"))
 
-(global-set-key [(f5)] 'adoc-test-run)

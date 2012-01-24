@@ -605,6 +605,22 @@ Subgroups:
    "\\|[^. \t\n]\\).*\\)"
    "\\(\n\\)"))
 
+(defun adoc-re-attribute-list-elt ()
+  "Returns a regexp matching an attribute list elment.
+Subgroups:
+1 attribute name
+2 attribute value if given as string 
+3 attribute value if not given as string"
+  (concat
+   ",?[ \t\n]*"
+   "\\(?:\\([a-zA-Z_]+\\)[ \t\n]*=[ \t\n]*\\)?"         ; 1
+   "\\(?:"
+     ;; regexp for string: See 'Mastering Regular Expressions', chapter 'The
+     ;; Real "Unrolling-the-Loop" Pattern'.
+     "\"\\([^\"]*\\(?:\\.[^\"]*\\)*\\)\"[ \t\n]*" "\\|"	; 2 
+     "\\([^,]+\\)"					; 3 
+   "\\)"))
+
 (defun adoc-re-precond (&optional unwanted-chars backslash-allowed disallowed-at-bol)
   (concat
           (when disallowed-at-bol ".")
@@ -788,53 +804,32 @@ value."
 		  (some (lambda(x)
 			  (and (match-beginning x))
 			  (text-property-any (match-beginning x)
-					     (match-end x)
+			         	     (match-end x)
 					     'adoc-reserved 'block-del))
 			no-block-del-groups))))
       (when (and found prevented (<= (point) end))
 	(goto-char (1+ saved-point))))
     (and found (not prevented))))
 
-;; (defun adoc-kwf-std (end regexp &rest must-free-groups)
-;;   "adoc's standart matcher function for keywords.
-
-;; Intendent to be called from font lock keyword functions. END is
-;; the limit of the search. REXEXP the regexp to be searched.
-;; MUST-FREE-GROUPS a list of regexp group numbers which may not
-;; match text that has an adoc-reserved text-property with a non-nil
-;; value."
-;;   (let ((found t) (prevented t) ; start value's are semantically not true, but make the loop condition simpler
-;; 	saved-point
-;; 	(continue t)
-;; 	(end2 end))
-;;     (while continue
-;;       (when (eq (get-text-property (point) 'adoc-reserved) 'block-del)
-;; 	(goto-char (next-single-property-change (point) 'adoc-reserved nil end)))
-;;       (setq end2 (min (if (eq (get-text-property end 'adoc-reserved) 'block-del)
-;; 			  (1+ (previous-single-property-change (point) 'adoc-reserved nil end))
-;; 			end)
-;; 		      (text-property-any (point) end 'adoc-reserved 'block-del)))
-;;       (setq saved-point (point))
-;;       (setq found (and (> end2 (point))
-;; 		       (re-search-forward regexp end2 t)))
-
-;;       ;; it is prevented if some/any of the must free groups contain text which
-;;       ;; has a non-nil adoc-reserved text property
-;;       (setq prevented 
-;; 	    (and found
-;; 		 (some (lambda(x)
-;; 			 (and (match-beginning x)
-;; 			      (text-property-not-all (match-beginning x)
-;; 						     (match-end x)
-;; 						     'adoc-reserved nil)))
-;; 		       must-free-groups)))
-;;       (setq continue
-;; 	    (and (or (and found prevented)
-;; 		     (and (not found) (< end2 end)))
-;; 		 (< (point) (1- end))))
-;;       (when continue
-;; 	(goto-char (1+ saved-point))))
-;;     (and found (not prevented))))
+(defun adoc-kwf-attriblist (end)
+  (let* ((end2 end)
+	 key)	
+    (while (< (point) end)
+      (goto-char (or (text-property-not-all (point) end 'adoc-attribute-list nil)
+		     end))
+      (when (< (point) end)
+	(setq key 0)
+	(setq end2 (or (text-property-any (point) end 'adoc-attribute-list nil)
+		       end))
+	(while (re-search-forward (adoc-re-attribute-list-elt) end2 t)
+	  (when (match-beginning 1)
+	    (setq key (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+	    (put-text-property (match-beginning 1) (match-end 1) 'face markup-attribute-face))
+	  (let ((group (if (match-beginning 2) 2 3))
+	  	(face (adoc-attribute-elt-face (get-text-property (match-beginning 0) 'adoc-attribute-list) key)))
+	    (put-text-property (match-beginning group) (match-end group) 'face face))
+	  (when (numberp key) (setq key (1+ key)))))))
+  nil)
 
 (defun adoc-facespec-subscript ()
   (list 'quote
@@ -888,6 +883,15 @@ value."
    ;; highlighers
    `(1 ,text-face t)
    `(2 '(face markup-meta-hide-face adoc-reserved block-del) t)))
+
+;; (defun adoc-?????-attributes (endpos enddelchar)
+;;   (list
+;;    (concat 
+;;     ",?[ \t\n]*"
+;;     "\\(?:\\([a-zA-Z_]+\\)[ \t\n]*=[ \t\n]*\\)?" ; attribute name
+;;     "\\([^" enddelchar ",]*\\|" (adoc-re-string) "\\)"))					      ; attribute value
+;;    '(1 markup-attribute-face t)
+;;    '(2 markup-value-face t)))
 
 (defun adoc-kw-oulisti (type &optional level sub-type)
   "Creates a keyword for font-lock which highlights both (un)ordered list item.
@@ -1167,11 +1171,14 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(1 '(face markup-comment-face adoc-reserved block-del)))    
    ;; image
    ;; (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
-   (list "^\\(\\(image::\\)\\([^ \t\n]*?\\)\\(\\[.*?\\]\\)\\)[ \t]*$"
-         '(1 '(face nil adoc-reserved block-del)) ; whole match
-         '(2 adoc-hide-delimiter)         ; macro name
-         '(3 adoc-complex-replacement)    ; file name
-         '(4 adoc-delimiter))             ; attribute list inlcl. []
+   (list "^\\(image\\)::\\([^ \t\n]*?\\)\\[\\(.*?\\)\\][ \t]*$"
+         '(0 '(face markup-delimiter-face adoc-reserved block-del)) ; whole match
+         '(1 markup-complex-replacement-face t)	  ; macro name
+         '(2 markup-internal-reference-face t)	  ; file name
+         '(3 '(face markup-delimiter-face
+	       adoc-attribute-list (((0 "alt") markup-secondary-text-face)
+			        ("title" markup-secondary-text-face)))
+	      t))			  ; attribute list
    ;; passthrough: (?u)^(?P<name>pass)::(?P<subslist>\S*?)(\[(?P<passtext>.*?)\])$
    ;; todo
 
@@ -1180,7 +1187,6 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; general syntax: (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
    (list "^[a-zA-Z0-9_]+::\\([^ \t\n]*?\\)\\(\\[.*?\\]\\)[ \t]*$"
          'adoc-delimiter) 
-
 
    ;; lists
    ;; ------------------------------
@@ -1278,7 +1284,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; admonition block
    (list "^\\(\\[\\(?:CAUTION\\|WARNING\\|IMPORTANT\\|TIP\\|NOTE\\)\\]\\)[ \t]*$"
          '(1 '(face adoc-complex-replacement adoc-reserved block-del)))
-   ;; block id = 1st alternation from asciidoc's regex (see general section below)
+   ;; ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
    ;; see also anchor inline macro
    (list "^\\(\\(\\[\\[\\)\\([-a-zA-Z0-9_]+\\)\\(?:\\(,\\)\\(.*?\\)\\)?\\(\\]\\]\\)[ \t]*\\)$"
          '(1 '(face nil adoc-reserved block-del)) ; whole match
@@ -1288,10 +1294,11 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(5 adoc-secondary-text nil t)   ;   xref text
          '(6 adoc-hide-delimiter))        ; ]]
 
-   ;; --- general attribute list = 2nd alternation from ascidoc's regex
-   ;; (?u)(^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$)|(^\[(?P<attrlist>.*)\]$)
-   (list "^\\(\\[.*\\]\\)[ \t]*$"
-         '(1 '(face adoc-delimiter adoc-reserved block-del)))
+   ;; --- general attribute list
+   ;; ^\[(?P<attrlist>.*)\]$
+   (list "^\\(\\[\\(.*\\)\\]\\)[ \t]*$"
+         '(1 '(face adoc-delimiter adoc-reserved block-del))
+	 '(2 '(face markup-delimiter-face 'adoc-attribute-list t)))
 
 
    ;; block title
@@ -1574,6 +1581,9 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; implicitely.
    (list "^\\(\\+[ \t]*\\)\n\\([ \t]+\\)[^ \t\n]" '(1 adoc-warning t) '(2 adoc-warning t)) 
 
+   ;; content of attribute lists
+   (list 'adoc-kwf-attriblist)
+
    ;; cleanup
    (list 'adoc-flf-meta-face-cleanup)
    ))
@@ -1811,6 +1821,20 @@ knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
                    (match-string 1 entity)))))
       (when (characterp ch) (make-string 1 ch)))))
 
+(defun adoc-attribute-elt-face (attribute-list key)
+  "Returns the face in the ATTRIBUTE-LIST associated with KEY.
+If there is no match, `markup-value-face' is returned."
+  (let (found-face)
+    (while (and (listp attribute-list) attribute-list (not found-face))
+      (let* ((elt (car attribute-list))
+	     (key-or-keys (car elt)) 
+	     (face (cadr elt)))
+	(when (or (and (listp key-or-keys) (member key key-or-keys))
+		  (equal key key-or-keys))
+	  (setq found-face face))
+	(setq attribute-list (cdr attribute-list))))
+    (or found-face markup-value-face)))
+
 (defun adoc-calc ()
   "(Re-)calculates variables used in adoc-mode.
 Needs to be called after changes to certain (customization)
@@ -1874,7 +1898,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
 	 (font-lock-multiline . t)
 	 (font-lock-mark-block-function . adoc-font-lock-mark-block-function)))
   (make-local-variable 'font-lock-extra-managed-props)
-  (setq font-lock-extra-managed-props '(adoc-reserved))
+  (setq font-lock-extra-managed-props '(adoc-reserved adoc-attribute-list))
   (make-local-variable 'font-lock-unfontify-region-function)
   (setq font-lock-unfontify-region-function 'adoc-unfontify-region-function)
   
