@@ -960,7 +960,7 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
 ;; if adoc-kw-delimited-block, adoc-kw-two-line-title don't find the whole
 ;; delimited block / two line title, at least 'use up' the delimiter line so it
 ;; is later not misinterpreted as a funny serries of unconstrained quotes
-(defun adoc-kw-delimtier-line-fallback ()
+(defun adoc-kw-delimiter-line-fallback ()
   (list
    `(lambda (end) (adoc-kwf-std end ,(adoc-re-delimited-block-line) '(0)))
    '(0 '(face markup-meta-face adoc-reserved block-del) t)))
@@ -1274,7 +1274,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    (adoc-kw-delimited-block 5 nil t) ; example  
    (adoc-kw-delimited-block 6 adoc-secondary-text t) ; sidebar
    (adoc-kw-delimited-block 7 nil t) ; open block
-   (adoc-kw-delimtier-line-fallback)  
+   (adoc-kw-delimiter-line-fallback)  
 
 
    ;; tables
