@@ -614,6 +614,21 @@ Subgroups:
 3 attribute list, exclusive brackets []"
   (concat "^\\(" (or cmd-name "[a-zA-Z0-9_]+") "\\)::\\([^ \t\n]*?\\)\\[\\(.*?\\)\\][ \t]*$"))
 
+;; with attriblists:
+;;   inline macro special syntax: [\\]?\[\[(?P<attrlist>[\w"_:].*?)\]\]
+;;   inline macro biblio special syntax: [\\]?\[\[\[(?P<attrlist>[\w_:][\w_:.-]*?)\]\]\]
+;; id/reftext given by  special syntax
+;;   block id:  ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
+;; mixed:
+;;   inline macro default syntax: see adoc-re-inline-macro. the target is the id, the 1st pos arg is the xreflabel
+(defun adoc-re-anchor(type)
+  "Returns a regexp matching an anchor."
+  (cond
+   ((eq type 'block-id) "^\\[\\[\\([-a-zA-Z0-9_]+\\)\\(?:,?\\(.*?\\)\\)?\\]\\][ \t]*$")
+   ((eq type 'inline-special) "\\(\\[\\[\\)\\([a-zA-Z0-9\"_:].*?\\)\\(\\]\\]\\)")
+   ((eq type 'biblio) "\\(\\[\\[\\)\\(\\[[a-zA-Z0-9_:][a-zA-Z0-9_:.-]*?\\]\\)\\(\\]\\]\\)")
+   ((eq type 'inline-general) (adoc-re-inline-macro "anchor"))))
+
 (defun adoc-re-attribute-list-elt ()
   "Returns a regexp matching an attribute list elment.
 Subgroups:
@@ -719,18 +734,22 @@ subgroups:
    (t
     (error "Invalid type"))))
 
-;; Macros using default syntax.
+;; asciidoc.conf:
+;; # Macros using default syntax.
 ;; (?<!\w)[\\]?(?P<name>http|https|ftp|file|irc|mailto|callto|image|link|anchor|xref|indexterm):(?P<target>\S*?)\[(?P<attrlist>.*?)\]
-;; Default (catchall) inline macro is not implemented
-;; #    [\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]
-(defun adoc-re-inline-macro (cmd-name)
+;; # Default (catchall) inline macro is not implemented
+;; # [\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]
+(defun adoc-re-inline-macro (&optional cmd-name)
   "Returns regex matching an inline macro.
 Subgroups:
 1 cmd name
-2 target
-3 attribute list, exclusive brackets []"
+2 :
+3 target
+4 [
+5 attribute list, exclusive brackets []
+6 ]"
   ;; !!! \< is not exactly what AsciiDoc does, see regex above
-  (concat "\\<\\(" cmd-name "\\):\\([^ \t\n].*\\)\\[\\(.*?\\)\\]" ))
+  (concat "\\<\\(" (or cmd-name "\\w+") "\\)\\(:\\)\\([^ \t\n].*\\)\\(\\[\\)\\(.*?\\)\\(\\]\\)" ))
 
 ;; todo: use same regexps as for font lock
 (defun adoc-re-paragraph-separate ()
@@ -833,6 +852,8 @@ value."
 	(goto-char (1+ saved-point))))
     (and found (not prevented))))
 
+;; todo: maybe add default face use for keys
+;; (list "\\[[^]\n]*?\\(?:caption\\|title\\|alt\\|attribution\\|citetitle\\|xreflabel\\|xreftext\\)=\"\\([^\"\n]*?\\)\"[^]\n]*?\\]"
 (defun adoc-kwf-attriblist (end)
   (let* ((end2 end)
 	 key)	
@@ -1010,18 +1031,15 @@ When LITERAL-P is non-nil, the contained text is literal text."
       '(3 nil)) ; grumbl, I dont know how to get rid of it
    `(4 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t))); close del
 
-(defun adoc-kw-inline-image ()
+(defun adoc-kw-inline-macro (&optional cmd-name cmd-face target-face target-meta-p attribute-list)
   (list
-   ;; matcher function
-   `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro "image") '(1 2) '(0)))
-   ;; highlighers
-   '(0 '(face markup-meta-face adoc-reserved t) t)
-   '(1 markup-complex-replacement-face t)
-   '(2 markup-internal-reference-face t)
-   '(3 '(face markup-meta-face
-	     adoc-reserved nil	    
-	     adoc-attribute-list (((0 "alt") markup-secondary-text-face)
-				  ("title" markup-secondary-text-face))) t)))
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name) '(1 2 4 5) '(0)))
+   `(1 '(face ,(or cmd-face markup-command-face) adoc-reserved t) t) 
+   '(2 '(face markup-meta-face adoc-reserved t) t) ; :
+   `(3 ,(or target-face markup-meta-face) ,(if target-meta-p t 'append))
+   '(4 '(face markup-meta-face adoc-reserved t) t) ; [
+   `(5 '(face markup-meta-face adoc-attribute-list ,(or attribute-list t)) t)
+   '(6 '(face markup-meta-face adoc-reserved t) t))) ; ]
 
 ;; bug: escapes are not handled yet
 ;; todo: give the inserted character a specific face. But I fear that is not
@@ -1206,7 +1224,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(1 '(face markup-comment-face adoc-reserved block-del)))    
    ;; image
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro "image") '(0)))
-         '(0 '(face markup-meta-face adoc-reserved block-del)) ; whole match
+         '(0 '(face markup-meta-face adoc-reserved block-del) t) ; whole match
          '(1 markup-complex-replacement-face t)	; 'image'  
          '(2 markup-internal-reference-face t)  ; file name
          '(3 '(face markup-meta-face		; attribute list
@@ -1319,21 +1337,17 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; admonition block
    (list "^\\(\\[\\(?:CAUTION\\|WARNING\\|IMPORTANT\\|TIP\\|NOTE\\)\\]\\)[ \t]*$"
          '(1 '(face adoc-complex-replacement adoc-reserved block-del)))
-   ;; ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
-   ;; see also anchor inline macro
-   (list "^\\(\\(\\[\\[\\)\\([-a-zA-Z0-9_]+\\)\\(?:\\(,\\)\\(.*?\\)\\)?\\(\\]\\]\\)[ \t]*\\)$"
-         '(1 '(face nil adoc-reserved block-del)) ; whole match
-         '(2 adoc-hide-delimiter)         ; [[
-         '(3 adoc-anchor)                 ;   anchor-id
-         '(4 adoc-hide-delimiter nil t)   ;   ,
-         '(5 adoc-secondary-text nil t)   ;   xref text
-         '(6 adoc-hide-delimiter))        ; ]]
+   ;; block id
+   (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-anchor 'block-id) '(0)))
+   	 '(0 '(face markup-meta-face adoc-reserved block-del))
+   	 '(1 markup-anchor-face t)
+   	 '(2 markup-secondary-text-face t t))
 
-   ;; --- general attribute list
+   ;; --- general attribute list block element
    ;; ^\[(?P<attrlist>.*)\]$
-   (list "^\\(\\[\\(.*\\)\\]\\)[ \t]*$"
+   (list '(lambda (end) (adoc-kwf-std end "^\\(\\[\\(.*\\)\\]\\)[ \t]*$" '(0)))
          '(1 '(face markup-meta-face adoc-reserved block-del))
-	 '(2 '(face markup-meta-face adoc-attribute-list t)))
+   	 '(2 '(face markup-meta-face adoc-attribute-list t)))
 
 
    ;; block title
@@ -1451,6 +1465,16 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; 
    ;; 
 
+   ;; Macros using default syntax, but having special highlighting in adoc-mode
+   (adoc-kw-inline-macro "anchor" nil markup-anchor-face t
+			 '(((0 "xreflabel") markup-secondary-text-face)))  
+   (adoc-kw-inline-macro "image" markup-complex-replacement-face markup-internal-reference-face t
+			 '(((0 "alt") markup-secondary-text-face)
+			   ("title" markup-secondary-text-face)))  
+
+   ;; Macros using default syntax and having default highlighting in adoc-mod
+   (adoc-kw-inline-macro)  
+   
    ;; # These URL types don't require any special attribute list formatting.
    ;; (?su)(?<!\S)[\\]?(?P<name>http|https|ftp|file|irc):(?P<target>//[^\s<>]*[\w/])=
    ;; # Allow a leading parenthesis and square bracket.
@@ -1462,15 +1486,9 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; list, that version can only have a limited set of characters before. Why
    ;; not just have the rule that it must start with \b.
    (list "\\b\\(\\(?:https?\\|ftp\\|file\\|irc\\|mailto\\|callto\\|link\\)[^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
-         '(1 adoc-delimiter) '(2 adoc-hide-delimiter)  '(3 adoc-reference) '(4 adoc-delimiter nil t) '(5 adoc-hide-delimiter))
+         '(1 adoc-delimiter) '(2 adoc-hide-delimiter) '(3 adoc-reference) '(4 adoc-delimiter nil t) '(5 adoc-hide-delimiter))
    (cons "\\b\\(?:https?\\|ftp\\|file\\|irc\\)://[^ \t<>\n]*[a-zA-Z0-9_//]" 'adoc-reference)
-   (list "\\b\\(xref:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
-         '(1 adoc-hide-delimiter) '(2 adoc-delimiter) '(3 adoc-hide-delimiter) '(4 adoc-reference) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter)) 
 
-   (adoc-kw-inline-image)
-   
-   (list "\\(anchor:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\]\\)"
-         '(1 adoc-hide-delimiter) '(2 adoc-anchor) '(3 adoc-hide-delimiter) '(4 adoc-secondary-text) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter)) 
    ;; standalone email, SIMPLE reglex! copied from http://www.regular-expressions.info/email.html
    ;; asciidoc.conf: (?su)(?<![">:\w._/-])[\\]?(?P<target>\w[\w._-]*@[\w._-]*\w)(?!["<\w_-])=mailto
    ;; todo: use asciidoc's regex
@@ -1496,6 +1514,41 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(4 adoc-hide-delimiter))      ; ]
 
 
+   ;; bibliographic anchor ala [[[id]]]
+   ;; actually the part between the innermost brackets is an attribute list, for
+   ;; simplicity adoc-mode doesn't really treat it as such. The attrib list can
+   ;; only contain one element anyway.
+   (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-anchor 'biblio) '(1 3) '(0)))
+   	 '(1 '(face markup-meta-face adoc-reserved t) t)  ; [[
+   	 '(2 markup-gen-face)				  ; [id]
+	 '(3 '(face markup-meta-face adoc-reserved t) t)) ; ]]
+   ;; anchor ala [[id]] or [[id,xreflabel]]
+   (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-anchor 'inline-special) '(1 3) '(0)))
+   	 '(1 '(face markup-meta-face adoc-reserved t) t)
+   	 '(2 '(face markup-meta-face
+	       adoc-attribute-list (((0 "id") markup-anchor-face)
+				    ((1 "xreflabel") markup-secondary-text-face))) t)
+	 '(3 '(face markup-meta-face adoc-reserved t) t))
+
+   ;; reference with own/explicit caption
+   ;; (?su)[\\]?&lt;&lt;(?P<attrlist>[\w"].*?)&gt;&gt;=xref2
+   (list "\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+         '(1 adoc-hide-delimiter)       ; <<
+         '(2 adoc-delimiter)            ; anchor-id
+         '(3 adoc-hide-delimiter)       ; ,
+         '(4 adoc-reference)            ; link text
+         '(5 adoc-hide-delimiter))      ; >>
+   ;; reference without caption
+   ;; asciidoc.conf uses the same regexp as for without caption
+   (list "\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+         '(1 adoc-hide-delimiter)       ; <<
+         '(2 adoc-reference)            ; link text = anchor id
+         '(3 adoc-hide-delimiter))      ; >>
+   (list "\\b\\(xref:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
+         '(1 adoc-hide-delimiter) '(2 adoc-delimiter) '(3 adoc-hide-delimiter) '(4 adoc-reference) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter)) 
+
+
+
    ;; index terms
    ;; todo:
    ;; - copy asciidocs regexps below
@@ -1517,47 +1570,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; # Inline literal (within ifndef::no-inline-literal[])
    ;; (?su)(?<!\w)([\\]?`(?P<passtext>\S|\S.*?\S)`)(?!\w)=literal[specialcharacters]
 
-   ;; -- anchors, references, biblio
-   ;;
-   ;; anchor inline macro with xreflabel (see also block id block macro)
-   ;; (?su)[\\]?\[\[(?P<attrlist>[\w"].*?)\]\]=anchor2
-   (list "\\(\\[\\[\\)\\([a-zA-Z0-9_\"].*?\\)\\(,\\)\\(.*?\\)\\(\]\\]\\)"
-         '(1 adoc-hide-delimiter)       ; [[
-         '(2 adoc-anchor)               ; anchor-id
-         '(3 adoc-hide-delimiter)       ; ,
-         '(4 adoc-secondary-text)       ; xref label
-         '(5 adoc-hide-delimiter))      ; ]]
-   ;; anchor inline macro without xreflabel (see also block id block macro)
-   ;; (?su)[\\]?\[\[(?P<attrlist>[\w"].*?)\]\]=anchor2
-   (list "\\(\\[\\[\\)\\([a-zA-Z0-9_\"].*?\\)\\(\\]\\]\\)"
-         '(1 adoc-hide-delimiter)       ; [[
-         '(2 adoc-anchor)               ; anchor-id
-         '(3 adoc-hide-delimiter))      ; ]]
-   ;; reference with own/explicit caption
-   ;; (?su)[\\]?&lt;&lt;(?P<attrlist>[\w"].*?)&gt;&gt;=xref2
-   (list "\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)"
-         '(1 adoc-hide-delimiter)       ; <<
-         '(2 adoc-delimiter)            ; anchor-id
-         '(3 adoc-hide-delimiter)       ; ,
-         '(4 adoc-reference)            ; link text
-         '(5 adoc-hide-delimiter))      ; >>
-   ;; reference without caption
-   ;; asciidoc.conf uses the same regexp as for without caption
-   (list "\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)"
-         '(1 adoc-hide-delimiter)       ; <<
-         '(2 adoc-reference)            ; link text = anchor id
-         '(3 adoc-hide-delimiter))      ; >>
-   ;; biblio item:
-   ;; (?su)[\\]?\[\[\[(?P<attrlist>[\w][\w-]*?)\]\]\]=anchor3
-   (list "\\(\\[\\[\\)\\(\\[[a-zA-Z0-9_][-a-zA-Z0-9_]*?\\]\\)\\(\\]\\]\\)"
-         '(1 adoc-hide-delimiter)       ; [[
-         '(2 adoc-generic)              ; [anchorid]
-         '(3 adoc-hide-delimiter))      ; ]]
 
-   ;; -- general inline
-   ;; inline: (?su)[\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]=
-   ;; todo: implement my regexp according the one above from asciidoc.conf
-   (cons "\\\\?\\w\\(\\w\\|-\\)*:[^ \t\n]*?\\[.*?\\]" 'adoc-delimiter) ; inline
 
    ;; -- forced linebreak 
    ;; manual: A plus character preceded by at least one space character at the
@@ -1581,12 +1594,6 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; ------------------------------
 
    ;; -- misc 
-   ;; special attribute type-value pairs: 
-   ;; bug: can actually only appear within attribute lists
-   (list "\\[[^]\n]*?\\(?:caption\\|title\\|alt\\|attribution\\|citetitle\\|xreflabel\\|xreftext\\)=\"\\([^\"\n]*?\\)\"[^]\n]*?\\]"
-         '(1 adoc-secondary-text t)) 
-   (list "\\[[^]\n]*?\\(?:id\\)=\"\\([^\"\n]*?\\)\"[^]\n]*?\\]"
-         '(1 adoc-anchor t)) 
    (adoc-kw-first-whites-fixed-width)
 
    ;; -- warnings 

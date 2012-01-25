@@ -134,6 +134,24 @@
     ;; tested in delimited-blocks-simple
     ))
 
+(ert-deftest adoctest-test-anchors ()
+  (adoctest-faces "anchors"
+    ;; block id
+    "[[" markup-meta-face "foo" markup-anchor-face "]]" markup-meta-face "\n" nil
+    "[[" markup-meta-face "foo" markup-anchor-face "," markup-meta-face "bar" markup-secondary-text-face "]]" markup-meta-face "\n" nil
+
+    ;; general inline macro syntax
+    "lorem " 'no-face "anchor" markup-command-face ":" markup-meta-face
+      "ipsum" markup-anchor-face
+      "[]" markup-meta-face "\n" nil
+    "lorem " 'no-face "anchor" markup-command-face ":" markup-meta-face
+      "ipsum" markup-anchor-face
+      "[" markup-meta-face "dolor sit amet" markup-secondary-text-face"]" markup-meta-face "\n" nil
+
+    ;; biblio
+    "[[" markup-meta-face "[X1]" markup-gen-face "]]" markup-meta-face " lorem ipsum\n" 'no-face
+    ))
+
 (ert-deftest adoctest-test-images ()
   (adoctest-faces "images"
      ;; block macros
@@ -322,6 +340,10 @@
    ;; newline. However it shall deal with the situation that there is no
    ;; preceding newline, because we're at the beginning of the buffer
    "lorem" markup-gen-face "::" markup-list-face " " nil "ipsum" 'no-face))
+
+(ert-deftest adoctest-test-inline-macros ()
+  (adoctest-faces "inline-macros"
+    "commandname" markup-command-face ":target[" markup-meta-face "attribute list" markup-value-face "]" markup-meta-face "\n" nil))
 
 (ert-deftest adoctest-test-meta-face-cleanup ()
   ;; begin with a few simple explicit cases which are easier to debug in case of troubles
