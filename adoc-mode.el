@@ -350,6 +350,19 @@ To become a customizable variable when regexps for list items become customizabl
 (defvar adoc-unichar-alist nil
   "An alist, key=unicode character name as string, value=codepoint.")
 
+;; altough currently always the same face is used, I prefer an alist over a
+;; list. It is faster to find out wheter any attribute id is in the alist or
+;; not. And maybe markup-faces splits up markup-secondary-text-face into more
+;; specific faces.
+(defvar adoc-attribute-face-alist
+  '(("caption" . markup-secondary-text-face)
+    ("title" . markup-secondary-text-face)
+    ("alt" . markup-secondary-text-face)
+    ("attribution" . markup-secondary-text-face)
+    ("citetitle" . markup-secondary-text-face)
+    ("xreflabel" . markup-secondary-text-face))
+  "An alist, key=attribute id, value=face.")
+
 (defvar adoc-mode-hook nil
   "Normal hook run when entering Adoc Text mode.")
 
@@ -852,26 +865,24 @@ value."
 	(goto-char (1+ saved-point))))
     (and found (not prevented))))
 
-;; todo: maybe add default face use for keys
-;; (list "\\[[^]\n]*?\\(?:caption\\|title\\|alt\\|attribution\\|citetitle\\|xreflabel\\|xreftext\\)=\"\\([^\"\n]*?\\)\"[^]\n]*?\\]"
 (defun adoc-kwf-attriblist (end)
   (let* ((end2 end)
-	 key)	
+	 pos-or-id)	
     (while (< (point) end)
       (goto-char (or (text-property-not-all (point) end 'adoc-attribute-list nil)
 		     end))
       (when (< (point) end)
-	(setq key 0)
+	(setq pos-or-id 0)
 	(setq end2 (or (text-property-any (point) end 'adoc-attribute-list nil)
 		       end))
 	(while (re-search-forward (adoc-re-attribute-list-elt) end2 t)
 	  (when (match-beginning 1)
-	    (setq key (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+	    (setq pos-or-id (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
 	    (put-text-property (match-beginning 1) (match-end 1) 'face markup-attribute-face))
 	  (let ((group (if (match-beginning 2) 2 3))
-	  	(face (adoc-attribute-elt-face (get-text-property (match-beginning 0) 'adoc-attribute-list) key)))
+	  	(face (adoc-attribute-elt-face pos-or-id (get-text-property (match-beginning 0) 'adoc-attribute-list))))
 	    (put-text-property (match-beginning group) (match-end group) 'face face))
-	  (when (numberp key) (setq key (1+ key)))))))
+	  (when (numberp pos-or-id) (setq pos-or-id (1+ pos-or-id)))))))
   nil)
 
 (defun adoc-facespec-subscript ()
@@ -1227,11 +1238,8 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(0 '(face markup-meta-face adoc-reserved block-del) t) ; whole match
          '(1 markup-complex-replacement-face t)	; 'image'  
          '(2 markup-internal-reference-face t)  ; file name
-         '(3 '(face markup-meta-face		; attribute list
-	       adoc-reserved nil	    
-	       adoc-attribute-list (((0 "alt") markup-secondary-text-face)
-			        ("title" markup-secondary-text-face)))
-	      t))			  
+         '(3 '(face markup-meta-face adoc-reserved nil adoc-attribute-list ("alt")) t)) ; attribute list
+			  
    ;; passthrough: (?u)^(?P<name>pass)::(?P<subslist>\S*?)(\[(?P<passtext>.*?)\])$
    ;; todo
 
@@ -1466,11 +1474,8 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; 
 
    ;; Macros using default syntax, but having special highlighting in adoc-mode
-   (adoc-kw-inline-macro "anchor" nil markup-anchor-face t
-			 '(((0 "xreflabel") markup-secondary-text-face)))  
-   (adoc-kw-inline-macro "image" markup-complex-replacement-face markup-internal-reference-face t
-			 '(((0 "alt") markup-secondary-text-face)
-			   ("title" markup-secondary-text-face)))  
+   (adoc-kw-inline-macro "anchor" nil markup-anchor-face t '("xreflabel"))
+   (adoc-kw-inline-macro "image" markup-complex-replacement-face markup-internal-reference-face t '("alt"))
 
    ;; Macros using default syntax and having default highlighting in adoc-mod
    (adoc-kw-inline-macro)  
@@ -1525,9 +1530,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; anchor ala [[id]] or [[id,xreflabel]]
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-anchor 'inline-special) '(1 3) '(0)))
    	 '(1 '(face markup-meta-face adoc-reserved t) t)
-   	 '(2 '(face markup-meta-face
-	       adoc-attribute-list (((0 "id") markup-anchor-face)
-				    ((1 "xreflabel") markup-secondary-text-face))) t)
+   	 '(2 '(face markup-meta-face adoc-attribute-list ("id" "xreflabel")) t)
 	 '(3 '(face markup-meta-face adoc-reserved t) t))
 
    ;; reference with own/explicit caption
@@ -1845,19 +1848,14 @@ knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
                    (match-string 1 entity)))))
       (when (characterp ch) (make-string 1 ch)))))
 
-(defun adoc-attribute-elt-face (attribute-list key)
-  "Returns the face in the ATTRIBUTE-LIST associated with KEY.
-If there is no match, `markup-value-face' is returned."
-  (let (found-face)
-    (while (and (listp attribute-list) attribute-list (not found-face))
-      (let* ((elt (car attribute-list))
-	     (key-or-keys (car elt)) 
-	     (face (cadr elt)))
-	(when (or (and (listp key-or-keys) (member key key-or-keys))
-		  (equal key key-or-keys))
-	  (setq found-face face))
-	(setq attribute-list (cdr attribute-list))))
-    (or found-face markup-value-face)))
+(defun adoc-attribute-elt-face (pos-or-id &optional attribute-list-prop-val)
+  "Returns the face to be used for the given id or position"
+  (let ((id (cond ((stringp pos-or-id) pos-or-id)
+		  ((and (numberp pos-or-id) (listp attribute-list-prop-val)
+			(nth pos-or-id attribute-list-prop-val)))
+		  (t nil))))
+    (or (when id (cdr (assoc id adoc-attribute-face-alist)))
+	markup-value-face)))
 
 (defun adoc-calc ()
   "(Re-)calculates variables used in adoc-mode.
