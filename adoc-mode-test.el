@@ -138,18 +138,27 @@
   (adoctest-faces "anchors"
     ;; block id
     "[[" markup-meta-face "foo" markup-anchor-face "]]" markup-meta-face "\n" nil
-    "[[" markup-meta-face "foo" markup-anchor-face "," markup-meta-face "bar" markup-secondary-text-face "]]" markup-meta-face "\n" nil
+    "[[" markup-meta-face "foo" markup-anchor-face "," markup-meta-face
+      "bar" markup-secondary-text-face "]]" markup-meta-face "\n" nil
+
+    ;; special inline syntax: [[id]] [[id,xreftext]]
+    "lorem " 'no-face "[[" markup-meta-face "foo" markup-anchor-face "]]"
+      markup-meta-face "ipsum" 'no-face "\n" nil
+    "lorem " 'no-face "[[" markup-meta-face "foo" markup-anchor-face "," markup-meta-face
+      "bla bli bla blu" markup-secondary-text-face "]]" markup-meta-face "ipsum" 'no-face "\n" nil
 
     ;; general inline macro syntax
     "lorem " 'no-face "anchor" markup-command-face ":" markup-meta-face
-      "ipsum" markup-anchor-face
-      "[]" markup-meta-face "\n" nil
+      "foo" markup-anchor-face
+      "[]" markup-meta-face "ipsum" 'no-face "\n" nil
     "lorem " 'no-face "anchor" markup-command-face ":" markup-meta-face
-      "ipsum" markup-anchor-face
-      "[" markup-meta-face "dolor sit amet" markup-secondary-text-face"]" markup-meta-face "\n" nil
+      "foo" markup-anchor-face
+      "[" markup-meta-face "bla bli bla blu" markup-secondary-text-face "]" markup-meta-face
+      "ipsum" 'no-face "\n" nil
 
     ;; biblio
-    "[[" markup-meta-face "[X1]" markup-gen-face "]]" markup-meta-face " lorem ipsum\n" 'no-face
+    "lorem " 'no-face "[[" markup-meta-face "[foo]" markup-gen-face "]]" markup-meta-face
+      " ipsum\n" 'no-face
     ))
 
 (ert-deftest adoctest-test-images ()

@@ -355,12 +355,13 @@ To become a customizable variable when regexps for list items become customizabl
 ;; not. And maybe markup-faces splits up markup-secondary-text-face into more
 ;; specific faces.
 (defvar adoc-attribute-face-alist
-  '(("caption" . markup-secondary-text-face)
-    ("title" . markup-secondary-text-face)
+  '(("id" . markup-anchor-face)
+    ("caption" . markup-secondary-text-face)
+    ("xreflabel" . markup-secondary-text-face)
     ("alt" . markup-secondary-text-face)
+    ("title" . markup-secondary-text-face)
     ("attribution" . markup-secondary-text-face)
-    ("citetitle" . markup-secondary-text-face)
-    ("xreflabel" . markup-secondary-text-face))
+    ("citetitle" . markup-secondary-text-face))
   "An alist, key=attribute id, value=face.")
 
 (defvar adoc-mode-hook nil
