@@ -1043,12 +1043,17 @@ When LITERAL-P is non-nil, the contained text is literal text."
       '(3 nil)) ; grumbl, I dont know how to get rid of it
    `(4 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t))); close del
 
-(defun adoc-kw-inline-macro (&optional cmd-name cmd-face target-face target-meta-p attribute-list)
+(defun adoc-kw-inline-macro (&optional cmd-name cmd-face target-faces target-meta-p attribute-list)
   (list
    `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name) '(1 2 4 5) '(0)))
    `(1 '(face ,(or cmd-face markup-command-face) adoc-reserved t) t) 
    '(2 '(face markup-meta-face adoc-reserved t) t) ; :
-   `(3 ,(or target-face markup-meta-face) ,(if target-meta-p t 'append))
+   `(3 ,(cond ((not target-faces) markup-meta-face)
+	      ((listp target-faces) '(if (string= (match-string 5) "")
+					 (car target-faces)
+				       (cadr target-faces)))
+	      (t target-faces))
+       ,(if target-meta-p t 'append))
    '(4 '(face markup-meta-face adoc-reserved t) t) ; [
    `(5 '(face markup-meta-face adoc-attribute-list ,(or attribute-list t)) t)
    '(6 '(face markup-meta-face adoc-reserved t) t))) ; ]
@@ -1477,7 +1482,12 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; Macros using default syntax, but having special highlighting in adoc-mode
    (adoc-kw-inline-macro "anchor" nil markup-anchor-face t '("xreflabel"))
    (adoc-kw-inline-macro "image" markup-complex-replacement-face markup-internal-reference-face t '("alt"))
+   ;; (adoc-kw-inline-macro "xref" nil markup-internal-reference-face t
+   ;;   '(("alt") (("" . )))
 
+   ;; (list "\\b\\(xref:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
+   ;;       '(1 adoc-hide-delimiter) '(2 adoc-delimiter) '(3 adoc-hide-delimiter) '(4 adoc-reference) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter))
+   
    ;; Macros using default syntax and having default highlighting in adoc-mod
    (adoc-kw-inline-macro)  
    
@@ -1521,9 +1531,9 @@ When LITERAL-P is non-nil, the contained text is literal text."
 
 
    ;; bibliographic anchor ala [[[id]]]
-   ;; actually the part between the innermost brackets is an attribute list, for
-   ;; simplicity adoc-mode doesn't really treat it as such. The attrib list can
-   ;; only contain one element anyway.
+   ;; actually in AsciiDoc the part between the innermost brackets is an
+   ;; attribute list, for simplicity adoc-mode doesn't really treat it as such.
+   ;; The attrib list can only contain one element anyway.
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-anchor 'biblio) '(1 3) '(0)))
    	 '(1 '(face markup-meta-face adoc-reserved t) t)  ; [[
    	 '(2 markup-gen-face)				  ; [id]
@@ -1548,8 +1558,6 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(1 adoc-hide-delimiter)       ; <<
          '(2 adoc-reference)            ; link text = anchor id
          '(3 adoc-hide-delimiter))      ; >>
-   (list "\\b\\(xref:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
-         '(1 adoc-hide-delimiter) '(2 adoc-delimiter) '(3 adoc-hide-delimiter) '(4 adoc-reference) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter)) 
 
 
 
@@ -1851,11 +1859,16 @@ knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
 
 (defun adoc-attribute-elt-face (pos-or-id &optional attribute-list-prop-val)
   "Returns the face to be used for the given id or position"
-  (let ((id (cond ((stringp pos-or-id) pos-or-id)
-		  ((and (numberp pos-or-id) (listp attribute-list-prop-val)
-			(nth pos-or-id attribute-list-prop-val)))
-		  (t nil))))
-    (or (when id (cdr (assoc id adoc-attribute-face-alist)))
+  (let* ((has-pos-to-id (listp attribute-list-prop-val))
+	 (has-local-alist (and has-pos-to-id (listp (car-safe attribute-list-prop-val))))
+	 (pos-to-id (cond ((not has-pos-to-id) nil)
+			  (has-local-alist (car attribute-list-prop-val))
+			  (t attribute-list-prop-val)))
+	 (local-attribute-face-alist (when has-local-alist (cadr attribute-list-prop-val)))
+	 (id (cond ((stringp pos-or-id) pos-or-id)
+		   ((numberp pos-or-id) (nth pos-or-id pos-to-id)))))
+    (or (when id (or (cdr (assoc id local-attribute-face-alist))
+		     (cdr (assoc id adoc-attribute-face-alist))))
 	markup-value-face)))
 
 (defun adoc-calc ()
