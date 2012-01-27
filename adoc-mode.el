@@ -1049,9 +1049,9 @@ When LITERAL-P is non-nil, the contained text is literal text."
    `(1 '(face ,(or cmd-face markup-command-face) adoc-reserved t) t) 
    '(2 '(face markup-meta-face adoc-reserved t) t) ; :
    `(3 ,(cond ((not target-faces) markup-meta-face)
-	      ((listp target-faces) '(if (string= (match-string 5) "")
-					 (car target-faces)
-				       (cadr target-faces)))
+	      ((listp target-faces) `(if (string= (match-string 5) "")
+					 ,(car target-faces)
+				       ,(cadr target-faces)))
 	      (t target-faces))
        ,(if target-meta-p t 'append))
    '(4 '(face markup-meta-face adoc-reserved t) t) ; [
@@ -1481,9 +1481,10 @@ When LITERAL-P is non-nil, the contained text is literal text."
 
    ;; Macros using default syntax, but having special highlighting in adoc-mode
    (adoc-kw-inline-macro "anchor" nil markup-anchor-face t '("xreflabel"))
-   (adoc-kw-inline-macro "image" markup-complex-replacement-face markup-internal-reference-face t '("alt"))
-   ;; (adoc-kw-inline-macro "xref" nil markup-internal-reference-face t
-   ;;   '(("alt") (("" . )))
+   (adoc-kw-inline-macro "image" markup-complex-replacement-face markup-internal-reference-face t
+     '("alt"))
+   (adoc-kw-inline-macro "xref" nil '(markup-reference-face markup-internal-reference-face) t
+     '(("caption") (("caption" . markup-reference-face))))
 
    ;; (list "\\b\\(xref:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
    ;;       '(1 adoc-hide-delimiter) '(2 adoc-delimiter) '(3 adoc-hide-delimiter) '(4 adoc-reference) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter))

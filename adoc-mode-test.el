@@ -161,6 +161,15 @@
       " ipsum\n" 'no-face
     ))
 
+(ert-deftest adoctest-test-references ()
+  (adoctest-faces "references"
+     "lorem " 'no-face "xref" markup-command-face ":" markup-meta-face
+       "foo" markup-reference-face "[]" markup-meta-face "\n" nil
+     "lorem " 'no-face "xref" markup-command-face ":" markup-meta-face
+       "foo" markup-internal-reference-face "[" markup-meta-face
+       "bla bli bla blu" markup-reference-face "]" markup-meta-face  "\n" nil
+       ))
+
 (ert-deftest adoctest-test-images ()
   (adoctest-faces "images"
      ;; block macros
