@@ -643,20 +643,20 @@ Subgroups:
    ((eq type 'biblio) "\\(\\[\\[\\)\\(\\[[a-zA-Z0-9_:][a-zA-Z0-9_:.-]*?\\]\\)\\(\\]\\]\\)")
    ((eq type 'inline-general) (adoc-re-inline-macro "anchor"))))
 
-(defun adoc-re-attribute-list-elt ()
+(defun adoc-re-attribute-list-elt (first)
   "Returns a regexp matching an attribute list elment.
 Subgroups:
 1 attribute name
 2 attribute value if given as string 
 3 attribute value if not given as string"
   (concat
-   ",?[ \t\n]*"
+   "\\=" (unless first ",") "[ \t\n]*"
    "\\(?:\\([a-zA-Z_]+\\)[ \t\n]*=[ \t\n]*\\)?"         ; 1
    "\\(?:"
      ;; regexp for string: See 'Mastering Regular Expressions', chapter 'The
      ;; Real "Unrolling-the-Loop" Pattern'.
      "\"\\([^\"\\]*\\(?:\\\\.[^\"\\]*\\)*\\)\"[ \t\n]*" "\\|"	; 2 
-     "\\([^,]+\\)"					; 3 
+     "\\([^,]*\\)"					; 3 
    "\\)"))
 
 (defun adoc-re-precond (&optional unwanted-chars backslash-allowed disallowed-at-bol)
@@ -730,14 +730,14 @@ subgroups:
     (concat
      ;; added &<> because those are special chars which are substituted by a
      ;; entity, which ends in ;, which is prohibited in the ascidoc.conf regexp
-     (adoc-re-quote-precondition "A-Za-z0-9;:}&<>")  
+     (adoc-re-quote-precondition "A-Za-z0-9_;:}&<>")  
      "\\(\\[[^][]+?\\]\\)?"
      "\\(" qldel "\\)"
      "\\([^ \t\n]\\|[^ \t\n].*?\\(?:\n.*?\\)\\{,1\\}?[^ \t\n]\\)"
      "\\(" qrdel "\\)"
      ;; BUG: now that Emacs doesn't has look-ahead, the match is too long, and
      ;; adjancted quotes of the same type wouldn't be recognized.
-     "\\(?:[^A-Za-z0-9\n]\\|[ \t]*$\\)")))
+     "\\(?:[^A-Za-z0-9_\n]\\|[ \t]*$\\)")))
 
 (defun adoc-re-quote (type ldel &optional rdel)
   (cond
@@ -835,7 +835,7 @@ Subgroups:
          (style "[demshalv]"))
     (concat "\\(?:" fullspan "\\)?\\(?:" align "\\)?\\(?:" style "\\)?")))
 
-(defun adoc-kwf-std (end regexp &optional must-free-groups no-block-del-groups)
+(defun adoc-kwf-std (end regexp &optional must-free-groups no-block-del-groups attrib-list-group)
   "Standart function for keywords
 
 Intendent to be called from font lock keyword functions. END is
@@ -864,6 +864,8 @@ value."
 			no-block-del-groups))))
       (when (and found prevented (<= (point) end))
 	(goto-char (1+ saved-point))))
+    (when (and found (not prevented) attrib-list-group)
+      (adoc-put-text-properies-on-attrib-list (match-beginning attrib-list-group) (match-end attrib-list-group)))
     (and found (not prevented))))
 
 (defun adoc-kwf-attriblist (end)
@@ -1043,19 +1045,19 @@ When LITERAL-P is non-nil, the contained text is literal text."
       '(3 nil)) ; grumbl, I dont know how to get rid of it
    `(4 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t))); close del
 
-(defun adoc-kw-inline-macro (&optional cmd-name cmd-face target-faces target-meta-p attribute-list)
+(defun adoc-kw-inline-macro (&optional cmd-name cmd-face target-faces target-meta-p attribute-list-spec)
   (list
-   `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name) '(1 2 4 5) '(0)))
-   `(1 '(face ,(or cmd-face markup-command-face) adoc-reserved t) t) 
-   '(2 '(face markup-meta-face adoc-reserved t) t) ; :
-   `(3 ,(cond ((not target-faces) markup-meta-face)
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name) '(1 2 4 5) '(0) attribute-list-spec))
+   `(1 '(face ,(or cmd-face markup-command-face) adoc-reserved t) t) ; cmd name
+   '(2 '(face markup-meta-face adoc-reserved t) t)  ; :
+   `(3 ,(cond ((not target-faces) markup-meta-face) ; target
 	      ((listp target-faces) `(if (string= (match-string 5) "")
 					 ,(car target-faces)
 				       ,(cadr target-faces)))
 	      (t target-faces))
        ,(if target-meta-p t 'append))
    '(4 '(face markup-meta-face adoc-reserved t) t) ; [
-   `(5 '(face markup-meta-face adoc-attribute-list ,(or attribute-list t)) t)
+   `(5 '(face markup-meta-face) t)
    '(6 '(face markup-meta-face adoc-reserved t) t))) ; ]
 
 ;; bug: escapes are not handled yet
@@ -1486,9 +1488,6 @@ When LITERAL-P is non-nil, the contained text is literal text."
    (adoc-kw-inline-macro "xref" nil '(markup-reference-face markup-internal-reference-face) t
      '(("caption") (("caption" . markup-reference-face))))
 
-   ;; (list "\\b\\(xref:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
-   ;;       '(1 adoc-hide-delimiter) '(2 adoc-delimiter) '(3 adoc-hide-delimiter) '(4 adoc-reference) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter))
-   
    ;; Macros using default syntax and having default highlighting in adoc-mod
    (adoc-kw-inline-macro)  
    
@@ -1544,22 +1543,12 @@ When LITERAL-P is non-nil, the contained text is literal text."
    	 '(1 '(face markup-meta-face adoc-reserved t) t)
    	 '(2 '(face markup-meta-face adoc-attribute-list ("id" "xreflabel")) t)
 	 '(3 '(face markup-meta-face adoc-reserved t) t))
-
    ;; reference with own/explicit caption
    ;; (?su)[\\]?&lt;&lt;(?P<attrlist>[\w"].*?)&gt;&gt;=xref2
-   (list "\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)"
-         '(1 adoc-hide-delimiter)       ; <<
-         '(2 adoc-delimiter)            ; anchor-id
-         '(3 adoc-hide-delimiter)       ; ,
-         '(4 adoc-reference)            ; link text
-         '(5 adoc-hide-delimiter))      ; >>
-   ;; reference without caption
-   ;; asciidoc.conf uses the same regexp as for without caption
-   (list "\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)"
-         '(1 adoc-hide-delimiter)       ; <<
-         '(2 adoc-reference)            ; link text = anchor id
-         '(3 adoc-hide-delimiter))      ; >>
-
+   (list `(lambda (end) (adoc-kwf-std end "\\(<<\\)\\([a-zA-Z0-9_\"].*?\\)\\(>>\\)" '(1 3) '(0)))
+         '(1 '(face markup-meta-hide-face adoc-reserved t) t)  ; <<
+         '(2 '(face markup-meta-hide-face adoc-attribute-list (("id" "caption")(("id" . markup-internal-reference-face))))) ; attribute-list
+         '(3 '(face markup-meta-hide-face adoc-reserved t) t)) ; >>
 
 
    ;; index terms
@@ -1871,6 +1860,39 @@ knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
     (or (when id (or (cdr (assoc id local-attribute-face-alist))
 		     (cdr (assoc id adoc-attribute-face-alist))))
 	markup-value-face)))
+
+(defun adoc-put-text-properies-on-attrib-list(beg end face-spec) 
+  (let ((pos-or-id 0)
+	dict
+	dict-elt
+	(first t))
+    (save-excursion 
+      (goto-char beg)
+      ;; parse attribute list which means creating a dictionary
+      (while (re-search-forward (adoc-re-attribute-list-elt first) end t)
+	(if (not (match-beginning 1))
+	    ;; positional attribute 
+	    (setq pos-or-id (1+ pos-or-id))
+	  ;; attribute with id
+	  (put-text-property  'adoc-attribute-list-elt markup-attribute-face)
+	  (setq pos-or-id (buffer-substring-no-properties (match-beginning 1) (match-end 1))))
+	(let* ((values-group (if (match-beginning 2) 2 3))
+	       (dict-elt (list pos-or-id
+			       (match-beginning 1) (match-end 1)
+			       (match-beginning values-group) (match-end values-group))))
+	  (setq dict (cons dict-elt dict))
+	  (setq first false)))
+
+      ;; store dictionart as text property 'adoc-attribute-list-dict
+      (put-text-property beg end 'adoc-attribute-list-dict dict)
+
+      ;; define face to be used for each attribute list element as text property
+      ;; 'adoc-attribute-list-elt
+      (while dict
+	(setq dict-elt (car dict))
+	(when (nth 1 dict-el)
+	  (put-text-property (nth 1 dict-el) (nth 2 dict-el) 'adoc-attribute-list-elt markup-attribute-face))
+	(put-text-property (nth 3 dict-el) (nth 4 dict-el) 'adoc-attribute-list-elt (adoc-attribute-elt-face (nth 0 dict-elt) dict face-spec))))))
 
 (defun adoc-calc ()
   "(Re-)calculates variables used in adoc-mode.
