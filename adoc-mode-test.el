@@ -168,12 +168,6 @@
      "lorem " 'no-face "xref" markup-command-face ":" markup-meta-face
        "foo" markup-internal-reference-face "[" markup-meta-face
        "bla bli bla blu" markup-reference-face "]" markup-meta-face  "\n" nil
-
-     "lorem " 'no-face "<<" markup-meta-hide-face "foo" markup-reference-face
-       ">>" markup-meta-hide-face "\n" nil
-     "lorem " 'no-face "<<" markup-meta-hide-face "foo" markup-internal-reference-face
-       "," markup-meta-hide-face "bla bli bla blu" markup-reference-face
-       ">>" markup-meta-hide-face "\n" nil
        ))
 
 (ert-deftest adoctest-test-images ()
