@@ -1,15 +1,23 @@
+;;; adoc-mode-test.el --- test suite for adoc-mode.el
+;;; 
+;;; Commentary:
+;; 
+;; - font-lock-support-mode must be nil
+;; 
+;;; Todo:
+;; - there shoud not be a need to set font-lock-support-mode to nil. Maybe use
+;;   the let form, or find a function which forces font lock to do the
+;;   fontification of the whole buffer.
+;; - test for font lock multiline property 
+;; - test for presence of adoc-reserved (we do white-box testing here)
+;; - test also with multiple versions of (X)Emacs
+;; - compare adoc-mode fontification with actuall output from AsciiDoc, being
+;;   almost the ultimative test for correctness
+;;
+
+;;; Code:
 (require 'ert)
 (require 'adoc-mode)
-
-;; todo
-;; test for font lock multiline property 
-;; todo
-;;  !!!!!!!!!!!!!
-;;  Lock Support Mode must be set to nil
-;;  !!!!!!!!!!!!!
-
-;; todo: test for presence of adoc-reserved (we do white-box testing here)
-
 
 (defun adoctest-faces (name &rest args)
   (set-buffer (get-buffer-create (concat "adoctest-" name))) 
@@ -437,22 +445,21 @@
    "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor\n" 'no-face
    "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor\n" 'no-face))
 
-;; todo: also test for warnings
 (ert-deftest adoctest-pre-test-byte-compile ()
+  ;; todo: also test for warnings
   (ert-should (byte-compile-file (locate-library "adoc-mode.el" t)))
   (ert-should (load "adoc-mode.el" nil nil t))
   (ert-should (byte-compile-file (locate-library "adoc-mode-test.el" t)))
   (ert-should (load "adoc-mode-test.el" nil nil t)))
 
-;; todo
-;; - test also for multiple versions of (X)Emacs
-;; - compare adoc-mode fontification with actuall output from AsciiDoc, being
-;;   almost the ultimative test for correctness
-
 (defun adoc-test-run()
   (interactive)
   (save-buffer "adoc-mode.el")
   (save-buffer "adoc-mode-test.el")
+  ;; todo: execute tests in an smart order: the basic/simple tests first, so
+  ;; when a complicated test fails one knows that the simple things do work
   (ert-run-tests-interactively "^adoctest-pre-test-byte-compile")
   (ert-run-tests-interactively "^adoctest-test-"))
+
+;;; adoc-mode-test.el ends here
 

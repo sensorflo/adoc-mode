@@ -78,9 +78,10 @@
 ;;     make them configurable in a way similar to that configuration file
 ;;   - respect font-lock-maximum-decoration
 ;; - Other common emacs functionality/features
+;;   - create a menu entry and keybindings for the commands
 ;;   - indent functions
 ;;   - imenu / outline / hideshow
-;;   - tags
+;;   - tags tables for anchors, indixes, bibliography items, titles, ...
 ;;   - Make 'compilation', i.e. translating into the desired output format more
 ;;     conventient
 ;;   - tempo-templates
@@ -94,27 +95,28 @@
 ;;     AsciiDoc source text, the other emphasises to see how the output will
 ;;     look like.
 ;;   - invisible text property could be used to hide meta characters
-;;   - tags tables for anchors, indixes, bibliography items, titles, ...
 ;;
 ;; Bugs:
 ;; - delimited blocks are supported, but not well at all
 ;; - Most regexps for highlighting can spawn at most over two lines.
 ;; - font-lock's multi line capabilities are not used well enough
-;; - AsciiDoc's escape rules don't seem to be what one expects. E.g. \\__bla__
-;;   is *not* a literal backslashed followed by an emphasised bla, but an
-;;   emphasised _bla_. Try to find out what AsciiDoc's rules are. adoc-mode
-;;   currently uses 'common' escaping rule: backslash always makes the following
-;;   char literal.
 ;;
+
 ;;; Variables:
 
 (require 'markup-faces)
-(require 'cl)
+(require 'cl) ; I know, I should remove it, I will, eventually
 
-(defconst adoc-mode-version "0.4.0"
+(defconst adoc-mode-version "0.4.0" 
   "Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are taken from
-that version's asciidoc.conf/manual.")
+that version's asciidoc.conf/manual.
 
+Since I regard adoc-mode major enough for the general public, and
+because I am not good at it, I don't change adoc-mode-version a
+lot and it is currently of no much use.")
+
+
+;;;; customization  
 (defgroup adoc nil
   "Support for AsciiDoc documents."
   :group 'wp)
@@ -275,6 +277,8 @@ most 3 chars from the length of the title text."
 		 number)
   :group 'adoc)
 
+
+;;;; faces / font lock  
 (define-obsolete-face-alias 'adoc-orig-default 'adoc-align "23.3")
 (defface adoc-align
   '((t (:inherit (markup-meta-face))))
@@ -329,6 +333,8 @@ aligned.
 (defvar adoc-warning 'markup-error-face)
 (defvar adoc-preprocessor 'markup-preprocessor-face)
 
+
+;;;; misc 
 (defconst adoc-title-max-level 4
   "Max title level, counting starts at 0.")
 
@@ -377,10 +383,12 @@ To become a customizable variable when regexps for list items become customizabl
 
 (define-abbrev-table 'adoc-mode-abbrev-table ())
 
+
 ;;; Code:
 
 ;; from asciidoc.conf:
 ;; ^:(?P<attrname>\w[^.]*?)(\.(?P<attrname2>.*?))?:(\s+(?P<attrvalue>.*))?$
+;;;; regexps
 (defun adoc-re-attribute-entry ()
   (concat "^\\(:[a-zA-Z0-9_][^.\n]*?\\(?:\\..*?\\)?:[ \t]*\\)\\(.*?\\)$"))
 
@@ -835,6 +843,8 @@ Subgroups:
          (style "[demshalv]"))
     (concat "\\(?:" fullspan "\\)?\\(?:" align "\\)?\\(?:" style "\\)?")))
 
+
+;;;; font lock keywords 
 (defun adoc-kwf-std (end regexp &optional must-free-groups no-block-del-groups)
   "Standart function for keywords
 
@@ -1147,6 +1157,8 @@ When LITERAL-P is non-nil, the contained text is literal text."
       (goto-char next-pos)))
   nil)
 
+
+;;;; font lock 
 (defun adoc-unfontify-region-function (beg end) 
   ;; 
   (font-lock-default-unfontify-region beg end)
@@ -1625,6 +1637,8 @@ When LITERAL-P is non-nil, the contained text is literal text."
    (list 'adoc-flf-meta-face-cleanup)
    ))
 
+
+;;;; interactively-callable commands
 (defun adoc-show-version ()
   "Show the version number in the minibuffer."
   (interactive)
@@ -1648,6 +1662,66 @@ anchors in the [[id]] style."
   (goto-char 0)
   (re-search-forward (concat "^\\[\\[" (match-string 1) "\\]\\]")))
 
+(defun adoc-promote-title (&optional arg)
+  "Promotes the title point is on ARG levels.
+
+When ARG is nil (i.e. when no prefix arg is given), it defaults
+to 1. When ARG is negative, level is denoted that many levels. If
+ARG is 0, see `adoc-adjust-title-del'."
+  (interactive "p")
+  (adoc-modify-title arg))
+
+(defun adoc-denote-title (&optional arg)
+  "Completely analgous to `adoc-promote-title'."
+  (interactive "p")
+  (adoc-promote-title (- arg)))
+
+;; (defun adoc-set-title-level (&optional arg)
+;;   ""
+;;   (interactive "P")
+;;   (cond
+;;    ()
+;;       (adoc-modify-title nil arg)
+;;     (adoc-modify-title 1)))
+
+(defun adoc-adjust-title-del ()
+  "Adjusts delimiter to match the length of the title's text.
+
+E.g. after editing a two line title, call `adoc-adjust-title-del' so
+the underline has the correct length."
+  (interactive)
+  (adoc-modify-title))
+
+(defun adoc-toggle-title-type (&optional type-type)
+  "Toggles title's type.
+
+If TYPE-TYPE is nil, title's type is toggled. If TYPE-TYPE is
+non-nil, the sub type is toggled."
+  (interactive "P") 
+  (when type-type
+    (setq type-type t))
+  (adoc-modify-title nil nil (not type-type) type-type))
+
+(defun adoc-calc ()
+  "(Re-)calculates variables used in adoc-mode.
+Needs to be called after changes to certain (customization)
+variables. Mostly in order font lock highlighting works as the
+new customization demands."
+  (interactive)
+
+  (when (and (null adoc-insert-replacement)
+             adoc-unichar-name-resolver)
+    (message "Warning: adoc-unichar-name-resolver is non-nil, but is adoc-insert-replacement is nil"))
+  (when (and (eq adoc-unichar-name-resolver 'adoc-unichar-by-name)
+             (null adoc-unichar-alist))
+    (adoc-make-unichar-alist))
+
+  (setq adoc-font-lock-keywords (adoc-get-font-lock-keywords))
+  (when (and font-lock-mode (eq major-mode 'adoc-mode))
+    (font-lock-fontify-buffer)))
+
+
+;;;; misc
 (defun adoc-title-descriptor()
   "Returns title descriptor of title point is in.
 
@@ -1734,36 +1808,36 @@ and title's text are not preserved, afterwards its always one space."
     ;;     (setq descriptor (list 1 1 2 ?? adoc-default-title-type adoc-default-title-sub-type)))
     (let* ((type (nth 0 descriptor))
            (new-type-val (cond
-                      ((eq new-type 1) 2)
-                      ((eq new-type 2) 1)
-                      ((not (or (eq type 1) (eq type 2)))
-                       (error "Invalid title type"))
-                      ((eq new-type nil) type)
-                      ((eq new-type t) (if (eq type 1) 2 1))
-                      (t (error "NEW-TYPE has invalid value"))))
+			  ((eq new-type 1) 2)
+			  ((eq new-type 2) 1)
+			  ((not (or (eq type 1) (eq type 2)))
+			   (error "Invalid title type"))
+			  ((eq new-type nil) type)
+			  ((eq new-type t) (if (eq type 1) 2 1))
+			  (t (error "NEW-TYPE has invalid value"))))
            (sub-type (nth 1 descriptor))
            (new-sub-type-val (cond
-                          ((eq new-sub-type 1) 2)
-                          ((eq new-sub-type 2) 1)
-                          ((null sub-type) adoc-default-title-sub-type) ; there wasn't a sub-type before
-                          ((not (or (eq sub-type 1) (eq sub-type 2)))
-                           (error "Invalid title sub-type"))
-                          ((eq new-sub-type nil) sub-type)
-                          ((eq new-sub-type t) (if (eq sub-type 1) 2 1))
-                          (t (error "NEW-SUB-TYPE has invalid value"))))           
+			      ((eq new-sub-type 1) 2)
+			      ((eq new-sub-type 2) 1)
+			      ((null sub-type) adoc-default-title-sub-type) ; there wasn't a sub-type before
+			      ((not (or (eq sub-type 1) (eq sub-type 2)))
+			       (error "Invalid title sub-type"))
+			      ((eq new-sub-type nil) sub-type)
+			      ((eq new-sub-type t) (if (eq sub-type 1) 2 1))
+			      (t (error "NEW-SUB-TYPE has invalid value"))))           
            (level (nth 2 descriptor))
            (new-level (cond
-                      ((or (null new-level-rel) (eq new-level-rel 0))
-                       level)
-                      ((not (null new-level-rel))
-                       (let ((x (% (+ level arg) (+ adoc-title-max-level 1))))
-                         (if (< x 0)
-                             (+ x adoc-title-max-level 1)
-                           x)))
-                      ((not (null new-level-abs))
-                       new-level-abs)
-                      (t
-                       level)))
+		       ((or (null new-level-rel) (eq new-level-rel 0))
+			level)
+		       ((not (null new-level-rel))
+			(let ((x (% (+ level arg) (+ adoc-title-max-level 1))))
+			  (if (< x 0)
+			      (+ x adoc-title-max-level 1)
+			    x)))
+		       ((not (null new-level-abs))
+			new-level-abs)
+		       (t
+			level)))
            (start (nth 4 descriptor))
            (end (nth 5 descriptor))
            (saved-col (current-column)))
@@ -1776,46 +1850,6 @@ and title's text are not preserved, afterwards its always one space."
       (when (eq new-type-val 2)
         (forward-line -1))
       (move-to-column saved-col))))
-
-(defun adoc-promote-title (&optional arg)
-  "Promotes the title point is on ARG levels.
-
-When ARG is nil (i.e. when no prefix arg is given), it defaults
-to 1. When ARG is negative, level is denoted that many levels. If
-ARG is 0, see `adoc-adjust-title-del'."
-  (interactive "p")
-  (adoc-modify-title arg))
-
-(defun adoc-denote-title (&optional arg)
-  "Completely analgous to `adoc-promote-title'."
-  (interactive "p")
-  (adoc-promote-title (- arg)))
-
-;; (defun adoc-set-title-level (&optional arg)
-;;   ""
-;;   (interactive "P")
-;;   (cond
-;;    ()
-;;       (adoc-modify-title nil arg)
-;;     (adoc-modify-title 1)))
-
-(defun adoc-adjust-title-del ()
-  "Adjusts delimiter to match the length of the title's text.
-
-E.g. after editing a two line title, call `adoc-adjust-title-del' so
-the underline has the correct length."
-  (interactive)
-  (adoc-modify-title))
-
-(defun adoc-toggle-title-type (&optional type-type)
-  "Toggles title's type.
-
-If TYPE-TYPE is nil, title's type is toggled. If TYPE-TYPE is
-non-nil, the sub type is toggled."
-  (interactive "P") 
-  (when type-type
-    (setq type-type t))
-  (adoc-modify-title nil nil (not type-type) type-type))
 
 (defun adoc-make-unichar-alist()
   "Creates `adoc-unichar-alist' from `unicode-character-list'"
@@ -1872,26 +1906,8 @@ knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
 		     (cdr (assoc id adoc-attribute-face-alist))))
 	markup-value-face)))
 
-(defun adoc-calc ()
-  "(Re-)calculates variables used in adoc-mode.
-Needs to be called after changes to certain (customization)
-variables. Mostly in order font lock highlighting works as the
-new customization demands."
-  (interactive)
 
-  (when (and (null adoc-insert-replacement)
-             adoc-unichar-name-resolver)
-    (message "Warning: adoc-unichar-name-resolver is non-nil, but is adoc-insert-replacement is nil"))
-  (when (and (eq adoc-unichar-name-resolver 'adoc-unichar-by-name)
-             (null adoc-unichar-alist))
-    (adoc-make-unichar-alist))
-
-  (setq adoc-font-lock-keywords (adoc-get-font-lock-keywords))
-  (when (and font-lock-mode (eq major-mode 'adoc-mode))
-    (font-lock-fontify-buffer)))
-
-(adoc-calc)
-
+
 ;;;###autoload
 (define-derived-mode adoc-mode text-mode "adoc"
   "Major mode for editing AsciiDoc text files.
@@ -1963,6 +1979,11 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
 
   (run-hooks 'adoc-mode-hook))
 
+
+;;;; non-definitions evaluated during load  
+(adoc-calc)
+
+
 (provide 'adoc-mode)
 
 ;;; adoc-mode.el ends here
