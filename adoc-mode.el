@@ -111,9 +111,9 @@
   "Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are taken from
 that version's asciidoc.conf/manual.
 
-Since I regard adoc-mode major enough for the general public, and
-because I am not good at it, I don't change adoc-mode-version a
-lot and it is currently of no much use.")
+Since I don't regard adoc-mode major enough for the general
+public, and because I am not good at it, I don't change
+adoc-mode-version a lot and it is currently of no much use.")
 
 
 ;;;; customization  
