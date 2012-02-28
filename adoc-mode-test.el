@@ -2,12 +2,9 @@
 ;;; 
 ;;; Commentary:
 ;; 
-;; - font-lock-support-mode must be nil
+;; Call adoc-test-run to run the test suite
 ;; 
 ;;; Todo:
-;; - there shoud not be a need to set font-lock-support-mode to nil. Maybe use
-;;   the let form, or find a function which forces font lock to do the
-;;   fontification of the whole buffer.
 ;; - test for font lock multiline property 
 ;; - test for presence of adoc-reserved (we do white-box testing here)
 ;; - test also with multiple versions of (X)Emacs
@@ -19,33 +16,46 @@
 (require 'ert)
 (require 'adoc-mode)
 
+;; todo:
+;; - auto-create different contexts like
+;;   - beginning/end of buffer
+;;   - beginning/end of paragraph
+;;   - side-to-side yes/no with next same construct
 (defun adoctest-faces (name &rest args)
-  (set-buffer (get-buffer-create (concat "adoctest-" name))) 
-  (delete-region (point-min) (point-max))
+  (let ((not-done t)
+	(font-lock-support-mode)
+	(buf-name (concat "adoctest-" name)))
+    (unwind-protect
+	(progn
+	  ;; setup
+	  (set-buffer (get-buffer-create buf-name)) 
+	  (delete-region (point-min) (point-max))
+	  (while args
+	    (insert (propertize (car args) 'adoctest (cadr args)))
+	    (setq args (cddr args)))
 
-  (while args
-    (insert (propertize (car args) 'adoctest (cadr args)))
-    (setq args (cddr args)))
+	  ;; exercise
+	  (adoc-mode)
+	  (font-lock-fontify-buffer)
 
-  (adoc-mode)
-  (font-lock-fontify-buffer)
-  (goto-char (point-min))
-  (let ((not-done t))
-    (while not-done
-      (let* ((tmp (get-text-property (point) 'adoctest))
-	     (tmp2 (get-text-property (point) 'face)))
-	(cond
-	 ((null tmp)) ; nop
-	 ((eq tmp 'no-face)
-	  (should (null tmp2)))
-	 (t
-	  (if (and (listp tmp2) (not (listp tmp)))
-	      (should (and (= 1 (length tmp2)) (equal tmp (car tmp2))))
-	    (should (equal tmp tmp2)))))
-	(if (< (point) (point-max))
-	    (forward-char 1)
-	  (setq not-done nil)))))
-  (kill-buffer (concat "adoctest-" name)))
+	  ;; verify
+	  (goto-char (point-min))
+	  (while not-done
+	    (let* ((tmp (get-text-property (point) 'adoctest))
+		   (tmp2 (get-text-property (point) 'face)))
+	      (cond
+	       ((null tmp)) ; nop
+	       ((eq tmp 'no-face)
+		(should (null tmp2)))
+	       (t
+		(if (and (listp tmp2) (not (listp tmp)))
+		    (should (and (= 1 (length tmp2)) (equal tmp (car tmp2))))
+		  (should (equal tmp tmp2)))))
+	      (if (< (point) (point-max))
+		  (forward-char 1)
+		(setq not-done nil))))))
+    ;; tear-down
+    (kill-buffer buf-name)))
 
 (ert-deftest adoctest-test-titles-simple ()
   (adoctest-faces "titles-simple"
