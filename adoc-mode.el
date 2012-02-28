@@ -1,9 +1,10 @@
 ;;; adoc-mode.el --- a major-mode for editing AsciiDoc files in Emacs
 ;;
-;; Copyright 2010 Florian Kaufmann <sensorflo@gmail.com>
+;; Copyright 2010-2012 Florian Kaufmann <sensorflo@gmail.com>
 ;;
 ;; Author: Florian Kaufmann <sensorflo@gmail.com>
-;; URL: http://code.google.com/p/adoc-mode/
+;; URL: Current official: http://code.google.com/p/adoc-mode/
+;;      Develop, future official: https://github.com/sensorflo/adoc-mode
 ;; Created: 2009
 ;; Version: 0.4.0
 ;; Keywords: wp AsciiDoc
