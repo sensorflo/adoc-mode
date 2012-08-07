@@ -26,6 +26,7 @@
 ;; the Free Software Foundation, Inc., 51 Franklin Street, Fifth
 ;; Floor, Boston, MA 02110-1301, USA.
 ;;
+;;
 ;;; Commentary:
 ;; 
 ;; AsciiDoc (http://www.methods.co.nz/asciidoc/) is a text document format for
