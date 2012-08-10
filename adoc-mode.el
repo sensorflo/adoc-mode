@@ -91,6 +91,9 @@
 ;;   - Is there something that would remove hard newlines within a paragraph,
 ;;     but just for display, so the paragraph uses the whole buffer length.
 ;;   - are there generic base packages to handle lists / tables?
+;;   - a readonly view mode where commands for navigation are on short key
+;;     bindings like alphanum letters
+;;   - study what other markup modes like rst offer
 ;; - AsciiDoc related features
 ;;   - Two (or gruadualy fading) display modes: one emphasises to see the
 ;;     AsciiDoc source text, the other emphasises to see how the output will
@@ -100,12 +103,13 @@
 ;; Bugs:
 ;; - delimited blocks are supported, but not well at all
 ;; - Most regexps for highlighting can spawn at most over two lines.
-;; - font-lock's multi line capabilities are not used well enough
+;; - font-lock's multi line capabilities are not used well enough. At least 2
+;;   line spawns should be covered - replace all .*? by .*?\\(?:\n.*?\\)??
 ;;
 
 ;;; Variables:
 
-(require 'markup-faces)
+(require 'markup-faces) ; https://github.com/sensorflo/markup-faces
 (require 'cl) ; I know, I should remove it, I will, eventually
 
 (defconst adoc-mode-version "0.4.0" 
@@ -1527,9 +1531,6 @@ When LITERAL-P is non-nil, the contained text is literal text."
      '("alt"))
    (adoc-kw-inline-macro "xref" nil '(markup-reference-face markup-internal-reference-face) t
      '(("caption") (("caption" . markup-reference-face))))
-
-   ;; (list "\\b\\(xref:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
-   ;;       '(1 adoc-hide-delimiter) '(2 adoc-delimiter) '(3 adoc-hide-delimiter) '(4 adoc-reference) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter))
    
    ;; Macros using default syntax and having default highlighting in adoc-mod
    (adoc-kw-inline-macro)  
@@ -1601,8 +1602,6 @@ When LITERAL-P is non-nil, the contained text is literal text."
          '(1 adoc-hide-delimiter)       ; <<
          '(2 adoc-reference)            ; link text = anchor id
          '(3 adoc-hide-delimiter))      ; >>
-
-
 
    ;; index terms
    ;; todo:
@@ -1725,16 +1724,13 @@ ARG is 0, see `adoc-adjust-title-del'."
   (interactive "p")
   (adoc-promote-title (- arg)))
 
-;; (defun adoc-set-title-level (&optional arg)
-;;   ""
-;;   (interactive "P")
-;;   (cond
-;;    ()
-;;       (adoc-modify-title nil arg)
-;;     (adoc-modify-title 1)))
-
+;; todo:
+;; - adjust while user is typing title
+;; - tempo template which uses alreay typed text to insert a 'new' title
+;; - auto convert one line title to two line title. is easy&fast to type, but
+;;   gives two line titles for those liking them
 (defun adoc-adjust-title-del ()
-  "Adjusts delimiter to match the length of the title's text.
+  "Adjusts underline length to match the length of the title's text.
 
 E.g. after editing a two line title, call `adoc-adjust-title-del' so
 the underline has the correct length."
