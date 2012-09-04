@@ -137,8 +137,11 @@ You need to call `adoc-calc' after a change."
                (float :tag "Superscript"))
   :group 'adoc)
 
-(defcustom adoc-insert-replacement t
-  "When true the character/string a replacment/entity stands for is displayed.
+;; Interacts very badly with minor-modes using overlays because
+;; adoc-unfontify-region-function removes ALL overlays, not only those which
+;; where insered by adoc-mode.
+(defcustom adoc-insert-replacement nil
+  "When non-nil the character/string a replacment/entity stands for is displayed.
 
 E.g. after '&amp;' an '&' is displayed, after '(C)' the copy right
 sign is displayed. It's only about display, neither the file nor
@@ -146,8 +149,11 @@ the buffer content is affected.
 
 You need to call `adoc-calc' after you change
 `adoc-insert-replacement'. For named character entities (e.g.
-'&amp;', in contrast to '&#20;' or '(C)' ) to be displayed you need to
-set `adoc-unichar-name-resolver'."
+'&amp;', in contrast to '&#20;' or '(C)' ) to be displayed you
+need to set `adoc-unichar-name-resolver'.
+
+Setting it to non-nil interacts very badly with minor-modes using
+overlays."
   :type 'boolean
   :group 'adoc)
 
