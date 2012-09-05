@@ -53,9 +53,9 @@
 		  (should (equal tmp tmp2)))))
 	      (if (< (point) (point-max))
 		  (forward-char 1)
-		(setq not-done nil))))))
-    ;; tear-down
-    (kill-buffer buf-name)))
+		(setq not-done nil)))))
+      ;; tear-down
+      (kill-buffer buf-name))))
 
 (defun adoctest-trans (original-text expected-text transform-fn &optional args)
   (let ((pos 0)
@@ -80,9 +80,9 @@
 	  ;; exercise
   	  (funcall transform-fn args)
 	  ;; verify
-  	  (should (string-equal (buffer-substring (point-min) (point-max)) expected-text))))
-    ;; tear-down
-    (kill-buffer "adoctest-trans")))
+  	  (should (string-equal (buffer-substring (point-min) (point-max)) expected-text)))
+      ;; tear-down
+      (kill-buffer "adoctest-trans"))))
 
 (ert-deftest adoctest-test-titles-simple-one-line-before ()
   (adoctest-faces "titles-simple-one-line-before"
@@ -510,19 +510,32 @@
 
 (ert-deftest adoctest-pre-test-byte-compile ()
   ;; todo: also test for warnings
+  (when (file-exists-p "adoc-mode.elc")
+    (delete-file "adoc-mode.elc"))
   (should (byte-compile-file (locate-library "adoc-mode.el" t)))
   (should (load "adoc-mode.el" nil nil t))
+
+  (when (file-exists-p "adoc-mode-test.elc")
+    (delete-file "adoc-mode-test.elc"))
   (should (byte-compile-file (locate-library "adoc-mode-test.el" t)))
   (should (load "adoc-mode-test.el" nil nil t)))
 
 (defun adoc-test-run()
   (interactive)
-  (save-buffer "adoc-mode.el")
-  (save-buffer "adoc-mode-test.el")
-  ;; todo: execute tests in an smart order: the basic/simple tests first, so
-  ;; when a complicated test fails one knows that the simple things do work
-  (ert-run-tests-interactively "^adoctest-pre-test-byte-compile")
-  (ert-run-tests-interactively "^adoctest-test-"))
+  (unwind-protect
+      (progn
+	(when (get-buffer "*ert*")
+	  (kill-buffer "*ert*")) ; so after a test failed it can be re-run
+	(save-buffer "adoc-mode.el")
+	(save-buffer "adoc-mode-test.el")
+	;; todo: execute tests in an smart order: the basic/simple tests first, so
+	;; when a complicated test fails one knows that the simple things do work
+	(ert-run-tests-interactively "^adoctest-pre-test-byte-compile")
+	(ert-run-tests-interactively "^adoctest-test-"))
+    (when (file-exists-p "adoc-mode.elc")
+      (delete-file "adoc-mode.elc"))
+    (when (file-exists-p "adoc-mode-test.elc")
+      (delete-file "adoc-mode-test.elc"))))
 
 ;;; adoc-mode-test.el ends here
 
