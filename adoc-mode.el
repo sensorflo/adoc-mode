@@ -79,7 +79,6 @@
 ;;     make them configurable in a way similar to that configuration file
 ;;   - respect font-lock-maximum-decoration
 ;; - Other common emacs functionality/features
-;;   - create a menu entry and keybindings for the commands
 ;;   - indent functions
 ;;   - imenu / outline / hideshow
 ;;   - tags tables for anchors, indixes, bibliography items, titles, ...
@@ -388,8 +387,31 @@ To become a customizable variable when regexps for list items become customizabl
 
 (define-abbrev-table 'adoc-mode-abbrev-table ())
 
+(defvar adoc-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\C-c\C-d" 'adoc-denote)
+    (define-key map "\C-c\C-p" 'adoc-promote)
+    (define-key map "\C-c\C-t" 'adoc-toggle-title-type)
+    (define-key map "\C-c\C-g" 'adoc-goto-ref-label)
+    map)
+  "Keymap used in adoc mode.")
+
 
 ;;; Code:
+
+(defvar adoc-menu)
+(condition-case nil
+    (progn
+      (require 'easymenu)
+      (easy-menu-define
+	adoc-menu adoc-mode-map "Menu for adoc mode"
+	'("AsciiDoc"
+	  ["Promote" adoc-promote t]
+	  ["Denote" adoc-denote t]
+	  ["Toggle title type" adoc-toggle-title-type t]
+	  ["Adjust title underline" adoc-adjust-title-del t]
+	  ["Goto anchor" adoc-goto-ref-label t])))
+  (error nil))
 
 ;; from asciidoc.conf:
 ;; ^:(?P<attrname>\w[^.]*?)(\.(?P<attrname2>.*?))?:(\s+(?P<attrvalue>.*))?$
@@ -2139,6 +2161,8 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
     (make-local-variable 'compilation-error-regexp-alist)
     (add-to-list 'compilation-error-regexp-alist 'asciidoc))
 
+  (if (featurep 'easymenu)
+      (easy-menu-add cperl-menu))	; A NOP in Emacs.
   (run-hooks 'adoc-mode-hook))
 
 
