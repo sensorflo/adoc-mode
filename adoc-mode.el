@@ -406,15 +406,18 @@ match-data has this sub groups:
 4 trailing delimiter only inclusive whites between title text and delimiter
 0 only chars that belong to the title block element
 
-== my title ==  n
---12------23----
-             4-4"
+==  my title  ==  n
+---12------23------
+            4--4"
   (let* ((del (if level
                  (make-string (+ level 1) ?=)
                (concat "=\\{1," (+ adoc-title-max-level 1) "\\}"))))
     (concat
      "^\\("  del "[ \t]+\\)"		      ; 1
      "\\([^ \t\n].*?\\)"		      ; 2
+     ;; using \n instad $ is important so group 3 is guaranteed to be at least 1
+     ;; char long (except when at the end of the buffer()). That is important to
+     ;; to have a place to put the text property adoc-reserved on.
      "\\(\\([ \t]+" del "\\)?[ \t]*\\(?:\n\\|\\'\\)\\)" ))) ; 3 & 4
 
 (defun adoc-make-one-line-title (sub-type level text)
@@ -441,7 +444,9 @@ a two line title underline, see also `adoc-re-two-line-title'."
        (regexp-quote (substring x 0 1)) "?"
        "\\)"))
     (if del (list del) adoc-two-line-title-del) "\\|")          
-   "\\)[ \t]*$"))
+   ;; adoc-re-two-line-title shall have same behaviour als one line, thus
+   ;; also here use \n instead $
+   "\\)[ \t]*\\(?:\n\\|\\'\\)"))
 
 ;; asciidoc.conf regexps for _first_ line
 ;; ^(?P<title>.*?)$   
@@ -1812,7 +1817,7 @@ trailing delimiter ('== my title ==').
       (when found
         (list type sub-type level text (match-beginning 0) (match-end 0))))))
 
-(defun adoc-make-title(descriptor)
+(defun adoc-make-title (descriptor)
   (let ((type (nth 0 descriptor))
         (sub-type (nth 1 descriptor))
         (level (nth 2 descriptor))
@@ -1851,6 +1856,7 @@ and title's text are not preserved, afterwards its always one space."
   (let ((descriptor (adoc-title-descriptor)))
     (if (or create (not descriptor))
         (error "Point is not on a title"))
+
     ;; todo: set descriptor to default
     ;; (if (not descriptor)
     ;;     (setq descriptor (list 1 1 2 ?? adoc-default-title-type adoc-default-title-sub-type)))
@@ -1889,16 +1895,26 @@ and title's text are not preserved, afterwards its always one space."
            (start (nth 4 descriptor))
            (end (nth 5 descriptor))
            (saved-col (current-column)))
+      
+      ;; set new title descriptor
       (setcar (nthcdr 0 descriptor) new-type-val)
       (setcar (nthcdr 1 descriptor) new-sub-type-val)
       (setcar (nthcdr 2 descriptor) new-level)
-      (beginning-of-line)
-      (when (and (eq type 2) (looking-at (adoc-re-two-line-title-undlerline)))
-	(forward-line -1)
-	(beginning-of-line))
-      (delete-region start end)
-      (insert (adoc-make-title descriptor))
-      (when (eq new-type-val 2)
+
+      ;; replace old title by new
+      (let ((end-char (char-before end)))
+	(beginning-of-line)
+	(when (and (eq type 2) (looking-at (adoc-re-two-line-title-undlerline)))
+	  (forward-line -1)
+	  (beginning-of-line))
+	(delete-region start end)
+	(insert (adoc-make-title descriptor))
+	(when (equal end-char ?\n)
+	  (insert  "\n")
+	  (forward-line -1)))
+
+      ;; reposition point
+      (when (and (eq new-type-val 2) (eq type 1))
         (forward-line -1))
       (move-to-column saved-col))))
 

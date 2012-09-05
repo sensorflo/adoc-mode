@@ -57,16 +57,29 @@
       ;; tear-down
       (kill-buffer buf-name))))
 
-(defun adoctest-trans (original-text expected-text transform-fn &optional args)
-  (let ((pos 0)
-	(line 0))
-    (while (and (< pos (length original-text))
-		(setq pos (string-match "\n\\|\\'" original-text pos)))
-      (adoctest-trans-inner original-text expected-text transform-fn args line)
-      (setq line (1+ line))
-      (setq pos (1+ pos)))))
+(defun adoctest-trans (original-text expected-text transform)
+  (if (string-match "!" original-text)
+      ;; original-text has ! markers
+      (let ((pos 0)
+	    (pos-old 0)
+	    (pos-list)
+	    (new-original-text ""))
+	;; original-text -> new-original-text by removing ! and remembering their positions
+	(while (and (< pos (length original-text))
+		    (setq pos (string-match "!" original-text pos)))
+	  (setq new-original-text (concat new-original-text (substring original-text pos-old pos)))
+	  (setq pos-list (cons (length new-original-text) pos-list))
+	  (setq pos (1+ pos))
+	  (setq pos-old pos))
+	(setq new-original-text (concat new-original-text (substring original-text pos-old pos)))
+	;; run adoctest-trans-inner for each remembered pos 
+	(while pos-list
+	  (adoctest-trans-inner new-original-text expected-text transform (car pos-list))
+	  (setq pos-list (cdr pos-list))))
+    ;; original-text has no ! markers
+    (adoctest-trans-inner original-text expected-text transform)))
 
-(defun adoctest-trans-inner (original-text expected-text transform-fn args line)
+(defun adoctest-trans-inner (original-text expected-text transform &optional pos)
   (let ((not-done t)
 	(font-lock-support-mode))
     (unwind-protect
@@ -76,9 +89,10 @@
   	  (delete-region (point-min) (point-max))
   	  (adoc-mode)
   	  (insert original-text)
-	  (goto-line line)
+	  (when pos
+	    (goto-char pos))
 	  ;; exercise
-  	  (funcall transform-fn args)
+  	  (eval transform)
 	  ;; verify
   	  (should (string-equal (buffer-substring (point-min) (point-max)) expected-text)))
       ;; tear-down
@@ -489,24 +503,33 @@
    "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor" 'no-face))
 
 (ert-deftest adoctest-test-promote-title ()
-  (adoctest-trans "= foo" "== foo" 'adoc-promote-title 1)
-  (adoctest-trans "===== foo" "= foo" 'adoc-promote-title 1)
-  (adoctest-trans "== foo" "==== foo" 'adoc-promote-title 2)
+  (adoctest-trans "= foo" "== foo" '(adoc-promote-title 1))
+  (adoctest-trans "===== foo" "= foo" '(adoc-promote-title 1))
+  (adoctest-trans "== foo" "==== foo" '(adoc-promote-title 2))
 
-  (adoctest-trans "= foo =" "== foo ==" 'adoc-promote-title 1)
-  (adoctest-trans "===== foo =====" "= foo =" 'adoc-promote-title 1)
-  (adoctest-trans "== foo ==" "==== foo ====" 'adoc-promote-title 2)
+  (adoctest-trans "= foo =" "== foo ==" '(adoc-promote-title 1))
+  (adoctest-trans "===== foo =====" "= foo =" '(adoc-promote-title 1))
+  (adoctest-trans "== foo ==" "==== foo ====" '(adoc-promote-title 2))
 
-  (adoctest-trans "foo\n===" "foo\n---" 'adoc-promote-title 1)
-  (adoctest-trans "foo\n+++" "foo\n===" 'adoc-promote-title 1)
-  (adoctest-trans "foo\n---" "foo\n^^^" 'adoc-promote-title 2))
+  (adoctest-trans "foo!\n===!" "foo\n---" '(adoc-promote-title 1))
+  (adoctest-trans "foo!\n+++!" "foo\n===" '(adoc-promote-title 1))
+  (adoctest-trans "foo!\n---!" "foo\n^^^" '(adoc-promote-title 2)))
 
 ;; since it's a whitebox test we know denote and promote only differ by inverse
 ;; arg. So denote doesn't need to be throuhly tested again
 (ert-deftest adoctest-test-denote-title ()
-  (adoctest-trans "= foo" "===== foo" 'adoc-denote-title 1)
-  (adoctest-trans "= foo =" "===== foo =====" 'adoc-denote-title 1)
-  (adoctest-trans "foo\n===" "foo\n+++" 'adoc-denote-title 1))
+  (adoctest-trans "= foo" "===== foo" '(adoc-denote-title 1))
+  (adoctest-trans "= foo =" "===== foo =====" '(adoc-denote-title 1))
+  (adoctest-trans "foo!\n===!" "foo\n+++" '(adoc-denote-title 1)))
+
+;; todo: test after transition point is still on title lines
+(ert-deftest adoctest-test-toggle-title-type ()
+  (adoctest-trans "= one" "one\n===" '(adoc-toggle-title-type))
+  (adoctest-trans "two!\n===!" "= two" '(adoc-toggle-title-type))
+  (adoctest-trans "= three!\nbar" "three\n=====\nbar" '(adoc-toggle-title-type))
+  (adoctest-trans "four!\n====!\nbar" "= four\nbar" '(adoc-toggle-title-type))
+  (adoctest-trans "= five" "= five =" '(adoc-toggle-title-type t))
+  (adoctest-trans "= six =" "= six" '(adoc-toggle-title-type t)))
 
 (ert-deftest adoctest-pre-test-byte-compile ()
   ;; todo: also test for warnings
