@@ -57,6 +57,33 @@
     ;; tear-down
     (kill-buffer buf-name)))
 
+(defun adoctest-trans (original-text expected-text transform-fn &optional args)
+  (let ((pos 0)
+	(line 0))
+    (while (and (< pos (length original-text))
+		(setq pos (string-match "\n\\|\\'" original-text pos)))
+      (adoctest-trans-inner original-text expected-text transform-fn args line)
+      (setq line (1+ line))
+      (setq pos (1+ pos)))))
+
+(defun adoctest-trans-inner (original-text expected-text transform-fn args line)
+  (let ((not-done t)
+	(font-lock-support-mode))
+    (unwind-protect
+	(progn
+	  ;; setup
+	  (set-buffer (get-buffer-create "adoctest-trans")) 
+  	  (delete-region (point-min) (point-max))
+  	  (adoc-mode)
+  	  (insert original-text)
+	  (goto-line line)
+	  ;; exercise
+  	  (funcall transform-fn args)
+	  ;; verify
+  	  (should (string-equal (buffer-substring (point-min) (point-max)) expected-text))))
+    ;; tear-down
+    (kill-buffer "adoctest-trans")))
+
 (ert-deftest adoctest-test-titles-simple-one-line-before ()
   (adoctest-faces "titles-simple-one-line-before"
    "= " markup-meta-hide-face "document title" markup-title-0-face "\n" nil
@@ -460,6 +487,26 @@
    ;; don't cross list item boundaries in the case of labeled lists
    "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor\n" 'no-face
    "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor" 'no-face))
+
+(ert-deftest adoctest-test-promote-title ()
+  (adoctest-trans "= foo" "== foo" 'adoc-promote-title 1)
+  (adoctest-trans "===== foo" "= foo" 'adoc-promote-title 1)
+  (adoctest-trans "== foo" "==== foo" 'adoc-promote-title 2)
+
+  (adoctest-trans "= foo =" "== foo ==" 'adoc-promote-title 1)
+  (adoctest-trans "===== foo =====" "= foo =" 'adoc-promote-title 1)
+  (adoctest-trans "== foo ==" "==== foo ====" 'adoc-promote-title 2)
+
+  (adoctest-trans "foo\n===" "foo\n---" 'adoc-promote-title 1)
+  (adoctest-trans "foo\n+++" "foo\n===" 'adoc-promote-title 1)
+  (adoctest-trans "foo\n---" "foo\n^^^" 'adoc-promote-title 2))
+
+;; since it's a whitebox test we know denote and promote only differ by inverse
+;; arg. So denote doesn't need to be throuhly tested again
+(ert-deftest adoctest-test-denote-title ()
+  (adoctest-trans "= foo" "===== foo" 'adoc-denote-title 1)
+  (adoctest-trans "= foo =" "===== foo =====" 'adoc-denote-title 1)
+  (adoctest-trans "foo\n===" "foo\n+++" 'adoc-denote-title 1))
 
 (ert-deftest adoctest-pre-test-byte-compile ()
   ;; todo: also test for warnings

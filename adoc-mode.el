@@ -422,11 +422,37 @@ match-data has this sub groups:
   (let ((del (make-string (+ level 1) ?=)))
     (concat del " " text (when (eq sub-type 2) (concat " " del)))))   
 
-;; for first line, 2nd line is not a regex but python code
+;; AsciiDoc handles that by source code, there is no regexp in AsciiDoc
+(defun adoc-re-two-line-title-undlerline (&optional del)
+  "Returns a regexp matching the underline of a two line title.
+
+DEL is an element of `adoc-two-line-title-del' or nil. If nil,
+any del is matched.
+
+Note that even if this regexp matches it still doesn't mean it is
+a two line title underline, see also `adoc-re-two-line-title'."
+  (concat
+   "\\("
+   (mapconcat
+    (lambda(x)
+      (concat
+       "\\(?:"
+       "\\(?:" (regexp-quote x) "\\)+"	
+       (regexp-quote (substring x 0 1)) "?"
+       "\\)"))
+    (if del (list del) adoc-two-line-title-del) "\\|")          
+   "\\)[ \t]*$"))
+
+;; asciidoc.conf regexps for _first_ line
 ;; ^(?P<title>.*?)$   
 (defun adoc-re-two-line-title (del)
-  "Note that even if this regexp matches it still doesn't mean it is a two line title.
-You additionaly have to test if the underline has the correct length.
+  "Returns a regexps that matches a two line title.
+
+Note that even if this regexp matches it still doesn't mean it is
+a two line title. You additionaly have to test if the underline
+has the correct length.
+
+DEL is described in `adoc-re-two-line-title-undlerline'.
 
 match-data has his this sub groups:
 1 title's text
@@ -435,13 +461,11 @@ match-data has his this sub groups:
   (when (not (eq (length del) 2))
     (error "two line title delimiters must be 2 chars long"))
   (concat
-   ;; title text (the first line) must contain at least one \w character. You
-   ;; don't see that in asciidoc.conf, only in asciidoc source code.
+   ;; 1st line: title text must contain at least one \w character. You don't see
+   ;; that in asciidoc.conf, only in asciidoc source code.
    "\\(^.*?[a-zA-Z0-9_].*?\\)[ \t]*\n" 
-   "\\("
-     "\\(?:" (regexp-quote del) "\\)+"
-     (regexp-quote (substring del 0 1)) "?"   
-   "\\)[ \t]*$" ))
+   ;; 2nd line: underline
+   (adoc-re-two-line-title-undlerline del)))
 
 (defun adoc-make-two-line-title (del text)
   "Returns a two line title using given DEL containing given TEXT."
@@ -1664,7 +1688,7 @@ anchors in the [[id]] style."
   (re-search-forward (concat "^\\[\\[" (match-string 1) "\\]\\]")))
 
 (defun adoc-promote-title (&optional arg)
-  "Promotes the title point is on ARG levels.
+  "Promotes the title at point ARG levels.
 
 When ARG is nil (i.e. when no prefix arg is given), it defaults
 to 1. When ARG is negative, level is denoted that many levels. If
@@ -1756,7 +1780,11 @@ trailing delimiter ('== my title ==').
          ;; method ensuring the correct length of the underline, be aware that
          ;; due to adoc-adjust-title-del we sometimes want to find a title which has
          ;; the wrong underline length.
-         ((looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))
+         ((or (looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))
+	      (save-excursion
+		(forward-line -1)
+		(beginning-of-line)
+		(looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))))
           (setq type 2)
           (setq text (match-string 1))
           (setq found t))
@@ -1846,6 +1874,9 @@ and title's text are not preserved, afterwards its always one space."
       (setcar (nthcdr 1 descriptor) new-sub-type-val)
       (setcar (nthcdr 2 descriptor) new-level)
       (beginning-of-line)
+      (when (and (eq type 2) (looking-at (adoc-re-two-line-title-undlerline)))
+	(forward-line -1)
+	(beginning-of-line))
       (delete-region start end)
       (insert (adoc-make-title descriptor))
       (when (eq new-type-val 2)
