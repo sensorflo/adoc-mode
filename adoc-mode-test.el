@@ -37,11 +37,11 @@
 	(cond
 	 ((null tmp)) ; nop
 	 ((eq tmp 'no-face)
-	  (ert-should (null tmp2)))
+	  (should (null tmp2)))
 	 (t
 	  (if (and (listp tmp2) (not (listp tmp)))
-	      (ert-should (and (= 1 (length tmp2)) (equal tmp (car tmp2))))
-	    (ert-should (equal tmp tmp2)))))
+	      (should (and (= 1 (length tmp2)) (equal tmp (car tmp2))))
+	    (should (equal tmp tmp2)))))
 	(if (< (point) (point-max))
 	    (forward-char 1)
 	  (setq not-done nil)))))
@@ -447,10 +447,10 @@
 
 (ert-deftest adoctest-pre-test-byte-compile ()
   ;; todo: also test for warnings
-  (ert-should (byte-compile-file (locate-library "adoc-mode.el" t)))
-  (ert-should (load "adoc-mode.el" nil nil t))
-  (ert-should (byte-compile-file (locate-library "adoc-mode-test.el" t)))
-  (ert-should (load "adoc-mode-test.el" nil nil t)))
+  (should (byte-compile-file (locate-library "adoc-mode.el" t)))
+  (should (load "adoc-mode.el" nil nil t))
+  (should (byte-compile-file (locate-library "adoc-mode-test.el" t)))
+  (should (load "adoc-mode-test.el" nil nil t)))
 
 (defun adoc-test-run()
   (interactive)
