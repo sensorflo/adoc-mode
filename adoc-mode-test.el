@@ -531,6 +531,11 @@
   (adoctest-trans "= five" "= five =" '(adoc-toggle-title-type t))
   (adoctest-trans "= six =" "= six" '(adoc-toggle-title-type t)))
 
+(ert-deftest adoctest-test-adjust-title-del ()
+  (adoctest-trans "lorem!\n===!" "lorem\n=====" '(adoc-adjust-title-del))
+  (adoctest-trans "lorem!\n========!" "lorem\n=====" '(adoc-adjust-title-del))
+  (adoctest-trans "lorem!\n=====!" "lorem\n=====" '(adoc-adjust-title-del)))
+
 (ert-deftest adoctest-pre-test-byte-compile ()
   ;; todo: also test for warnings
   (when (file-exists-p "adoc-mode.elc")
