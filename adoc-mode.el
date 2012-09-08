@@ -670,13 +670,34 @@ Subgroups:
 3 attribute list, exclusive brackets []"
   (concat "^\\(" (or cmd-name "[a-zA-Z0-9_]+") "\\)::\\([^ \t\n]*?\\)\\[\\(.*?\\)\\][ \t]*$"))
 
-;; with attriblists:
-;;   inline macro special syntax: [\\]?\[\[(?P<attrlist>[\w"_:].*?)\]\]
-;;   inline macro biblio special syntax: [\\]?\[\[\[(?P<attrlist>[\w_:][\w_:.-]*?)\]\]\]
-;; id/reftext given by  special syntax
-;;   block id:  ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
-;; mixed:
-;;   inline macro default syntax: see adoc-re-inline-macro. the target is the id, the 1st pos arg is the xreflabel
+(defun adoc-re-anchor (type &optional id)
+  "Returns a regexp matching an anchor.
+
+If ID is non-nil, the regexp matches an anchor defining exactly
+this id. If ID is nil, the regexp matches any anchor."
+  (cond
+   ((eq type 'block-id)
+    ;; ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
+    (concat "^\\[\\["
+	    "\\(" (or (regexp-quote id) "[-a-zA-Z0-9_]+") "\\)"
+	    "\\(?:,?\\(.*?\\)\\)?"
+	    "\\]\\][ \t]*$"))
+
+   ((eq type 'inline-special)
+    ;; [\\]?\[\[(?P<attrlist>[\w"_:].*?)\]\]
+    (concat "\\(\\[\\[\\)"
+	    "\\(" (or (concat (regexp-quote id) "[ \t]*?") "[a-zA-Z0-9\"_:].*?") "\\)"
+	    "\\(\\]\\]\\)"))
+
+   ((eq type 'biblio)
+    ;; [\\]?\[\[\[(?P<attrlist>[\w_:][\w_:.-]*?)\]\]\]
+    (concat "\\(\\[\\[\\)"
+	    "\\(\\[" (or (regexp-quote id) "[a-zA-Z0-9_:][a-zA-Z0-9_:.-]*?") "\\]\\)"
+	    "\\(\\]\\]\\)"))
+
+   ((eq type 'inline-general)
+    (adoc-re-inline-macro "anchor" id))))
+
 (defun adoc-re-anchor(type)
   "Returns a regexp matching an anchor."
   (cond
@@ -795,9 +816,13 @@ subgroups:
 ;; (?<!\w)[\\]?(?P<name>http|https|ftp|file|irc|mailto|callto|image|link|anchor|xref|indexterm):(?P<target>\S*?)\[(?P<attrlist>.*?)\]
 ;; # Default (catchall) inline macro is not implemented
 ;; # [\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]
-(defun adoc-re-inline-macro (&optional cmd-name)
+(defun adoc-re-inline-macro (&optional cmd-name target)
   "Returns regex matching an inline macro.
-Subgroups:
+
+Id CMD-NAME is nil, any command is matched. If TARGET is nil, any
+target is matched.
+
+Subgroups of returned regexp:
 1 cmd name
 2 :
 3 target
@@ -805,7 +830,11 @@ Subgroups:
 5 attribute list, exclusive brackets []
 6 ]"
   ;; !!! \< is not exactly what AsciiDoc does, see regex above
-  (concat "\\<\\(" (or cmd-name "\\w+") "\\)\\(:\\)\\([^ \t\n].*\\)\\(\\[\\)\\(.*?\\)\\(\\]\\)" ))
+  (concat
+   "\\(\\<" (or (regexp-quote cmd-name) "\\w+") "\\)"
+   "\\(:\\)"
+   "\\(" (or (regexp-quote target) "[^ \t\n]*?") "\\)"
+   "\\(\\[\\)\\(.*?\\)\\(\\]\\)" ))
 
 ;; todo: use same regexps as for font lock
 (defun adoc-re-paragraph-separate ()
