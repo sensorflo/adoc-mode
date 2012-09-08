@@ -536,6 +536,24 @@
   (adoctest-trans "lorem!\n========!" "lorem\n=====" '(adoc-adjust-title-del))
   (adoctest-trans "lorem!\n=====!" "lorem\n=====" '(adoc-adjust-title-del)))
 
+(ert-deftest adoctest-test-xref-at-point-1 ()
+  (unwind-protect
+      (progn
+	(set-buffer (get-buffer-create "adoc-test")) 
+	(insert "lorem xref:bogous1[] ipsum xref:foo[bla\nbli] dolor xref:bogous2[]")
+	(re-search-backward "bli")	; move point within ref
+	(should (equal (adoc-xref-id-at-point) "foo")))
+    (kill-buffer "adoc-test")))
+
+(ert-deftest adoctest-test-xref-at-point-2 ()
+  (unwind-protect
+      (progn
+	(set-buffer (get-buffer-create "adoc-test")) 
+	(insert "lorem ipsum <<foo,bla\nbli>> dolor")
+	(re-search-backward "bli") ; move point within ref
+	(should (equal (adoc-xref-id-at-point) "foo")))
+    (kill-buffer "adoc-test")))
+
 (ert-deftest adoctest-pre-test-byte-compile ()
   ;; todo: also test for warnings
   (when (file-exists-p "adoc-mode.elc")

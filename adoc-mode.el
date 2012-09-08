@@ -670,8 +670,11 @@ Subgroups:
 3 attribute list, exclusive brackets []"
   (concat "^\\(" (or cmd-name "[a-zA-Z0-9_]+") "\\)::\\([^ \t\n]*?\\)\\[\\(.*?\\)\\][ \t]*$"))
 
-(defun adoc-re-anchor (type &optional id)
+(defun adoc-re-anchor (&optional type id)
   "Returns a regexp matching an anchor.
+
+If TYPE is non-nil, only that type is matched. If TYPE is nil,
+all types are matched.
 
 If ID is non-nil, the regexp matches an anchor defining exactly
 this id. If ID is nil, the regexp matches any anchor."
@@ -679,32 +682,55 @@ this id. If ID is nil, the regexp matches any anchor."
    ((eq type 'block-id)
     ;; ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
     (concat "^\\[\\["
-	    "\\(" (or (regexp-quote id) "[-a-zA-Z0-9_]+") "\\)"
+	    "\\(" (if id (regexp-quote id) "[-a-zA-Z0-9_]+") "\\)"
 	    "\\(?:,?\\(.*?\\)\\)?"
 	    "\\]\\][ \t]*$"))
 
    ((eq type 'inline-special)
     ;; [\\]?\[\[(?P<attrlist>[\w"_:].*?)\]\]
     (concat "\\(\\[\\[\\)"
-	    "\\(" (or (concat (regexp-quote id) "[ \t]*?") "[a-zA-Z0-9\"_:].*?") "\\)"
+	    "\\(" (if id (concat (regexp-quote id) "[ \t]*?") "[a-zA-Z0-9\"_:].*?") "\\)"
 	    "\\(\\]\\]\\)"))
 
    ((eq type 'biblio)
     ;; [\\]?\[\[\[(?P<attrlist>[\w_:][\w_:.-]*?)\]\]\]
     (concat "\\(\\[\\[\\)"
-	    "\\(\\[" (or (regexp-quote id) "[a-zA-Z0-9_:][a-zA-Z0-9_:.-]*?") "\\]\\)"
+	    "\\(\\[" (if id (regexp-quote id) "[a-zA-Z0-9_:][a-zA-Z0-9_:.-]*?") "\\]\\)"
 	    "\\(\\]\\]\\)"))
 
    ((eq type 'inline-general)
-    (adoc-re-inline-macro "anchor" id))))
+    (adoc-re-inline-macro "anchor" id))
 
-(defun adoc-re-anchor(type)
-  "Returns a regexp matching an anchor."
+   ((null type)
+    (mapconcat
+     (lambda (x) (adoc-re-anchor x id))
+     '(block-id inline-special biblio inline-general)
+     "\\|"))
+
+   (t
+    (error "Unknown type"))))
+
+(defun adoc-re-xref (&optional type)
+  "Returns a regexp matching a reference"
   (cond
-   ((eq type 'block-id) "^\\[\\[\\([-a-zA-Z0-9_]+\\)\\(?:,?\\(.*?\\)\\)?\\]\\][ \t]*$")
-   ((eq type 'inline-special) "\\(\\[\\[\\)\\([a-zA-Z0-9\"_:].*?\\)\\(\\]\\]\\)")
-   ((eq type 'biblio) "\\(\\[\\[\\)\\(\\[[a-zA-Z0-9_:][a-zA-Z0-9_:.-]*?\\]\\)\\(\\]\\]\\)")
-   ((eq type 'inline-general) (adoc-re-inline-macro "anchor"))))
+   ((eq type 'inline-special-with-caption)
+    ;; (?su)[\\]?&lt;&lt;(?P<attrlist>[\w"].*?)&gt;&gt;=xref2
+    "\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)")
+
+   ((eq type 'inline-special-no-caption)
+    ;; asciidoc.conf uses the same regexp as for without caption
+    "\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)")
+
+   ((eq type 'inline-general-macro)
+    (adoc-re-inline-macro "xref"))
+
+   ((null type)
+    (mapconcat
+     (lambda (x) (adoc-re-xref x))
+     '(inline-special-with-caption inline-special-no-caption inline-general-macro)
+     "\\|"))
+
+   (t (error "unknown type"))))
 
 (defun adoc-re-attribute-list-elt ()
   "Returns a regexp matching an attribute list elment.
@@ -831,10 +857,10 @@ Subgroups of returned regexp:
 6 ]"
   ;; !!! \< is not exactly what AsciiDoc does, see regex above
   (concat
-   "\\(\\<" (or (regexp-quote cmd-name) "\\w+") "\\)"
+   "\\(\\<" (if cmd-name (regexp-quote cmd-name) "\\w+") "\\)"
    "\\(:\\)"
-   "\\(" (or (regexp-quote target) "[^ \t\n]*?") "\\)"
-   "\\(\\[\\)\\(.*?\\)\\(\\]\\)" ))
+   "\\(" (if target (regexp-quote target) "[^ \t\n]*?") "\\)"
+   "\\(\\[\\)\\(.*?\\(?:\n.*?\\)??\\)\\(\\]\\)" ))
 
 ;; todo: use same regexps as for font lock
 (defun adoc-re-paragraph-separate ()
@@ -1617,17 +1643,16 @@ When LITERAL-P is non-nil, the contained text is literal text."
    	 '(2 '(face markup-meta-face adoc-attribute-list ("id" "xreflabel")) t)
 	 '(3 '(face markup-meta-face adoc-reserved t) t))
 
+   ;; see also xref: within inline macros
    ;; reference with own/explicit caption
-   ;; (?su)[\\]?&lt;&lt;(?P<attrlist>[\w"].*?)&gt;&gt;=xref2
-   (list "\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+   (list (adoc-re-xref 'inline-special-with-caption)
          '(1 adoc-hide-delimiter)       ; <<
          '(2 adoc-delimiter)            ; anchor-id
          '(3 adoc-hide-delimiter)       ; ,
          '(4 adoc-reference)            ; link text
          '(5 adoc-hide-delimiter))      ; >>
    ;; reference without caption
-   ;; asciidoc.conf uses the same regexp as for without caption
-   (list "\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+   (list (adoc-re-xref 'inline-special-no-caption)
          '(1 adoc-hide-delimiter)       ; <<
          '(2 adoc-reference)            ; link text = anchor id
          '(3 adoc-hide-delimiter))      ; >>
@@ -1702,23 +1727,25 @@ When LITERAL-P is non-nil, the contained text is literal text."
   (interactive)
   (message "adoc-mode, version %s" adoc-mode-version))
 
-(defun adoc-goto-ref-label ()
-  "Goto the label/anchor refered to by the reference at/before point.
-Works only for references in the <<id[,reftex]>> style and
-anchors in the [[id]] style."
-  (interactive)
-  (push-mark)
-  (cond
-   ((looking-at "<<")
-    ) ; nop
-   ((looking-at "<")
-    (backward-char 1))
-   (t
-    (unless (re-search-backward "<<" (line-beginning-position) t)
-      (error "Line contains no reference at/before point"))))
-  (re-search-forward "<<\\(.*?\\)[ \t]*\\(?:,\\|>>\\)")
-  (goto-char 0)
-  (re-search-forward (concat "^\\[\\[" (match-string 1) "\\]\\]")))
+(defun adoc-goto-ref-label (id)
+  "Goto the anchor defining the id ID."
+  ;; KLUDGE: Getting the default, i.e. trying to parse the xref 'at' point, is
+  ;; not done nicely. backward-char 5 because the longest 'starting' of an xref
+  ;; construct is 'xref:' (others are '<<'). All this fails if point is within
+  ;; the id, opposed to the start the id. Or if the xref spawns over the current
+  ;; line.
+  (interactive (let* ((default (adoc-xref-id-at-point))
+		      (default-str (if default (concat "(default " default ")") "")))
+		 (list
+		  (read-string
+		   (concat "Goto anchor of reference/label " default-str ": ")
+		   nil nil default))))
+  (let ((pos (save-excursion
+	       (goto-char 0)
+	       (re-search-forward (adoc-re-anchor nil id) nil t))))
+    (if (null pos) (error (concat "Can't find an anchor defining '" id "'")))
+    (push-mark)
+    (goto-char pos)))
 
 (defun adoc-promote (&optional arg)
   "Promotes the structure at point ARG levels.
@@ -1796,6 +1823,35 @@ new customization demands."
 
 
 ;;;; misc
+(defun adoc-forward-xref (&optional bound)
+  "Move forward to next xref and return it's id.
+
+Match data is the one of the found xref. Returns nil if there was
+no xref found."
+  (cond
+   ((or (re-search-forward (adoc-re-xref 'inline-special-with-caption) bound t)
+	(re-search-forward (adoc-re-xref 'inline-special-no-caption) bound t))
+    (match-string-no-properties 2))
+   ((re-search-forward (adoc-re-xref 'inline-general-macro) bound t)
+    (match-string-no-properties 3))
+   (t nil)))
+
+(defun adoc-xref-id-at-point ()
+  "Returns id referenced by the xref point is at.
+
+Returns nil if there was no xref found."
+  (save-excursion
+    ;; search the xref within +-1 one line. I.e. if the xref spawns more than
+    ;; two lines, it wouldn't be found.
+    (let ((id)
+	  (saved-point (point))
+	  (end (save-excursion (forward-line 1) (line-end-position))))
+      (forward-line -1)
+      (while (and (setq id (adoc-forward-xref end))
+		  (or (< saved-point (match-beginning 0))
+		      (> saved-point (match-end 0)))))
+      id)))
+
 (defun adoc-title-descriptor()
   "Returns title descriptor of title point is in.
 
