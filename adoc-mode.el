@@ -415,7 +415,7 @@ match-data has this sub groups:
     (concat
      "^\\("  del "[ \t]+\\)"		      ; 1
      "\\([^ \t\n].*?\\)"		      ; 2
-     "\\(\\([ \t]+" del "\\)?[ \t]*\n\\)" ))) ; 3 & 4
+     "\\(\\([ \t]+" del "\\)?[ \t]*\\(?:\n\\|\\'\\)\\)" ))) ; 3 & 4
 
 (defun adoc-make-one-line-title (sub-type level text)
   "Returns a one line title of LEVEL and SUB-TYPE containing the given text."
@@ -598,12 +598,12 @@ Subgroups:
      "[ \t]+[^ \t\n].*" 
      ;; 2nd+ line is neither a blank line nor a list continuation line
      "\\(?:\n\\(?:[^+ \t\n]\\|[ \t]+[^ \t\n]\\|\\+[ \t]*[^ \t\n]\\).*?\\)*?" 
-     ;; paragraph delimited by blank line or list continuation
+     ;; paragraph delimited by blank line or list continuation or end of buffer
      ;; NOTE: now list continuation belongs the the verbatim paragraph sequence,
      ;; but actually we want to highlight it differently. Thus the font lock
      ;; keywoard handling list continuation must come after verbatim paraphraph
      ;; sequence.
-     "\n\\+?[ \t]*\n" 
+     "\\(?:\n[ \t]*\\(?:\n\\|\\'\\)\\|\n\\+[ \t]*\n\\|\\'\\)" 
    "\\)+" 
 
    "\\)" ))
@@ -617,7 +617,7 @@ Subgroups:
 Subgroups:
 1 delimiter
 2 title's text incl trailing whites
-3 newline 
+3 newline or end-of-buffer anchor
 
 .foo n
 12--23"
@@ -626,7 +626,7 @@ Subgroups:
    "\\(\\.?\\(?:"	
    "[0-9]+[^+*]" ; inserted part, see above
    "\\|[^. \t\n]\\).*\\)"
-   "\\(\n\\)"))
+   "\\(\n\\|\\'\\)"))
 
 ;; (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
 (defun adoc-re-block-macro (&optional cmd-name)
@@ -1250,7 +1250,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; comment
    ;; (?mu)^[\\]?//(?P<passtext>[^/].*|)$
    ;; I don't know what the [\\]? should mean
-   (list "^\\(//\\(?:[^/].*\\|\\)\n\\)"
+   (list "^\\(//\\(?:[^/].*\\|\\)\\(?:\n\\|\\'\\)\\)"
          '(1 '(face markup-comment-face adoc-reserved block-del)))    
    ;; image
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro "image") '(0)))
@@ -1938,7 +1938,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   (set (make-local-variable 'comment-start) "// ")
   (set (make-local-variable 'comment-end) "")
   (set (make-local-variable 'comment-start-skip) "^//[ \t]*")
-  (set (make-local-variable 'comment-end-skip) "[ \t]*\n")
+  (set (make-local-variable 'comment-end-skip) "[ \t]*\\(?:\n\\|\\'\\)")
   
   ;; paragraphs
   (set (make-local-variable 'paragraph-separate) (adoc-re-paragraph-separate))
