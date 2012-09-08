@@ -554,6 +554,23 @@
 	(should (equal (adoc-xref-id-at-point) "foo")))
     (kill-buffer "adoc-test")))
 
+(ert-deftest adoctest-test-goto-ref-label ()
+  (unwind-protect
+      (progn
+	(set-buffer (get-buffer-create "adoc-test")) 
+	(insert "[[foo]]\n"		   ;1
+		"lorem ipsum\n"		   ;2
+		"[[bar]]\n"		   ;3
+		"dolor [[geil]]sit amen\n" ;4
+		"anchor:cool[]\n")	   ;5
+	(adoc-goto-ref-label "cool")
+	(should (equal (line-number-at-pos) 5))
+	(adoc-goto-ref-label "geil")
+	(should (equal (line-number-at-pos) 4))
+	(adoc-goto-ref-label "bar")
+	(should (equal (line-number-at-pos) 3)))
+    (kill-buffer "adoc-test")))
+
 (ert-deftest adoctest-pre-test-byte-compile ()
   ;; todo: also test for warnings
   (when (file-exists-p "adoc-mode.elc")
