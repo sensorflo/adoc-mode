@@ -670,6 +670,12 @@ Subgroups:
 3 attribute list, exclusive brackets []"
   (concat "^\\(" (or cmd-name "[a-zA-Z0-9_]+") "\\)::\\([^ \t\n]*?\\)\\[\\(.*?\\)\\][ \t]*$"))
 
+
+;; ?P<id>[\w\-_]+
+(defun adoc-re-id ()
+  "Returns a regexp matching an id used by anchors/xrefs"
+  "\\(?:[-a-zA-Z0-9_]+\\)")
+
 (defun adoc-re-anchor (&optional type id)
   "Returns a regexp matching an anchor.
 
@@ -682,7 +688,7 @@ this id. If ID is nil, the regexp matches any anchor."
    ((eq type 'block-id)
     ;; ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
     (concat "^\\[\\["
-	    "\\(" (if id (regexp-quote id) "[-a-zA-Z0-9_]+") "\\)"
+	    "\\(" (if id (regexp-quote id) (adoc-re-id)) "\\)"
 	    "\\(?:,?\\(.*?\\)\\)?"
 	    "\\]\\][ \t]*$"))
 
@@ -710,23 +716,31 @@ this id. If ID is nil, the regexp matches any anchor."
    (t
     (error "Unknown type"))))
 
-(defun adoc-re-xref (&optional type)
-  "Returns a regexp matching a reference"
+(defun adoc-re-xref (&optional type for-kw)
+  "Returns a regexp matching a reference.
+
+If TYPE is nil, any type is matched. If FOR-KW is true, the
+regexp is intendet for a font lock keyword, which has to make
+further tests to find a proper xref."
   (cond
    ((eq type 'inline-special-with-caption)
     ;; (?su)[\\]?&lt;&lt;(?P<attrlist>[\w"].*?)&gt;&gt;=xref2
-    "\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)")
+    (if for-kw
+	"\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+      (concat "\\(<<\\)\\(" (adoc-re-id) "[ \t\n]*\\)\\(,\\)\\([^>\n]*?\\(?:\n[^>\n]*?\\)??\\)\\(>>\\)")))
 
    ((eq type 'inline-special-no-caption)
     ;; asciidoc.conf uses the same regexp as for without caption
-    "\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)")
+    (if for-kw
+	"\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+      (concat "\\(<<\\)\\(" (adoc-re-id) "[ \t\n]*\\)\\(>>\\)")))
 
    ((eq type 'inline-general-macro)
     (adoc-re-inline-macro "xref"))
 
    ((null type)
     (mapconcat
-     (lambda (x) (adoc-re-xref x))
+     (lambda (x) (adoc-re-xref x for-kw))
      '(inline-special-with-caption inline-special-no-caption inline-general-macro)
      "\\|"))
 
@@ -1645,14 +1659,14 @@ When LITERAL-P is non-nil, the contained text is literal text."
 
    ;; see also xref: within inline macros
    ;; reference with own/explicit caption
-   (list (adoc-re-xref 'inline-special-with-caption)
+   (list (adoc-re-xref 'inline-special-with-caption t)
          '(1 adoc-hide-delimiter)       ; <<
          '(2 adoc-delimiter)            ; anchor-id
          '(3 adoc-hide-delimiter)       ; ,
          '(4 adoc-reference)            ; link text
          '(5 adoc-hide-delimiter))      ; >>
    ;; reference without caption
-   (list (adoc-re-xref 'inline-special-no-caption)
+   (list (adoc-re-xref 'inline-special-no-caption t)
          '(1 adoc-hide-delimiter)       ; <<
          '(2 adoc-reference)            ; link text = anchor id
          '(3 adoc-hide-delimiter))      ; >>

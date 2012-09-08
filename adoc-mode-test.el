@@ -549,7 +549,7 @@
   (unwind-protect
       (progn
 	(set-buffer (get-buffer-create "adoc-test")) 
-	(insert "lorem ipsum <<foo,bla\nbli>> dolor")
+	(insert "lorem <<bogous1,caption>> ipsum <<foo,bla\nbli>> dolor <<bogous2>>")
 	(re-search-backward "bli") ; move point within ref
 	(should (equal (adoc-xref-id-at-point) "foo")))
     (kill-buffer "adoc-test")))
