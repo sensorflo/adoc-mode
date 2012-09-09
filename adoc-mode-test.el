@@ -611,6 +611,12 @@ removed before TRANSFORM is evaluated.
 	(should (equal (line-number-at-pos) 3)))
     (kill-buffer "adoc-test")))
 
+(ert-deftest adoctest-test-make-two-line-title-underline ()
+  (should (equal (adoc-make-two-line-title-underline 0 6)
+		 "======"))
+  (should (equal (adoc-make-two-line-title-underline 2)
+		 "~~~~")))
+    
 ;; purpose
 ;; - ensure that the latest version, i.e. the one currently in buffer(s), of
 ;;   adoc-mode and adoc-mode-test is used for the test

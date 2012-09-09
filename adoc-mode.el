@@ -503,19 +503,27 @@ match-data has his this sub groups:
    ;; 2nd line: underline
    (adoc-re-two-line-title-undlerline del)))
 
-(defun adoc-make-two-line-title (del text)
-  "Returns a two line title using given DEL containing given TEXT."
-  (when (not (eq (length del) 2))
-    (error "two line title delimiters must be 2 chars long"))
-  (let ((repetition-cnt (if (>= (length text) 2) (/ (length text) 2) 1))
-        (result (concat text "\n")))
+(defun adoc-make-two-line-title (level text)
+  "Returns a two line title of given LEVEL containing given TEXT.
+LEVEL starts at 1."
+  (concat text "\n" (adoc-make-two-line-title-underline level (length text))))
+  
+(defun adoc-make-two-line-title-underline (level &optional length)
+  "Returns a two line title underline.
+LEVEL is the level of the title, starting at 1. LENGTH is the
+line of the title's text. When nil it defaults to 4."
+  (unless length
+    (setq length 4))
+  (let* ((repetition-cnt (if (>= length 2) (/ length 2) 1))
+	 (del (nth level adoc-two-line-title-del))
+	 (result ""))
     (while (> repetition-cnt 0)
       (setq result (concat result del))
       (setq repetition-cnt (- repetition-cnt 1)))
-    (when (eq (% (length text) 2) 1)
+    (when (eq (% length 2) 1)
       (setq result (concat result (substring del 0 1))))
     result))
-  
+
 (defun adoc-re-oulisti (type &optional level sub-type)
   "Returns a regexp matching an (un)ordered list item.
 
@@ -2009,7 +2017,7 @@ trailing delimiter ('== my title ==').
         (text (nth 3 descriptor)))
     (if (eq type 1)
         (adoc-make-one-line-title sub-type level text)
-      (adoc-make-two-line-title (nth level adoc-two-line-title-del) text))))
+      (adoc-make-two-line-title level text))))
 
 (defun adoc-modify-title (&optional new-level-rel new-level-abs new-type new-sub-type create)
   "Modify properties of title point is on.
