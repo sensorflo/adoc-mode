@@ -80,7 +80,6 @@
 ;;     make them configurable in a way similar to that configuration file
 ;;   - respect font-lock-maximum-decoration
 ;; - Other common emacs functionality/features
-;;   - create a menu entry and keybindings for the commands
 ;;   - indent functions
 ;;   - imenu / outline / hideshow
 ;;   - tags tables for anchors, indixes, bibliography items, titles, ...
@@ -92,6 +91,9 @@
 ;;   - Is there something that would remove hard newlines within a paragraph,
 ;;     but just for display, so the paragraph uses the whole buffer length.
 ;;   - are there generic base packages to handle lists / tables?
+;;   - a readonly view mode where commands for navigation are on short key
+;;     bindings like alphanum letters
+;;   - study what other markup modes like rst offer
 ;; - AsciiDoc related features
 ;;   - Two (or gruadualy fading) display modes: one emphasises to see the
 ;;     AsciiDoc source text, the other emphasises to see how the output will
@@ -101,12 +103,13 @@
 ;; Bugs:
 ;; - delimited blocks are supported, but not well at all
 ;; - Most regexps for highlighting can spawn at most over two lines.
-;; - font-lock's multi line capabilities are not used well enough
+;; - font-lock's multi line capabilities are not used well enough. At least 2
+;;   line spawns should be covered - replace all .*? by .*?\\(?:\n.*?\\)??
 ;;
 
 ;;; Variables:
 
-(require 'markup-faces)
+(require 'markup-faces) ; https://github.com/sensorflo/markup-faces
 (require 'cl) ; I know, I should remove it, I will, eventually
 
 (defconst adoc-mode-version "0.4.0" 
@@ -391,8 +394,31 @@ To become a customizable variable when regexps for list items become customizabl
 
 (define-abbrev-table 'adoc-mode-abbrev-table ())
 
+(defvar adoc-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map "\C-c\C-d" 'adoc-denote)
+    (define-key map "\C-c\C-p" 'adoc-promote)
+    (define-key map "\C-c\C-t" 'adoc-toggle-title-type)
+    (define-key map "\C-c\C-g" 'adoc-goto-ref-label)
+    map)
+  "Keymap used in adoc mode.")
+
 
 ;;; Code:
+
+(defvar adoc-menu)
+(condition-case nil
+    (progn
+      (require 'easymenu)
+      (easy-menu-define
+	adoc-menu adoc-mode-map "Menu for adoc mode"
+	'("AsciiDoc"
+	  ["Promote" adoc-promote t]
+	  ["Denote" adoc-denote t]
+	  ["Toggle title type" adoc-toggle-title-type t]
+	  ["Adjust title underline" adoc-adjust-title-del t]
+	  ["Goto anchor" adoc-goto-ref-label t])))
+  (error nil))
 
 ;; from asciidoc.conf:
 ;; ^:(?P<attrname>\w[^.]*?)(\.(?P<attrname2>.*?))?:(\s+(?P<attrvalue>.*))?$
@@ -413,27 +439,58 @@ match-data has this sub groups:
 4 trailing delimiter only inclusive whites between title text and delimiter
 0 only chars that belong to the title block element
 
-== my title ==  n
---12------23----
-             4-4"
+==  my title  ==  n
+---12------23------
+            4--4"
   (let* ((del (if level
                  (make-string (+ level 1) ?=)
                (concat "=\\{1," (+ adoc-title-max-level 1) "\\}"))))
     (concat
      "^\\("  del "[ \t]+\\)"		      ; 1
      "\\([^ \t\n].*?\\)"		      ; 2
-     "\\(\\([ \t]+" del "\\)?[ \t]*\n\\)" ))) ; 3 & 4
+     ;; using \n instad $ is important so group 3 is guaranteed to be at least 1
+     ;; char long (except when at the end of the buffer()). That is important to
+     ;; to have a place to put the text property adoc-reserved on.
+     "\\(\\([ \t]+" del "\\)?[ \t]*\\(?:\n\\|\\'\\)\\)" ))) ; 3 & 4
 
 (defun adoc-make-one-line-title (sub-type level text)
   "Returns a one line title of LEVEL and SUB-TYPE containing the given text."
   (let ((del (make-string (+ level 1) ?=)))
     (concat del " " text (when (eq sub-type 2) (concat " " del)))))   
 
-;; for first line, 2nd line is not a regex but python code
+;; AsciiDoc handles that by source code, there is no regexp in AsciiDoc
+(defun adoc-re-two-line-title-undlerline (&optional del)
+  "Returns a regexp matching the underline of a two line title.
+
+DEL is an element of `adoc-two-line-title-del' or nil. If nil,
+any del is matched.
+
+Note that even if this regexp matches it still doesn't mean it is
+a two line title underline, see also `adoc-re-two-line-title'."
+  (concat
+   "\\("
+   (mapconcat
+    (lambda(x)
+      (concat
+       "\\(?:"
+       "\\(?:" (regexp-quote x) "\\)+"	
+       (regexp-quote (substring x 0 1)) "?"
+       "\\)"))
+    (if del (list del) adoc-two-line-title-del) "\\|")          
+   ;; adoc-re-two-line-title shall have same behaviour als one line, thus
+   ;; also here use \n instead $
+   "\\)[ \t]*\\(?:\n\\|\\'\\)"))
+
+;; asciidoc.conf regexps for _first_ line
 ;; ^(?P<title>.*?)$   
 (defun adoc-re-two-line-title (del)
-  "Note that even if this regexp matches it still doesn't mean it is a two line title.
-You additionaly have to test if the underline has the correct length.
+  "Returns a regexps that matches a two line title.
+
+Note that even if this regexp matches it still doesn't mean it is
+a two line title. You additionaly have to test if the underline
+has the correct length.
+
+DEL is described in `adoc-re-two-line-title-undlerline'.
 
 match-data has his this sub groups:
 1 title's text
@@ -442,13 +499,11 @@ match-data has his this sub groups:
   (when (not (eq (length del) 2))
     (error "two line title delimiters must be 2 chars long"))
   (concat
-   ;; title text (the first line) must contain at least one \w character. You
-   ;; don't see that in asciidoc.conf, only in asciidoc source code.
+   ;; 1st line: title text must contain at least one \w character. You don't see
+   ;; that in asciidoc.conf, only in asciidoc source code.
    "\\(^.*?[a-zA-Z0-9_].*?\\)[ \t]*\n" 
-   "\\("
-     "\\(?:" (regexp-quote del) "\\)+"
-     (regexp-quote (substring del 0 1)) "?"   
-   "\\)[ \t]*$" ))
+   ;; 2nd line: underline
+   (adoc-re-two-line-title-undlerline del)))
 
 (defun adoc-make-two-line-title (del text)
   "Returns a two line title using given DEL containing given TEXT."
@@ -605,12 +660,12 @@ Subgroups:
      "[ \t]+[^ \t\n].*" 
      ;; 2nd+ line is neither a blank line nor a list continuation line
      "\\(?:\n\\(?:[^+ \t\n]\\|[ \t]+[^ \t\n]\\|\\+[ \t]*[^ \t\n]\\).*?\\)*?" 
-     ;; paragraph delimited by blank line or list continuation
+     ;; paragraph delimited by blank line or list continuation or end of buffer
      ;; NOTE: now list continuation belongs the the verbatim paragraph sequence,
      ;; but actually we want to highlight it differently. Thus the font lock
      ;; keywoard handling list continuation must come after verbatim paraphraph
      ;; sequence.
-     "\n\\+?[ \t]*\n" 
+     "\\(?:\n[ \t]*\\(?:\n\\|\\'\\)\\|\n\\+[ \t]*\n\\|\\'\\)" 
    "\\)+" 
 
    "\\)" ))
@@ -624,7 +679,7 @@ Subgroups:
 Subgroups:
 1 delimiter
 2 title's text incl trailing whites
-3 newline 
+3 newline or end-of-buffer anchor
 
 .foo n
 12--23"
@@ -633,7 +688,7 @@ Subgroups:
    "\\(\\.?\\(?:"	
    "[0-9]+[^+*]" ; inserted part, see above
    "\\|[^. \t\n]\\).*\\)"
-   "\\(\n\\)"))
+   "\\(\n\\|\\'\\)"))
 
 ;; (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
 (defun adoc-re-block-macro (&optional cmd-name)
@@ -644,20 +699,81 @@ Subgroups:
 3 attribute list, exclusive brackets []"
   (concat "^\\(" (or cmd-name "[a-zA-Z0-9_]+") "\\)::\\([^ \t\n]*?\\)\\[\\(.*?\\)\\][ \t]*$"))
 
-;; with attriblists:
-;;   inline macro special syntax: [\\]?\[\[(?P<attrlist>[\w"_:].*?)\]\]
-;;   inline macro biblio special syntax: [\\]?\[\[\[(?P<attrlist>[\w_:][\w_:.-]*?)\]\]\]
-;; id/reftext given by  special syntax
-;;   block id:  ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
-;; mixed:
-;;   inline macro default syntax: see adoc-re-inline-macro. the target is the id, the 1st pos arg is the xreflabel
-(defun adoc-re-anchor(type)
-  "Returns a regexp matching an anchor."
+
+;; ?P<id>[\w\-_]+
+(defun adoc-re-id ()
+  "Returns a regexp matching an id used by anchors/xrefs"
+  "\\(?:[-a-zA-Z0-9_]+\\)")
+
+(defun adoc-re-anchor (&optional type id)
+  "Returns a regexp matching an anchor.
+
+If TYPE is non-nil, only that type is matched. If TYPE is nil,
+all types are matched.
+
+If ID is non-nil, the regexp matches an anchor defining exactly
+this id. If ID is nil, the regexp matches any anchor."
   (cond
-   ((eq type 'block-id) "^\\[\\[\\([-a-zA-Z0-9_]+\\)\\(?:,?\\(.*?\\)\\)?\\]\\][ \t]*$")
-   ((eq type 'inline-special) "\\(\\[\\[\\)\\([a-zA-Z0-9\"_:].*?\\)\\(\\]\\]\\)")
-   ((eq type 'biblio) "\\(\\[\\[\\)\\(\\[[a-zA-Z0-9_:][a-zA-Z0-9_:.-]*?\\]\\)\\(\\]\\]\\)")
-   ((eq type 'inline-general) (adoc-re-inline-macro "anchor"))))
+   ((eq type 'block-id)
+    ;; ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
+    (concat "^\\[\\["
+	    "\\(" (if id (regexp-quote id) (adoc-re-id)) "\\)"
+	    "\\(?:,?\\(.*?\\)\\)?"
+	    "\\]\\][ \t]*$"))
+
+   ((eq type 'inline-special)
+    ;; [\\]?\[\[(?P<attrlist>[\w"_:].*?)\]\]
+    (concat "\\(\\[\\[\\)"
+	    "\\(" (if id (concat (regexp-quote id) "[ \t]*?") "[a-zA-Z0-9\"_:].*?") "\\)"
+	    "\\(\\]\\]\\)"))
+
+   ((eq type 'biblio)
+    ;; [\\]?\[\[\[(?P<attrlist>[\w_:][\w_:.-]*?)\]\]\]
+    (concat "\\(\\[\\[\\)"
+	    "\\(\\[" (if id (regexp-quote id) "[a-zA-Z0-9_:][a-zA-Z0-9_:.-]*?") "\\]\\)"
+	    "\\(\\]\\]\\)"))
+
+   ((eq type 'inline-general)
+    (adoc-re-inline-macro "anchor" id))
+
+   ((null type)
+    (mapconcat
+     (lambda (x) (adoc-re-anchor x id))
+     '(block-id inline-special biblio inline-general)
+     "\\|"))
+
+   (t
+    (error "Unknown type"))))
+
+(defun adoc-re-xref (&optional type for-kw)
+  "Returns a regexp matching a reference.
+
+If TYPE is nil, any type is matched. If FOR-KW is true, the
+regexp is intendet for a font lock keyword, which has to make
+further tests to find a proper xref."
+  (cond
+   ((eq type 'inline-special-with-caption)
+    ;; (?su)[\\]?&lt;&lt;(?P<attrlist>[\w"].*?)&gt;&gt;=xref2
+    (if for-kw
+	"\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+      (concat "\\(<<\\)\\(" (adoc-re-id) "[ \t\n]*\\)\\(,\\)\\([^>\n]*?\\(?:\n[^>\n]*?\\)??\\)\\(>>\\)")))
+
+   ((eq type 'inline-special-no-caption)
+    ;; asciidoc.conf uses the same regexp as for without caption
+    (if for-kw
+	"\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+      (concat "\\(<<\\)\\(" (adoc-re-id) "[ \t\n]*\\)\\(>>\\)")))
+
+   ((eq type 'inline-general-macro)
+    (adoc-re-inline-macro "xref"))
+
+   ((null type)
+    (mapconcat
+     (lambda (x) (adoc-re-xref x for-kw))
+     '(inline-special-with-caption inline-special-no-caption inline-general-macro)
+     "\\|"))
+
+   (t (error "unknown type"))))
 
 (defun adoc-re-attribute-list-elt ()
   "Returns a regexp matching an attribute list elment.
@@ -769,9 +885,13 @@ subgroups:
 ;; (?<!\w)[\\]?(?P<name>http|https|ftp|file|irc|mailto|callto|image|link|anchor|xref|indexterm):(?P<target>\S*?)\[(?P<attrlist>.*?)\]
 ;; # Default (catchall) inline macro is not implemented
 ;; # [\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]
-(defun adoc-re-inline-macro (&optional cmd-name)
+(defun adoc-re-inline-macro (&optional cmd-name target)
   "Returns regex matching an inline macro.
-Subgroups:
+
+Id CMD-NAME is nil, any command is matched. If TARGET is nil, any
+target is matched.
+
+Subgroups of returned regexp:
 1 cmd name
 2 :
 3 target
@@ -779,7 +899,11 @@ Subgroups:
 5 attribute list, exclusive brackets []
 6 ]"
   ;; !!! \< is not exactly what AsciiDoc does, see regex above
-  (concat "\\<\\(" (or cmd-name "\\w+") "\\)\\(:\\)\\([^ \t\n].*\\)\\(\\[\\)\\(.*?\\)\\(\\]\\)" ))
+  (concat
+   "\\(\\<" (if cmd-name (regexp-quote cmd-name) "\\w+") "\\)"
+   "\\(:\\)"
+   "\\(" (if target (regexp-quote target) "[^ \t\n]*?") "\\)"
+   "\\(\\[\\)\\(.*?\\(?:\n.*?\\)??\\)\\(\\]\\)" ))
 
 ;; todo: use same regexps as for font lock
 (defun adoc-re-paragraph-separate ()
@@ -1257,7 +1381,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    ;; comment
    ;; (?mu)^[\\]?//(?P<passtext>[^/].*|)$
    ;; I don't know what the [\\]? should mean
-   (list "^\\(//\\(?:[^/].*\\|\\)\n\\)"
+   (list "^\\(//\\(?:[^/].*\\|\\)\\(?:\n\\|\\'\\)\\)"
          '(1 '(face markup-comment-face adoc-reserved block-del)))    
    ;; image
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro "image") '(0)))
@@ -1505,9 +1629,6 @@ When LITERAL-P is non-nil, the contained text is literal text."
      '("alt"))
    (adoc-kw-inline-macro "xref" nil '(markup-reference-face markup-internal-reference-face) t
      '(("caption") (("caption" . markup-reference-face))))
-
-   ;; (list "\\b\\(xref:\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
-   ;;       '(1 adoc-hide-delimiter) '(2 adoc-delimiter) '(3 adoc-hide-delimiter) '(4 adoc-reference) '(5 adoc-delimiter nil t) '(6 adoc-hide-delimiter))
    
    ;; Macros using default syntax and having default highlighting in adoc-mod
    (adoc-kw-inline-macro)  
@@ -1565,22 +1686,19 @@ When LITERAL-P is non-nil, the contained text is literal text."
    	 '(2 '(face markup-meta-face adoc-attribute-list ("id" "xreflabel")) t)
 	 '(3 '(face markup-meta-face adoc-reserved t) t))
 
+   ;; see also xref: within inline macros
    ;; reference with own/explicit caption
-   ;; (?su)[\\]?&lt;&lt;(?P<attrlist>[\w"].*?)&gt;&gt;=xref2
-   (list "\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+   (list (adoc-re-xref 'inline-special-with-caption t)
          '(1 adoc-hide-delimiter)       ; <<
          '(2 adoc-delimiter)            ; anchor-id
          '(3 adoc-hide-delimiter)       ; ,
          '(4 adoc-reference)            ; link text
          '(5 adoc-hide-delimiter))      ; >>
    ;; reference without caption
-   ;; asciidoc.conf uses the same regexp as for without caption
-   (list "\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+   (list (adoc-re-xref 'inline-special-no-caption t)
          '(1 adoc-hide-delimiter)       ; <<
          '(2 adoc-reference)            ; link text = anchor id
          '(3 adoc-hide-delimiter))      ; >>
-
-
 
    ;; index terms
    ;; todo:
@@ -1652,26 +1770,47 @@ When LITERAL-P is non-nil, the contained text is literal text."
   (interactive)
   (message "adoc-mode, version %s" adoc-mode-version))
 
-(defun adoc-goto-ref-label ()
-  "Goto the label/anchor refered to by the reference at/before point.
-Works only for references in the <<id[,reftex]>> style and
-anchors in the [[id]] style."
-  (interactive)
-  (push-mark)
-  (cond
-   ((looking-at "<<")
-    ) ; nop
-   ((looking-at "<")
-    (backward-char 1))
-   (t
-    (unless (re-search-backward "<<" (line-beginning-position) t)
-      (error "Line contains no reference at/before point"))))
-  (re-search-forward "<<\\(.*?\\)[ \t]*\\(?:,\\|>>\\)")
-  (goto-char 0)
-  (re-search-forward (concat "^\\[\\[" (match-string 1) "\\]\\]")))
+(defun adoc-goto-ref-label (id)
+  "Goto the anchor defining the id ID."
+  ;; KLUDGE: Getting the default, i.e. trying to parse the xref 'at' point, is
+  ;; not done nicely. backward-char 5 because the longest 'starting' of an xref
+  ;; construct is 'xref:' (others are '<<'). All this fails if point is within
+  ;; the id, opposed to the start the id. Or if the xref spawns over the current
+  ;; line.
+  (interactive (let* ((default (adoc-xref-id-at-point))
+		      (default-str (if default (concat "(default " default ")") "")))
+		 (list
+		  (read-string
+		   (concat "Goto anchor of reference/label " default-str ": ")
+		   nil nil default))))
+  (let ((pos (save-excursion
+	       (goto-char 0)
+	       (re-search-forward (adoc-re-anchor nil id) nil t))))
+    (if (null pos) (error (concat "Can't find an anchor defining '" id "'")))
+    (push-mark)
+    (goto-char pos)))
+
+(defun adoc-promote (&optional arg)
+  "Promotes the structure at point ARG levels.
+
+When ARG is nil (i.e. when no prefix arg is given), it defaults
+to 1. When ARG is negative, level is denoted that many levels.
+
+The intention is that the structure can be a title or a list
+element or anything else which has a 'level'. However currently
+it works only for titles."
+  (interactive "p")
+  (adoc-promote-title arg))
+
+(defun adoc-denote (&optional arg)
+  "Denotes the structure at point ARG levels.
+
+Analogous to `adoc-promote', see there."
+  (interactive "p")
+  (adoc-denote-title arg))
 
 (defun adoc-promote-title (&optional arg)
-  "Promotes the title point is on ARG levels.
+  "Promotes the title at point ARG levels.
 
 When ARG is nil (i.e. when no prefix arg is given), it defaults
 to 1. When ARG is negative, level is denoted that many levels. If
@@ -1684,16 +1823,13 @@ ARG is 0, see `adoc-adjust-title-del'."
   (interactive "p")
   (adoc-promote-title (- arg)))
 
-;; (defun adoc-set-title-level (&optional arg)
-;;   ""
-;;   (interactive "P")
-;;   (cond
-;;    ()
-;;       (adoc-modify-title nil arg)
-;;     (adoc-modify-title 1)))
-
+;; todo:
+;; - adjust while user is typing title
+;; - tempo template which uses alreay typed text to insert a 'new' title
+;; - auto convert one line title to two line title. is easy&fast to type, but
+;;   gives two line titles for those liking them
 (defun adoc-adjust-title-del ()
-  "Adjusts delimiter to match the length of the title's text.
+  "Adjusts underline length to match the length of the title's text.
 
 E.g. after editing a two line title, call `adoc-adjust-title-del' so
 the underline has the correct length."
@@ -1730,6 +1866,35 @@ new customization demands."
 
 
 ;;;; misc
+(defun adoc-forward-xref (&optional bound)
+  "Move forward to next xref and return it's id.
+
+Match data is the one of the found xref. Returns nil if there was
+no xref found."
+  (cond
+   ((or (re-search-forward (adoc-re-xref 'inline-special-with-caption) bound t)
+	(re-search-forward (adoc-re-xref 'inline-special-no-caption) bound t))
+    (match-string-no-properties 2))
+   ((re-search-forward (adoc-re-xref 'inline-general-macro) bound t)
+    (match-string-no-properties 3))
+   (t nil)))
+
+(defun adoc-xref-id-at-point ()
+  "Returns id referenced by the xref point is at.
+
+Returns nil if there was no xref found."
+  (save-excursion
+    ;; search the xref within +-1 one line. I.e. if the xref spawns more than
+    ;; two lines, it wouldn't be found.
+    (let ((id)
+	  (saved-point (point))
+	  (end (save-excursion (forward-line 1) (line-end-position))))
+      (forward-line -1)
+      (while (and (setq id (adoc-forward-xref end))
+		  (or (< saved-point (match-beginning 0))
+		      (> saved-point (match-end 0)))))
+      id)))
+
 (defun adoc-title-descriptor()
   "Returns title descriptor of title point is in.
 
@@ -1763,7 +1928,11 @@ trailing delimiter ('== my title ==').
          ;; method ensuring the correct length of the underline, be aware that
          ;; due to adoc-adjust-title-del we sometimes want to find a title which has
          ;; the wrong underline length.
-         ((looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))
+         ((or (looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))
+	      (save-excursion
+		(forward-line -1)
+		(beginning-of-line)
+		(looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))))
           (setq type 2)
           (setq text (match-string 1))
           (setq found t))
@@ -1772,7 +1941,7 @@ trailing delimiter ('== my title ==').
       (when found
         (list type sub-type level text (match-beginning 0) (match-end 0))))))
 
-(defun adoc-make-title(descriptor)
+(defun adoc-make-title (descriptor)
   (let ((type (nth 0 descriptor))
         (sub-type (nth 1 descriptor))
         (level (nth 2 descriptor))
@@ -1811,6 +1980,7 @@ and title's text are not preserved, afterwards its always one space."
   (let ((descriptor (adoc-title-descriptor)))
     (if (or create (not descriptor))
         (error "Point is not on a title"))
+
     ;; todo: set descriptor to default
     ;; (if (not descriptor)
     ;;     (setq descriptor (list 1 1 2 ?? adoc-default-title-type adoc-default-title-sub-type)))
@@ -1849,13 +2019,26 @@ and title's text are not preserved, afterwards its always one space."
            (start (nth 4 descriptor))
            (end (nth 5 descriptor))
            (saved-col (current-column)))
+      
+      ;; set new title descriptor
       (setcar (nthcdr 0 descriptor) new-type-val)
       (setcar (nthcdr 1 descriptor) new-sub-type-val)
       (setcar (nthcdr 2 descriptor) new-level)
-      (beginning-of-line)
-      (delete-region start end)
-      (insert (adoc-make-title descriptor))
-      (when (eq new-type-val 2)
+
+      ;; replace old title by new
+      (let ((end-char (char-before end)))
+	(beginning-of-line)
+	(when (and (eq type 2) (looking-at (adoc-re-two-line-title-undlerline)))
+	  (forward-line -1)
+	  (beginning-of-line))
+	(delete-region start end)
+	(insert (adoc-make-title descriptor))
+	(when (equal end-char ?\n)
+	  (insert  "\n")
+	  (forward-line -1)))
+
+      ;; reposition point
+      (when (and (eq new-type-val 2) (eq type 1))
         (forward-line -1))
       (move-to-column saved-col))))
 
@@ -1945,7 +2128,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   (set (make-local-variable 'comment-start) "// ")
   (set (make-local-variable 'comment-end) "")
   (set (make-local-variable 'comment-start-skip) "^//[ \t]*")
-  (set (make-local-variable 'comment-end-skip) "[ \t]*\n")
+  (set (make-local-variable 'comment-end-skip) "[ \t]*\\(?:\n\\|\\'\\)")
   
   ;; paragraphs
   (set (make-local-variable 'paragraph-separate) (adoc-re-paragraph-separate))
@@ -1985,6 +2168,8 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
     (make-local-variable 'compilation-error-regexp-alist)
     (add-to-list 'compilation-error-regexp-alist 'asciidoc))
 
+  (if (featurep 'easymenu)
+      (easy-menu-add cperl-menu))	; A NOP in Emacs.
   (run-hooks 'adoc-mode-hook))
 
 

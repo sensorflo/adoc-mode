@@ -2,12 +2,9 @@
 ;;; 
 ;;; Commentary:
 ;; 
-;; - font-lock-support-mode must be nil
+;; Call adoc-test-run to run the test suite
 ;; 
 ;;; Todo:
-;; - there shoud not be a need to set font-lock-support-mode to nil. Maybe use
-;;   the let form, or find a function which forces font lock to do the
-;;   fontification of the whole buffer.
 ;; - test for font lock multiline property 
 ;; - test for presence of adoc-reserved (we do white-box testing here)
 ;; - test also with multiple versions of (X)Emacs
@@ -19,36 +16,90 @@
 (require 'ert)
 (require 'adoc-mode)
 
+;; todo:
+;; - auto-create different contexts like
+;;   - beginning/end of buffer
+;;   - beginning/end of paragraph
+;;   - side-to-side yes/no with next same construct
 (defun adoctest-faces (name &rest args)
-  (set-buffer (get-buffer-create (concat "adoctest-" name))) 
-  (delete-region (point-min) (point-max))
+  (let ((not-done t)
+	(font-lock-support-mode)
+	(buf-name (concat "adoctest-" name)))
+    (unwind-protect
+	(progn
+	  ;; setup
+	  (set-buffer (get-buffer-create buf-name)) 
+	  (delete-region (point-min) (point-max))
+	  (while args
+	    (insert (propertize (car args) 'adoctest (cadr args)))
+	    (setq args (cddr args)))
 
-  (while args
-    (insert (propertize (car args) 'adoctest (cadr args)))
-    (setq args (cddr args)))
+	  ;; exercise
+	  (adoc-mode)
+	  (font-lock-fontify-buffer)
 
-  (adoc-mode)
-  (font-lock-fontify-buffer)
-  (goto-char (point-min))
-  (let ((not-done t))
-    (while not-done
-      (let* ((tmp (get-text-property (point) 'adoctest))
-	     (tmp2 (get-text-property (point) 'face)))
-	(cond
-	 ((null tmp)) ; nop
-	 ((eq tmp 'no-face)
-	  (ert-should (null tmp2)))
-	 (t
-	  (if (and (listp tmp2) (not (listp tmp)))
-	      (ert-should (and (= 1 (length tmp2)) (equal tmp (car tmp2))))
-	    (ert-should (equal tmp tmp2)))))
-	(if (< (point) (point-max))
-	    (forward-char 1)
-	  (setq not-done nil)))))
-  (kill-buffer (concat "adoctest-" name)))
+	  ;; verify
+	  (goto-char (point-min))
+	  (while not-done
+	    (let* ((tmp (get-text-property (point) 'adoctest))
+		   (tmp2 (get-text-property (point) 'face)))
+	      (cond
+	       ((null tmp)) ; nop
+	       ((eq tmp 'no-face)
+		(should (null tmp2)))
+	       (t
+		(if (and (listp tmp2) (not (listp tmp)))
+		    (should (and (= 1 (length tmp2)) (equal tmp (car tmp2))))
+		  (should (equal tmp tmp2)))))
+	      (if (< (point) (point-max))
+		  (forward-char 1)
+		(setq not-done nil)))))
+      ;; tear-down
+      (kill-buffer buf-name))))
 
-(ert-deftest adoctest-test-titles-simple ()
-  (adoctest-faces "titles-simple"
+(defun adoctest-trans (original-text expected-text transform)
+  (if (string-match "!" original-text)
+      ;; original-text has ! markers
+      (let ((pos 0)
+	    (pos-old 0)
+	    (pos-list)
+	    (new-original-text ""))
+	;; original-text -> new-original-text by removing ! and remembering their positions
+	(while (and (< pos (length original-text))
+		    (setq pos (string-match "!" original-text pos)))
+	  (setq new-original-text (concat new-original-text (substring original-text pos-old pos)))
+	  (setq pos-list (cons (length new-original-text) pos-list))
+	  (setq pos (1+ pos))
+	  (setq pos-old pos))
+	(setq new-original-text (concat new-original-text (substring original-text pos-old pos)))
+	;; run adoctest-trans-inner for each remembered pos 
+	(while pos-list
+	  (adoctest-trans-inner new-original-text expected-text transform (car pos-list))
+	  (setq pos-list (cdr pos-list))))
+    ;; original-text has no ! markers
+    (adoctest-trans-inner original-text expected-text transform)))
+
+(defun adoctest-trans-inner (original-text expected-text transform &optional pos)
+  (let ((not-done t)
+	(font-lock-support-mode))
+    (unwind-protect
+	(progn
+	  ;; setup
+	  (set-buffer (get-buffer-create "adoctest-trans")) 
+  	  (delete-region (point-min) (point-max))
+  	  (adoc-mode)
+  	  (insert original-text)
+	  (when pos
+	    (goto-char pos))
+	  ;; exercise
+  	  (eval transform)
+	  ;; verify
+  	  (should (string-equal (buffer-substring (point-min) (point-max)) expected-text)))
+      ;; tear-down
+      (kill-buffer "adoctest-trans"))))
+
+(ert-deftest adoctest-test-titles-simple-one-line-before ()
+  (adoctest-faces "titles-simple-one-line-before"
    "= " markup-meta-hide-face "document title" markup-title-0-face "\n" nil
    "\n" nil
    "== " markup-meta-hide-face "chapter 1" markup-title-1-face "\n" nil
@@ -57,9 +108,10 @@
    "\n" nil
    "==== " markup-meta-hide-face "chapter 3" markup-title-3-face "\n" nil
    "\n" nil
-   "===== " markup-meta-hide-face "chapter 4" markup-title-4-face "\n" nil
-   "\n" nil
+   "===== " markup-meta-hide-face "chapter 4" markup-title-4-face))
 
+(ert-deftest adoctest-test-titles-simple-one-line-enclosed ()
+  (adoctest-faces "titles-simple-one-line-enclosed"
    "= " markup-meta-hide-face "document title" markup-title-0-face " =" markup-meta-hide-face "\n" nil
    "\n" nil
    "== " markup-meta-hide-face "chapter 1" markup-title-1-face " ==" markup-meta-hide-face "\n" nil
@@ -68,9 +120,10 @@
    "\n" nil
    "==== " markup-meta-hide-face "chapter 3" markup-title-3-face " ====" markup-meta-hide-face "\n" nil
    "\n" nil
-   "===== " markup-meta-hide-face "chapter 4" markup-title-4-face " =====" markup-meta-hide-face "\n" nil
-   "\n" nil
+   "===== " markup-meta-hide-face "chapter 4" markup-title-4-face " =====" markup-meta-hide-face))
 
+(ert-deftest adoctest-test-titles-simple-two-line ()
+  (adoctest-faces "titles-simple-two-line"
    ;; todo
    ;; ensure somehow adoc-enable-two-line-title is t
    "document title" markup-title-0-face "\n" nil
@@ -86,10 +139,11 @@
    "^^^^^^^^^" markup-meta-hide-face "\n" nil
    "\n" nil
    "chapter 4" markup-title-4-face "\n" nil
-   "+++++++++" markup-meta-hide-face "\n" nil
-   "\n" nil
+   "+++++++++" markup-meta-hide-face))
 
-   "." markup-meta-face "Block title" markup-gen-face "\n" nil ))
+(ert-deftest adoctest-test-titles-simple-block-title ()
+  (adoctest-faces "titles-simple-block-title"
+   "." markup-meta-face "Block title" markup-gen-face))
 
 (ert-deftest adoctest-test-delimited-blocks-simple ()
   (adoctest-faces "delimited-blocks-simple"
@@ -122,11 +176,13 @@
    "\n" nil
    "********" markup-meta-hide-face "\n" nil
    "sidebar line 1\nsidebar line 2" markup-secondary-text-face "\n" nil
-   "********" markup-meta-hide-face "\n" nil
-   "\n" nil
+   "********" markup-meta-hide-face "\n"))
+
+(ert-deftest adoctest-test-open-block ()
+  (adoctest-faces "open-block"
    "--" markup-meta-hide-face "\n" nil
    "open block line 1\nopen block line 2" nil "\n" nil
-   "--" markup-meta-hide-face "\n" nil))
+   "--" markup-meta-hide-face))
 
 (ert-deftest adoctest-test-comments ()
   (adoctest-faces "comments"
@@ -138,8 +194,9 @@
     "// dolor sit\n" markup-comment-face
     "amen\n" 'no-face
     "\n" nil
-    ;; as delimited block
-    ;; tested in delimited-blocks-simple
+    ;; block macro and end of buffer
+    "// lorem ipsum" markup-comment-face
+    ;; as delimited block it's tested in delimited-blocks-simple
     ))
 
 (ert-deftest adoctest-test-anchors ()
@@ -166,7 +223,7 @@
 
     ;; biblio
     "lorem " 'no-face "[[" markup-meta-face "[foo]" markup-gen-face "]]" markup-meta-face
-      " ipsum\n" 'no-face
+      " ipsum" 'no-face
     ))
 
 (ert-deftest adoctest-test-references ()
@@ -175,7 +232,7 @@
        "foo" markup-reference-face "[]" markup-meta-face "\n" nil
      "lorem " 'no-face "xref" markup-command-face ":" markup-meta-face
        "foo" markup-internal-reference-face "[" markup-meta-face
-       "bla bli bla blu" markup-reference-face "]" markup-meta-face  "\n" nil
+       "bla bli bla blu" markup-reference-face "]" markup-meta-face
        ))
 
 (ert-deftest adoctest-test-images ()
@@ -215,7 +272,7 @@
      "foo " 'no-face "image" markup-complex-replacement-face ":" markup-meta-face 
        "./foo/bar.png" markup-internal-reference-face
        "[" markup-meta-face "alt" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "," markup-meta-face
-       "title" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "bar" 'no-face "\n" nil))
+       "title" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "bar" 'no-face))
 
 (ert-deftest adoctest-test-attribute-list ()
   (adoctest-faces "attribute-list"
@@ -242,7 +299,7 @@
     ;; is , within strings really part of the string and not mistaken as element separator
     "[\"" markup-meta-face "lorem,ipsum=dolor" markup-value-face "\"]" markup-meta-face "\n" nil 		  
     ;; does escaping " in strings work
-    "[\"" markup-meta-face "lorem \\\"ipsum\\\" dolor" markup-value-face "\"]" markup-meta-face "\n" nil 		  
+    "[\"" markup-meta-face "lorem \\\"ipsum\\\" dolor" markup-value-face "\"]" markup-meta-face 
     ))
 
 (ert-deftest adoctest-test-block-macro ()
@@ -268,7 +325,7 @@
    "Lorem " nil "##" markup-meta-hide-face " ipsum " markup-gen-face "##" markup-meta-hide-face " dolor\n" nil
    "Lorem " nil "#" markup-meta-hide-face "ipsum" markup-gen-face "#" markup-meta-hide-face " dolor\n" nil
    "Lorem " nil "~" markup-meta-hide-face " ipsum " markup-subscript-face "~" markup-meta-hide-face " dolor\n" nil
-   "Lorem " nil "^" markup-meta-hide-face " ipsum " markup-superscript-face "^" markup-meta-hide-face " dolor\n" nil))
+   "Lorem " nil "^" markup-meta-hide-face " ipsum " markup-superscript-face "^" markup-meta-hide-face " dolor"))
 
 (ert-deftest adoctest-test-quotes-medium ()
   (adoctest-faces "test-quotes-medium"
@@ -309,7 +366,7 @@
    "~~~~~~~~~~~" markup-meta-hide-face "\n" nil
    "." markup-meta-face "lorem " 'markup-gen-face "_" markup-meta-hide-face "ipsum" '(markup-gen-face markup-emphasis-face) "_" markup-meta-hide-face "\n" nil
    "\n" nil
-   "lorem " markup-gen-face "+" markup-meta-hide-face "ipsum" '(markup-gen-face markup-typewriter-face) "+" markup-meta-hide-face " sit" markup-gen-face "::" markup-list-face " " adoc-align "\n" nil
+   "lorem " markup-gen-face "+" markup-meta-hide-face "ipsum" '(markup-gen-face markup-typewriter-face) "+" markup-meta-hide-face " sit" markup-gen-face "::" markup-list-face " " adoc-align
    ))
 
 ;; test border cases where the quote delimiter is at the beginning and/or the
@@ -369,7 +426,7 @@
 
 (ert-deftest adoctest-test-inline-macros ()
   (adoctest-faces "inline-macros"
-    "commandname" markup-command-face ":target[" markup-meta-face "attribute list" markup-value-face "]" markup-meta-face "\n" nil))
+    "commandname" markup-command-face ":target[" markup-meta-face "attribute list" markup-value-face "]" markup-meta-face))
 
 (ert-deftest adoctest-test-meta-face-cleanup ()
   ;; begin with a few simple explicit cases which are easier to debug in case of troubles
@@ -385,7 +442,7 @@
   (adoctest-faces "meta-face-cleanup-2"
     "_" markup-meta-hide-face "lorem " markup-emphasis-face
         "*" markup-meta-hide-face "ipsum" '(markup-strong-face markup-emphasis-face) "*" markup-meta-hide-face
-    " dolor" markup-emphasis-face "_" markup-meta-hide-face "\n" nil)
+    " dolor" markup-emphasis-face "_" markup-meta-hide-face)
 
   ;; now test all possible cases
   ;; mmm, that is all possible cases inbetween constrained/unconstrained quotes
@@ -443,23 +500,105 @@
    "**" markup-list-face " " nil "dolor ** sit\n" 'no-face
    ;; don't cross list item boundaries in the case of labeled lists
    "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor\n" 'no-face
-   "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor\n" 'no-face))
+   "lorem ** ipsum " markup-gen-face "::" markup-list-face " " nil "sit ** dolor" 'no-face))
+
+(ert-deftest adoctest-test-promote-title ()
+  (adoctest-trans "= foo" "== foo" '(adoc-promote-title 1))
+  (adoctest-trans "===== foo" "= foo" '(adoc-promote-title 1))
+  (adoctest-trans "== foo" "==== foo" '(adoc-promote-title 2))
+
+  (adoctest-trans "= foo =" "== foo ==" '(adoc-promote-title 1))
+  (adoctest-trans "===== foo =====" "= foo =" '(adoc-promote-title 1))
+  (adoctest-trans "== foo ==" "==== foo ====" '(adoc-promote-title 2))
+
+  (adoctest-trans "foo!\n===!" "foo\n---" '(adoc-promote-title 1))
+  (adoctest-trans "foo!\n+++!" "foo\n===" '(adoc-promote-title 1))
+  (adoctest-trans "foo!\n---!" "foo\n^^^" '(adoc-promote-title 2)))
+
+;; since it's a whitebox test we know denote and promote only differ by inverse
+;; arg. So denote doesn't need to be throuhly tested again
+(ert-deftest adoctest-test-denote-title ()
+  (adoctest-trans "= foo" "===== foo" '(adoc-denote-title 1))
+  (adoctest-trans "= foo =" "===== foo =====" '(adoc-denote-title 1))
+  (adoctest-trans "foo!\n===!" "foo\n+++" '(adoc-denote-title 1)))
+
+;; todo: test after transition point is still on title lines
+(ert-deftest adoctest-test-toggle-title-type ()
+  (adoctest-trans "= one" "one\n===" '(adoc-toggle-title-type))
+  (adoctest-trans "two!\n===!" "= two" '(adoc-toggle-title-type))
+  (adoctest-trans "= three!\nbar" "three\n=====\nbar" '(adoc-toggle-title-type))
+  (adoctest-trans "four!\n====!\nbar" "= four\nbar" '(adoc-toggle-title-type))
+  (adoctest-trans "= five" "= five =" '(adoc-toggle-title-type t))
+  (adoctest-trans "= six =" "= six" '(adoc-toggle-title-type t)))
+
+(ert-deftest adoctest-test-adjust-title-del ()
+  (adoctest-trans "lorem!\n===!" "lorem\n=====" '(adoc-adjust-title-del))
+  (adoctest-trans "lorem!\n========!" "lorem\n=====" '(adoc-adjust-title-del))
+  (adoctest-trans "lorem!\n=====!" "lorem\n=====" '(adoc-adjust-title-del)))
+
+(ert-deftest adoctest-test-xref-at-point-1 ()
+  (unwind-protect
+      (progn
+	(set-buffer (get-buffer-create "adoc-test")) 
+	(insert "lorem xref:bogous1[] ipsum xref:foo[bla\nbli] dolor xref:bogous2[]")
+	(re-search-backward "bli")	; move point within ref
+	(should (equal (adoc-xref-id-at-point) "foo")))
+    (kill-buffer "adoc-test")))
+
+(ert-deftest adoctest-test-xref-at-point-2 ()
+  (unwind-protect
+      (progn
+	(set-buffer (get-buffer-create "adoc-test")) 
+	(insert "lorem <<bogous1,caption>> ipsum <<foo,bla\nbli>> dolor <<bogous2>>")
+	(re-search-backward "bli") ; move point within ref
+	(should (equal (adoc-xref-id-at-point) "foo")))
+    (kill-buffer "adoc-test")))
+
+(ert-deftest adoctest-test-goto-ref-label ()
+  (unwind-protect
+      (progn
+	(set-buffer (get-buffer-create "adoc-test")) 
+	(insert "[[foo]]\n"		   ;1
+		"lorem ipsum\n"		   ;2
+		"[[bar]]\n"		   ;3
+		"dolor [[geil]]sit amen\n" ;4
+		"anchor:cool[]\n")	   ;5
+	(adoc-goto-ref-label "cool")
+	(should (equal (line-number-at-pos) 5))
+	(adoc-goto-ref-label "geil")
+	(should (equal (line-number-at-pos) 4))
+	(adoc-goto-ref-label "bar")
+	(should (equal (line-number-at-pos) 3)))
+    (kill-buffer "adoc-test")))
 
 (ert-deftest adoctest-pre-test-byte-compile ()
   ;; todo: also test for warnings
-  (ert-should (byte-compile-file (locate-library "adoc-mode.el" t)))
-  (ert-should (load "adoc-mode.el" nil nil t))
-  (ert-should (byte-compile-file (locate-library "adoc-mode-test.el" t)))
-  (ert-should (load "adoc-mode-test.el" nil nil t)))
+  (when (file-exists-p "adoc-mode.elc")
+    (delete-file "adoc-mode.elc"))
+  (should (byte-compile-file (locate-library "adoc-mode.el" t)))
+  (should (load "adoc-mode.el" nil nil t))
+
+  (when (file-exists-p "adoc-mode-test.elc")
+    (delete-file "adoc-mode-test.elc"))
+  (should (byte-compile-file (locate-library "adoc-mode-test.el" t)))
+  (should (load "adoc-mode-test.el" nil nil t)))
 
 (defun adoc-test-run()
   (interactive)
-  (save-buffer "adoc-mode.el")
-  (save-buffer "adoc-mode-test.el")
-  ;; todo: execute tests in an smart order: the basic/simple tests first, so
-  ;; when a complicated test fails one knows that the simple things do work
-  (ert-run-tests-interactively "^adoctest-pre-test-byte-compile")
-  (ert-run-tests-interactively "^adoctest-test-"))
+  (unwind-protect
+      (progn
+	(when (get-buffer "*ert*")
+	  (kill-buffer "*ert*")) ; so after a test failed it can be re-run
+	(save-buffer "adoc-mode.el")
+	(save-buffer "adoc-mode-test.el")
+	;; todo: execute tests in an smart order: the basic/simple tests first, so
+	;; when a complicated test fails one knows that the simple things do work
+	(ert-run-tests-interactively "^adoctest-pre-test-byte-compile")
+	(ert-run-tests-interactively "^adoctest-test-"))
+    (when (file-exists-p "adoc-mode.elc")
+      (delete-file "adoc-mode.elc"))
+    (when (file-exists-p "adoc-mode-test.elc")
+      (delete-file "adoc-mode-test.elc"))))
 
 ;;; adoc-mode-test.el ends here
 
