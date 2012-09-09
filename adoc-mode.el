@@ -113,12 +113,10 @@
 (require 'cl) ; I know, I should remove it, I will, eventually
 
 (defconst adoc-mode-version "0.5.0" 
-  "Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are taken from
-that version's asciidoc.conf/manual.
+  "adoc mode version number.
 
-Since I don't regard adoc-mode major enough for the general
-public, and because I am not good at it, I don't change
-adoc-mode-version a lot and it is currently of no much use.")
+Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are
+taken from that version's asciidoc.conf / manual.")
 
 
 ;;;; customization  
