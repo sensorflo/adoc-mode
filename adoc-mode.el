@@ -122,7 +122,8 @@ taken from that version's asciidoc.conf / manual.")
 ;;;; customization  
 (defgroup adoc nil
   "Support for AsciiDoc documents."
-  :group 'wp)
+  :group 'wp
+  :link '(custom-group-link markup-faces))
 
 (defcustom adoc-script-raise '(-0.3 0.3)
   "How much to lower and raise subscript and superscript content.
