@@ -1687,6 +1687,25 @@ anchors in the [[id]] style."
   (goto-char 0)
   (re-search-forward (concat "^\\[\\[" (match-string 1) "\\]\\]")))
 
+(defun adoc-promote (&optional arg)
+  "Promotes the structure at point ARG levels.
+
+When ARG is nil (i.e. when no prefix arg is given), it defaults
+to 1. When ARG is negative, level is denoted that many levels.
+
+The intention is that the structure can be a title or a list
+element or anything else which has a 'level'. However currently
+it works only for titles."
+  (interactive "p")
+  (adoc-promote-title arg))
+
+(defun adoc-denote (&optional arg)
+  "Denotes the structure at point ARG levels.
+
+Analogous to `adoc-promote', see there."
+  (interactive "p")
+  (adoc-denote-title arg))
+
 (defun adoc-promote-title (&optional arg)
   "Promotes the title at point ARG levels.
 
