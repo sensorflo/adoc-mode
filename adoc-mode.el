@@ -6,7 +6,7 @@
 ;; URL: Current official: http://code.google.com/p/adoc-mode/
 ;;      Develop, future official: https://github.com/sensorflo/adoc-mode
 ;; Created: 2009
-;; Version: 0.5.0
+;; Version: 0.5.1
 ;; Keywords: wp AsciiDoc
 ;; 
 ;; This file is not part of GNU Emacs.
@@ -112,7 +112,7 @@
 (require 'markup-faces) ; https://github.com/sensorflo/markup-faces
 (require 'cl) ; I know, I should remove it, I will, eventually
 
-(defconst adoc-mode-version "0.5.0" 
+(defconst adoc-mode-version "0.5.1" 
   "adoc mode version number.
 
 Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are
