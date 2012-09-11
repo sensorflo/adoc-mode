@@ -883,25 +883,29 @@ subgroups:
 ;; (?<!\w)[\\]?(?P<name>http|https|ftp|file|irc|mailto|callto|image|link|anchor|xref|indexterm):(?P<target>\S*?)\[(?P<attrlist>.*?)\]
 ;; # Default (catchall) inline macro is not implemented
 ;; # [\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]
-(defun adoc-re-inline-macro (&optional cmd-name target)
+;; Asciidocbug: At least with http, an attriblist only with whites lets AsciiDoc
+;; crash
+(defun adoc-re-inline-macro (&optional cmd-name target only-empty-attriblist)
   "Returns regex matching an inline macro.
 
-Id CMD-NAME is nil, any command is matched. If TARGET is nil, any
-target is matched.
+Id CMD-NAME is nil, any command is matched. It maybe a regexp
+itself in order to match multiple commands. If TARGET is nil, any
+target is matched. When ONLY-EMPTY-ATTRIBLIST is non-nil, only an
+empty attribut list is matched.
 
 Subgroups of returned regexp:
 1 cmd name
 2 :
 3 target
 4 [
-5 attribute list, exclusive brackets []
+5 attribute list, exclusive brackets [], also when only-empty-attriblist is non-nil
 6 ]"
   ;; !!! \< is not exactly what AsciiDoc does, see regex above
   (concat
-   "\\(\\<" (if cmd-name (regexp-quote cmd-name) "\\w+") "\\)"
+   "\\(\\<" (if cmd-name (concat "\\(?:" cmd-name "\\)") "\\w+") "\\)"
    "\\(:\\)"
    "\\(" (if target (regexp-quote target) "[^ \t\n]*?") "\\)"
-   "\\(\\[\\)\\(.*?\\(?:\n.*?\\)??\\)\\(\\]\\)" ))
+   "\\(\\[\\)\\(" (unless only-empty-attriblist ".*?\\(?:\n.*?\\)??") "\\)\\(\\]\\)" ))
 
 ;; todo: use same regexps as for font lock
 (defun adoc-re-paragraph-separate ()
