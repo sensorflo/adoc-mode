@@ -1211,6 +1211,70 @@ considered to be meta characters."
    `(5 '(face markup-meta-face adoc-attribute-list ,(or attribute-list t)) t)
    '(6 '(face markup-meta-face adoc-reserved t) t))) ; ]
 
+;; largely copied from adoc-kw-inline-macro
+;; todo: output text should be affected by quotes & co, e.g. bold, emph, ...
+;; todo: for simplicity maybe split up in one for url[] and url[caption]
+(defun adoc-kw-inline-macro-urls-attriblist ()
+  (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link")))
+	(attribute-list '(("caption") (("caption" . markup-reference-face)))))
+    (list
+     `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name) '(0) '(0)))
+     `(1 '(face markup-internal-reference-face adoc-reserved t) t) ; cmd-name
+     `(2 '(face markup-internal-reference-face adoc-reserved t) t) ; :
+     `(3 '(face markup-internal-reference-face adoc-reserved t) t) ; target
+     '(4 '(face markup-meta-face adoc-reserved t) t)		   ; [
+     `(5 '(face markup-reference-face adoc-attribute-list ,attribute-list) append)
+     '(6 '(face markup-meta-face adoc-reserved t) t))))            ; ]
+
+(defun adoc-kw-inline-macro-urls-no-attriblist ()
+  (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link"))))
+    (list
+     `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil t) '(0) '(0)))
+     '(1 '(face markup-reference-face adoc-reserved t) append) ; cmd-name
+     '(2 '(face markup-reference-face adoc-reserved t) append)		     ; :
+     '(3 '(face markup-reference-face adoc-reserved t) append)		     ; target
+     '(4 '(face markup-meta-face adoc-reserved t) t) ; [
+					             ; 5 = attriblist is empty
+     '(6 '(face markup-meta-face adoc-reserved t) t)))) ; ]
+
+;; standalone url
+;; From asciidoc.conf:
+;; # These URL types don't require any special attribute list formatting.
+;; (?su)(?<!\S)[\\]?(?P<name>http|https|ftp|file|irc):(?P<target>//[^\s<>]*[\w/])=
+;; # Allow a leading parenthesis and square bracket.
+;; (?su)(?<\=[([])[\\]?(?P<name>http|https|ftp|file|irc):(?P<target>//[^\s<>]*[\w/])=
+;; # Allow <> brackets.
+;; (?su)[\\]?&lt;(?P<name>http|https|ftp|file|irc):(?P<target>//[^\s<>]*[\w/])&gt;=
+;; 
+;; asciidoc.conf bug? why is it so restrictive for urls without attribute
+;; list, that version can only have a limited set of characters before. Why
+;; not just have the rule that it must start with \b.
+;;
+;; standalone email
+;; From asciidoc.conf:
+;; (?su)(?<![">:\w._/-])[\\]?(?P<target>\w[\w._-]*@[\w._-]*\w)(?!["<\w_-])=mailto
+;;
+;; todo: properly handle leading backslash escapes
+;;
+;; non-bugs: __flo@gmail.com__ is also in AsciiDoc *not* an emphasised email, it's
+;;   just an emphasised text. Thats because the quote transforms happen before
+;;   the url transform, thus the middle stage is something like
+;;   ...>flo@gmail.com<... According to asciidoc.conf regexps a leading > or a
+;;   trailing < are not allowed. In adoc-mode, the fontification is as in
+;;   AsciiDoc, but that's coincidence. The reason in adoc-mode is that the
+;;   regexps quantifier are greedy instead lazy, thus the trailing __ behind the
+;;   email are taken part as the email adress, and then adoc-kwf-std cant match
+;;   because part of the match (the __) contains text properties with
+;;   adoc-reserved non-nil, also because quote highlighting already happened.
+(defun adoc-kw-standalone-urls ()
+  (let* ((url "\\b\\(?:https?\\|ftp\\|file\\|irc\\)://[^ \t\n<>]*[a-zA-Z0-9_/]")
+	 (url<> (concat "<\\(?:" url "\\)>")) 
+	 (email "[a-zA-Z0-9_][-a-zA-Z0-9_._]*@[-a-zA-Z0-9_._]*[a-zA-Z0-9_]")
+	 (both (concat "\\(?:" url "\\)\\|\\(?:" url<> "\\)\\|\\(?:" email "\\)")))
+    (list
+     `(lambda (end) (adoc-kwf-std end ,both '(0) '(0)))
+     '(0 '(face markup-reference-face adoc-reserved t) append t))))
+
 ;; bug: escapes are not handled yet
 ;; todo: give the inserted character a specific face. But I fear that is not
 ;; possible. The string inserted with the ovlerlay property after-string gets
@@ -1635,6 +1699,8 @@ considered to be meta characters."
    ;; 
 
    ;; Macros using default syntax, but having special highlighting in adoc-mode
+   (adoc-kw-inline-macro-urls-no-attriblist)
+   (adoc-kw-inline-macro-urls-attriblist)
    (adoc-kw-inline-macro "anchor" nil markup-anchor-face t '("xreflabel"))
    (adoc-kw-inline-macro "image" markup-complex-replacement-face markup-internal-reference-face t
      '("alt"))
@@ -1644,24 +1710,8 @@ considered to be meta characters."
    ;; Macros using default syntax and having default highlighting in adoc-mod
    (adoc-kw-inline-macro)  
    
-   ;; # These URL types don't require any special attribute list formatting.
-   ;; (?su)(?<!\S)[\\]?(?P<name>http|https|ftp|file|irc):(?P<target>//[^\s<>]*[\w/])=
-   ;; # Allow a leading parenthesis and square bracket.
-   ;; (?su)(?<\=[([])[\\]?(?P<name>http|https|ftp|file|irc):(?P<target>//[^\s<>]*[\w/])=
-   ;; # Allow <> brackets.
-   ;; (?su)[\\]?&lt;(?P<name>http|https|ftp|file|irc):(?P<target>//[^\s<>]*[\w/])&gt;=
-   ;; todo: overtake above regexes
-   ;; asciidoc.conf bug? why is it so restrictive for urls without attribute
-   ;; list, that version can only have a limited set of characters before. Why
-   ;; not just have the rule that it must start with \b.
-   (list "\\b\\(\\(?:https?\\|ftp\\|file\\|irc\\|mailto\\|callto\\|link\\)[^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(,.*?\\)?\\(\\]\\)"
-         '(1 adoc-delimiter) '(2 adoc-hide-delimiter) '(3 adoc-reference) '(4 adoc-delimiter nil t) '(5 adoc-hide-delimiter))
-   (cons "\\b\\(?:https?\\|ftp\\|file\\|irc\\)://[^ \t<>\n]*[a-zA-Z0-9_//]" 'adoc-reference)
-
-   ;; standalone email, SIMPLE reglex! copied from http://www.regular-expressions.info/email.html
-   ;; asciidoc.conf: (?su)(?<![">:\w._/-])[\\]?(?P<target>\w[\w._-]*@[\w._-]*\w)(?!["<\w_-])=mailto
-   ;; todo: use asciidoc's regex
-   (cons "\\(\\w\\|[.%+-]\\)+@\\(\\w\\|[.-]\\)+\\.[a-zA-Z]\\{2,4\\}" 'adoc-reference) 
+   ;; URLs & Email addresses
+   (adoc-kw-standalone-urls)
 
    (list "\\(\\bfootnote:\\)\\(\\[\\)\\(.*?\\(?:\n.*?\\)?\\)\\(\\]\\)"
          '(1 adoc-delimiter)            ; name

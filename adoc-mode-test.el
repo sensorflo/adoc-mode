@@ -450,6 +450,33 @@
   ;; .... todo
   )
 
+(ert-deftest adoctest-test-url ()
+  (adoctest-faces "url"
+    ;; url inline macro with attriblist 
+    "foo " nil
+    "http://www.lorem.com/ipsum.html" markup-internal-reference-face
+    "[" markup-meta-face "sit amet" markup-reference-face "]" markup-meta-face
+    " bar \n" nil
+    ;; url inline macro withOUT attriblist 
+    "http://www.lorem.com/ipsum.html" markup-reference-face
+    "[]" markup-meta-face
+    " bar \n" nil
+    ;; plain url
+    "http://www.lorem.com/ipsum.html" markup-reference-face
+    " foo " nil "joe.bloggs@foobar.com" markup-reference-face ))
+
+(ert-deftest adoctest-test-url-enclosing-quote ()
+  (adoctest-faces "url-enclosing-quote"
+    ;; spaces between __ and url seem really to be needed also in asciidoc 
+    "foo " nil "__" markup-meta-hide-face " " nil
+    "http://www.lorem.com/ipsum.html" '(markup-emphasis-face markup-reference-face)
+    " " nil "__" markup-meta-hide-face
+
+    "\nfoo " nil
+    "**" markup-meta-hide-face " " nil
+    "joe.bloggs@foobar.com" '(markup-strong-face markup-reference-face)
+    " " nil "**" markup-meta-hide-face ))
+
 ;; inline substitutions only within the block they belong to. I.e. don't cross
 ;; block boundaries.
 (ert-deftest adoctest-test-inline-subst-boundaries ()
