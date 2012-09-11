@@ -571,29 +571,58 @@
 	(should (equal (line-number-at-pos) 3)))
     (kill-buffer "adoc-test")))
 
-(ert-deftest adoctest-pre-test-byte-compile ()
-  ;; todo: also test for warnings
-  (when (file-exists-p "adoc-mode.elc")
-    (delete-file "adoc-mode.elc"))
-  (should (byte-compile-file (locate-library "adoc-mode.el" t)))
-  (should (load "adoc-mode.el" nil nil t))
+;; purpose
+;; - ensure that the latest version, i.e. the one currently in buffer(s), of
+;;   adoc-mode and adoc-mode-test is used for the test
+;; - test that adoc-mode and adoc-mode-test are compileble & loadable
+;; - ensure no *.elc are lying around because they are 'dangerous' when the
+;;   corresponding .el is edited regulary; dangerous because it's not unlikely
+;;   that the .el is newer than the .elc, but load-library takes the outdated
+;;   .elc.
+;; 
+;; todo: also test for warnings
+(defun adoc-test-save-compile-load ()
+  (unwind-protect
+      (progn
+	(let ((buf-adoc-mode (find-buffer-visiting "adoc-mode.el"))
+	      (buf-adoc-mode-test (find-buffer-visiting "adoc-mode-test.el")))
 
-  (when (file-exists-p "adoc-mode-test.elc")
-    (delete-file "adoc-mode-test.elc"))
-  (should (byte-compile-file (locate-library "adoc-mode-test.el" t)))
-  (should (load "adoc-mode-test.el" nil nil t)))
+	  (cond
+	   ((null buf-adoc-mode))	;nop
+	   ((bufferp buf-adoc-mode) (save-buffer buf-adoc-mode))
+	   (t (error "Multiple buffer are visiting adoc-mode.el. Save them first")))	   
+	  (or (byte-compile-file (locate-library "adoc-mode.el" t)) (error "compile error"))
+	  (or (load "adoc-mode.el" nil nil t) (error "load error"))
+
+	  (cond
+	   ((null buf-adoc-mode-test))	;nop
+	   ((bufferp buf-adoc-mode-test) (save-buffer buf-adoc-mode-test))
+	   (t (error "Multiple buffer are visiting adoc-mode-test.el. Save them first")))
+	  (or (byte-compile-file (locate-library "adoc-mode-test.el" t)) (error "compile error"))
+	  (or (load "adoc-mode-test.el" nil nil t) (error "load error"))))
+
+    (when (file-exists-p "adoc-mode.elc")
+      (delete-file "adoc-mode.elc"))
+    (when (file-exists-p "adoc-mode-test.elc")
+      (delete-file "adoc-mode-test.elc"))))
 
 (defun adoc-test-run()
   (interactive)
   (unwind-protect
       (progn
+	;; so after a test failed it can be re-run
 	(when (get-buffer "*ert*")
-	  (kill-buffer "*ert*")) ; so after a test failed it can be re-run
-	(save-buffer "adoc-mode.el")
-	(save-buffer "adoc-mode-test.el")
+	  (kill-buffer "*ert*")) 
+
+	;; so no tests are executed which no longer exists (e.g. because they
+	;; were (temporarly) commented out)
+	(mapatoms
+	 (lambda (x) (if (string-match "^adoctest-test-" (symbol-name x))
+			 (unintern x nil))))
+
 	;; todo: execute tests in an smart order: the basic/simple tests first, so
 	;; when a complicated test fails one knows that the simple things do work
-	(ert-run-tests-interactively "^adoctest-pre-test-byte-compile")
+	(adoc-test-save-compile-load)
 	(ert-run-tests-interactively "^adoctest-test-"))
     (when (file-exists-p "adoc-mode.elc")
       (delete-file "adoc-mode.elc"))
