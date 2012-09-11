@@ -982,7 +982,8 @@ Intendent to be called from font lock keyword functions. END is
 the limit of the search. REXEXP the regexp to be searched.
 MUST-FREE-GROUPS a list of regexp group numbers which may not
 match text that has an adoc-reserved text-property with a non-nil
-value."
+value. Likewise, groups in NO-BLOCK-DEL-GROUPS may not contain
+text having adoc-reserved set to 'block-del."
   (let ((found t) (prevented t) saved-point)
     (while (and found prevented (<= (point) end) (not (eobp)))
       (setq saved-point (point))
@@ -1184,12 +1185,20 @@ When LITERAL-P is non-nil, the contained text is literal text."
    `(4 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t))); close del
 
 (defun adoc-kw-inline-macro (&optional cmd-name cmd-face target-faces target-meta-p attribute-list)
+  "Returns a kewyword which highlights an inline macro.
+For CMD-NAME see `adoc-re-inline-macro'. CMD-FACE determines face
+for the command text. If nil, `markup-command-face' is used.
+TARGET-FACES determines face for the target text. If nil
+`markup-meta-face' is used. If a list, the first is used if the
+attribute list is the empty string, the second is used if its not
+the empty string. If TARGET-META-P is non-nil, the target text is
+considered to be meta characters."
   (list
    `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name) '(1 2 4 5) '(0)))
-   `(1 '(face ,(or cmd-face markup-command-face) adoc-reserved t) t) 
-   '(2 '(face markup-meta-face adoc-reserved t) t) ; :
-   `(3 ,(cond ((not target-faces) markup-meta-face)
-	      ((listp target-faces) `(if (string= (match-string 5) "")
+   `(1 '(face ,(or cmd-face markup-command-face) adoc-reserved t) t) ; cmd-name
+   '(2 '(face markup-meta-face adoc-reserved t) t)		     ; :
+   `(3 ,(cond ((not target-faces) markup-meta-face)		     ; target
+	      ((listp target-faces) `(if (string= (match-string 5) "") ; 5=attribute-list
 					 ,(car target-faces)
 				       ,(cadr target-faces)))
 	      (t target-faces))
