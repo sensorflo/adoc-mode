@@ -90,7 +90,7 @@
   	  (adoc-mode)
   	  (insert original-text)
 	  (when pos
-	    (goto-char pos))
+	    (goto-char (1+ pos)))	; buffer pos starts at 1, but string pos at 0
 	  ;; exercise
   	  (eval transform)
 	  ;; verify
@@ -650,7 +650,8 @@
 	;; todo: execute tests in an smart order: the basic/simple tests first, so
 	;; when a complicated test fails one knows that the simple things do work
 	(adoc-test-save-compile-load)
-	(ert-run-tests-interactively "^adoctest-test-"))
+	(ert-run-tests-interactively "^adoctest-test-")
+	)
     (when (file-exists-p "adoc-mode.elc")
       (delete-file "adoc-mode.elc"))
     (when (file-exists-p "adoc-mode-test.elc")
