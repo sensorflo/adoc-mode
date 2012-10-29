@@ -608,12 +608,13 @@
 ;;   .elc.
 ;; 
 ;; todo: also test for warnings
-(defun adoc-test-save-compile-load ()
+(defun adoctest-save-compile-load ()
   (unwind-protect
       (progn
 	(let ((buf-adoc-mode (find-buffer-visiting "adoc-mode.el"))
 	      (buf-adoc-mode-test (find-buffer-visiting "adoc-mode-test.el")))
 
+	  ;; adoc-mode
 	  (cond
 	   ((null buf-adoc-mode))	;nop
 	   ((bufferp buf-adoc-mode) (save-buffer buf-adoc-mode))
@@ -621,6 +622,7 @@
 	  (or (byte-compile-file (locate-library "adoc-mode.el" t)) (error "compile error"))
 	  (or (load "adoc-mode.el" nil nil t) (error "load error"))
 
+	  ;; adoc-mode-test
 	  (cond
 	   ((null buf-adoc-mode-test))	;nop
 	   ((bufferp buf-adoc-mode-test) (save-buffer buf-adoc-mode-test))
@@ -635,27 +637,20 @@
 
 (defun adoc-test-run()
   (interactive)
-  (unwind-protect
-      (progn
-	;; so after a test failed it can be re-run
-	(when (get-buffer "*ert*")
-	  (kill-buffer "*ert*")) 
 
-	;; so no tests are executed which no longer exists (e.g. because they
-	;; were (temporarly) commented out)
-	(mapatoms
-	 (lambda (x) (if (string-match "^adoctest-test-" (symbol-name x))
-			 (unintern x nil))))
+  ;; ensure that a failed test can be re-run
+  (when (get-buffer "*ert*")
+    (kill-buffer "*ert*")) 
 
-	;; todo: execute tests in an smart order: the basic/simple tests first, so
-	;; when a complicated test fails one knows that the simple things do work
-	(adoc-test-save-compile-load)
-	(ert-run-tests-interactively "^adoctest-test-")
-	)
-    (when (file-exists-p "adoc-mode.elc")
-      (delete-file "adoc-mode.elc"))
-    (when (file-exists-p "adoc-mode-test.elc")
-      (delete-file "adoc-mode-test.elc"))))
+  ;; ensure no no-longer test defuns exist, which would otherwise be executed
+  (mapatoms
+   (lambda (x) (if (string-match "^adoctest-test-" (symbol-name x))
+		   (unintern x nil))))
+
+  (adoctest-save-compile-load)
+
+  ;; todo: execute tests in an smart order: the basic/simple tests first, so
+  ;; when a complicated test fails one knows that the simple things do work
+  (ert-run-tests-interactively "^adoctest-test-"))
 
 ;;; adoc-mode-test.el ends here
-
