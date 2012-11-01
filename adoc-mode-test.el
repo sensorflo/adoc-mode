@@ -711,11 +711,13 @@ removed before TRANSFORM is evaluated.
   (adoctest-delimited-block "--" '(tempo-template-adoc-delimited-block-open-block)))
 
 (ert-deftest adoctest-test-tempo-lists ()
-  (adoctest-trans "" "- " '(tempo-template-adoc-bulleted-list-item-1))
-  (adoctest-trans "" " ** " '(tempo-template-adoc-bulleted-list-item-2))
-  (adoctest-trans "<foo>" "- foo" '(tempo-template-adoc-bulleted-list-item-1))
-  (adoctest-trans "" ":: " '(tempo-template-adoc-labeled-list-item))
-  (adoctest-trans "<foo>" ":: foo" '(tempo-template-adoc-labeled-list-item)))
+  (let ((tab-width 2)
+	(indent-tabs-mode nil))
+    (adoctest-trans "" "- " '(tempo-template-adoc-bulleted-list-item-1))
+    (adoctest-trans "" " ** " '(tempo-template-adoc-bulleted-list-item-2))
+    (adoctest-trans "<foo>" "- foo" '(tempo-template-adoc-bulleted-list-item-1))
+    (adoctest-trans "" ":: " '(tempo-template-adoc-labeled-list-item))
+    (adoctest-trans "<foo>" ":: foo" '(tempo-template-adoc-labeled-list-item))))
 
 (ert-deftest adoctest-test-tempo-macros ()
   (adoctest-trans "" "http://foo.com[]" '(tempo-template-adoc-url-caption))
