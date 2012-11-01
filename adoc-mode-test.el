@@ -23,39 +23,33 @@
 ;;   - side-to-side yes/no with next same construct
 (defun adoctest-faces (name &rest args)
   (let ((not-done t)
-	(font-lock-support-mode)
-	(buf-name (concat "adoctest-" name)))
-    (unwind-protect
-	(progn
-	  ;; setup
-	  (set-buffer (get-buffer-create buf-name)) 
-	  (delete-region (point-min) (point-max))
-	  (while args
-	    (insert (propertize (car args) 'adoctest (cadr args)))
-	    (setq args (cddr args)))
+	(font-lock-support-mode))
+    (with-temp-buffer
+      ;; setup
+      (while args
+	(insert (propertize (car args) 'adoctest (cadr args)))
+	(setq args (cddr args)))
 
-	  ;; exercise
-	  (adoc-mode)
-	  (font-lock-fontify-buffer)
+      ;; exercise
+      (adoc-mode)
+      (font-lock-fontify-buffer)
 
-	  ;; verify
-	  (goto-char (point-min))
-	  (while not-done
-	    (let* ((tmp (get-text-property (point) 'adoctest))
-		   (tmp2 (get-text-property (point) 'face)))
-	      (cond
-	       ((null tmp)) ; nop
-	       ((eq tmp 'no-face)
-		(should (null tmp2)))
-	       (t
-		(if (and (listp tmp2) (not (listp tmp)))
-		    (should (and (= 1 (length tmp2)) (equal tmp (car tmp2))))
-		  (should (equal tmp tmp2)))))
-	      (if (< (point) (point-max))
-		  (forward-char 1)
-		(setq not-done nil)))))
-      ;; tear-down
-      (kill-buffer buf-name))))
+      ;; verify
+      (goto-char (point-min))
+      (while not-done
+	(let* ((tmp (get-text-property (point) 'adoctest))
+	       (tmp2 (get-text-property (point) 'face)))
+	  (cond
+	   ((null tmp)) ; nop
+	   ((eq tmp 'no-face)
+	    (should (null tmp2)))
+	   (t
+	    (if (and (listp tmp2) (not (listp tmp)))
+		(should (and (= 1 (length tmp2)) (equal tmp (car tmp2))))
+	      (should (equal tmp tmp2)))))
+	  (if (< (point) (point-max))
+	      (forward-char 1)
+	    (setq not-done nil)))))))
 
 (defun adoctest-trans (original-text expected-text transform)
   "Calling TRANSFORM on EXPECTED-TEXT, ORIGINAL-TEXT `should' result.
@@ -102,25 +96,20 @@ removed before TRANSFORM is evaluated.
 (defun adoctest-trans-inner (original-text expected-text transform &optional pos)
   (let ((not-done t)
 	(font-lock-support-mode))
-    (unwind-protect
-	(progn
-	  ;; setup
-	  (set-buffer (get-buffer-create "adoctest-trans")) 
-  	  (delete-region (point-min) (point-max))
-  	  (adoc-mode)
-  	  (insert original-text)
-	  (cond ; 1+: buffer pos starts at 1, but string pos at 0
-	   ((consp pos)
-	    (goto-char (1+ (car pos)))
-	    (set-mark (1+ (cdr pos))))
-	   (pos
-	    (goto-char (1+ pos)))) 
-	  ;; exercise
-  	  (eval transform)
-	  ;; verify
-  	  (should (string-equal (buffer-substring (point-min) (point-max)) expected-text)))
-      ;; tear-down
-      (kill-buffer "adoctest-trans"))))
+    (with-temp-buffer
+      ;; setup
+      (adoc-mode)
+      (insert original-text)
+      (cond ; 1+: buffer pos starts at 1, but string pos at 0
+       ((consp pos)
+	(goto-char (1+ (car pos)))
+	(set-mark (1+ (cdr pos))))
+       (pos
+	(goto-char (1+ pos)))) 
+      ;; exercise
+      (eval transform)
+      ;; verify
+      (should (string-equal (buffer-substring (point-min) (point-max)) expected-text)))))
 
 (ert-deftest adoctest-test-titles-simple-one-line-before ()
   (adoctest-faces "titles-simple-one-line-before"
