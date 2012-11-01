@@ -2467,6 +2467,11 @@ Is influenced by customization variables such as `adoc-title-style'."))))
 
 
 ;;;; misc
+(defun adoc-insert-indented (str indent-level)
+  "Indents and inserts STR such that point is at INDENT-LEVEL."
+  (indent-to (- (* tab-width indent-level) (length str)))
+  (insert str))
+
 (defun adoc-repeat-string (str n)
   "Returns str n times concatenated"
   (let ((retval ""))

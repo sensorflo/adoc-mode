@@ -756,6 +756,17 @@ removed before TRANSFORM is evaluated.
   (should (equal (adoc-repeat-string "lorem" 1) "lorem"))
   (should (equal (adoc-repeat-string "lorem" 2) "loremlorem")))
     
+(ert-deftest adoctest-test-indent-by-example ()
+  (let ((tab-width 2)
+  	(indent-tabs-mode nil))
+    (adoctest-trans "" " x"   '(adoc-insert-indented "x" 1))
+    (adoctest-trans "" "   x" '(adoc-insert-indented "x" 2)))
+
+  (let ((tab-width 3)
+	(indent-tabs-mode t))
+    (adoctest-trans "" "  x"   '(adoc-insert-indented "x" 1))
+    (adoctest-trans "" "\t  x" '(adoc-insert-indented "x" 2))))
+
 ;; purpose
 ;; - ensure that the latest version, i.e. the one currently in buffer(s), of
 ;;   adoc-mode and adoc-mode-test is used for the test
