@@ -111,6 +111,8 @@
 
 (require 'markup-faces) ; https://github.com/sensorflo/markup-faces
 (require 'cl) ; I know, I should remove it, I will, eventually
+;; tempo or tempo-snippet is required later below
+
 
 (defconst adoc-mode-version "0.5.1" 
   "adoc mode version number.
@@ -287,6 +289,21 @@ most 3 chars from the length of the title text."
 		 number)
   :group 'adoc)
 
+(defcustom adoc-title-style 'adoc-title-style-one-line
+  "Title style used for title tempo templates.
+
+See for example `tempo-template-adoc-title-1'."
+  :type '(choice (const :tag "== one line" adoc-title-style-one-line)
+		 (const :tag "== one line enclosed ==" adoc-title-style-one-line-enclosed)
+                 (const :tag "two line\\n--------" adoc-title-style-two-line))
+  :group 'adoc)
+
+(defcustom adoc-tempo-frwk 'tempo-vanilla
+  "Tempo framework to be used by adoc's templates. "
+  :type '(choice (const :tag "tempo" tempo-vanilla)
+		 (const :tag "tempo-snippets" tempo-snippets))
+  :group 'adoc)
+
 
 ;;;; faces / font lock  
 (define-obsolete-face-alias 'adoc-orig-default 'adoc-align "23.3")
@@ -403,21 +420,195 @@ To become a customizable variable when regexps for list items become customizabl
   "Keymap used in adoc mode.")
 
 
-;;; Code:
+;;;; help text copied from asciidoc manual
+(defconst adoc-help-constrained-quotes
+  "Constrained quotes must be bounded by white space or commonly
+  adjoining punctuation characters. These are the most commonly
+  used type of quote.")
+(defconst adoc-help-emphasis
+  "Usually rendered italic")
+(defconst adoc-help-strong
+  "Usually rendered bold")
+(defconst adoc-help-monospace
+  "Aka typewritter. This does _not_ mean verbatim / literal")
+(defconst adoc-help-single-quote
+  "Single quotation marks around enclosed text.")
+(defconst adoc-help-double-quote
+  "Quotation marks around enclosed text.")
+(defconst adoc-help-attributed
+  "A mechanism to allow inline attributes to be applied to
+  otherwise unformatted text.")
+(defconst adoc-help-unconstrained-quotes
+  "Unconstrained quotes have no boundary constraints and can be
+  placed anywhere within inline text.")
+(defconst adoc-help-line-break
+  "A plus character preceded by at least one space character at
+  the end of a non-blank line forces a line break. It generates a
+  line break (`br`) tag for HTML outputs and a custom XML
+  `asciidoc-br` processing instruction for DocBook outputs")
+(defconst adoc-help-page-break
+  "A line of three or more less-than (`<<<`) characters will
+  generate a hard page break in DocBook and printed HTML
+  outputs.")
+(defconst adoc-help-ruler-line
+  "A line of three or more apostrophe characters will generate a
+  ruler line. It generates a ruler (`hr`) tag for HTML outputs
+  and a custom XML `asciidoc-hr` processing instruction for
+  DocBook outputs.")
+(defconst adoc-help-entity-reference
+  "You can also include arbitrary character entity references in
+  the AsciiDoc source. Example both `&amp;` and `&#38;` are
+  replace by an & (ampersand).")
+(defconst adoc-help-literal-paragraph
+  "Verbatim in a monospaced font. Applyied to paragraphs where
+  the first line is indented by one or more space or tab
+  characters")
+(defconst adoc-help-delimited-block
+  "Delimited blocks are blocks of text enveloped by leading and
+  trailing delimiter lines (normally a series of four or more
+  repeated characters).")
+(defconst adoc-help-delimited-block-comment
+  "The contents of 'CommentBlocks' are not processed; they are
+  useful for annotations and for excluding new or outdated
+  content that you don't want displayed. CommentBlocks are never
+  written to output files.")
+(defconst adoc-help-delimited-block-passthrouh
+  "By default the block contents is subject only to 'attributes'
+  and 'macros' substitutions (use an explicit 'subs' attribute to
+  apply different substitutions). PassthroughBlock content will
+  often be backend specific. The following styles can be applied
+  to passthrough blocks: pass:: No substitutions are performed.
+  This is equivalent to `subs=\"none\"`. asciimath, latexmath::
+  By default no substitutions are performed, the contents are
+  rendered as mathematical formulas.")
+(defconst adoc-help-delimited-block-listing
+  "'ListingBlocks' are rendered verbatim in a monospaced font,
+  they retain line and whitespace formatting and are often
+  distinguished by a background or border. There is no text
+  formatting or substitutions within Listing blocks apart from
+  Special Characters and Callouts. Listing blocks are often used
+  for computer output and file listings.")
+(defconst adoc-help-delimited-block-literal
+  "'LiteralBlocks' are rendered just like literal paragraphs.")
+(defconst adoc-help-delimited-block-quote
+  "'QuoteBlocks' are used for quoted passages of text. There are
+  two styles: 'quote' and 'verse'. The style behavior is
+  identical to quote and verse paragraphs except that blocks can
+  contain multiple paragraphs and, in the case of the 'quote'
+  style, other section elements. The first positional attribute
+  sets the style, if no attributes are specified the 'quote'
+  style is used. The optional 'attribution' and 'citetitle'
+  attributes (positional attributes 2 and3) specify the quote's
+  author and source.")
+(defconst adoc-help-delimited-block-example
+  "'ExampleBlocks' encapsulate the DocBook Example element and
+  are used for, well, examples. Example blocks can be titled by
+  preceding them with a 'BlockTitle'. DocBook toolchains will
+  normally automatically number examples and generate a 'List of
+  Examples' backmatter section.
 
-(defvar adoc-menu)
-(condition-case nil
-    (progn
-      (require 'easymenu)
-      (easy-menu-define
-	adoc-menu adoc-mode-map "Menu for adoc mode"
-	'("AsciiDoc"
-	  ["Promote" adoc-promote t]
-	  ["Denote" adoc-denote t]
-	  ["Toggle title type" adoc-toggle-title-type t]
-	  ["Adjust title underline" adoc-adjust-title-del t]
-	  ["Goto anchor" adoc-goto-ref-label t])))
-  (error nil))
+  Example blocks are delimited by lines of equals characters and
+  can contain any block elements apart from Titles, BlockTitles
+  and Sidebars) inside an example block.")
+(defconst adoc-help-delimited-block-sidebar
+  "A sidebar is a short piece of text presented outside the
+  narrative flow of the main text. The sidebar is normally
+  presented inside a bordered box to set it apart from the main
+  text.The sidebar body is treated like a normal section body.")
+(defconst adoc-help-delimited-block-open-block
+  "An 'OpenBlock' groups a set of block elements.")
+(defconst adoc-help-list
+  "Indentation is optional and does _not_ determine nesting.")
+(defconst adoc-help-bulleted-list
+  "Aka itimized or unordered.")
+(defconst adoc-help-list-item-continuation
+  "Another list or a literal paragraph immediately following a
+  list item is implicitly appended to the list item; to append
+  other block elements to a list item you need to explicitly join
+  them to the list item with a 'list continuation' (a separator
+  line containing a single plus character). Multiple block
+  elements can be appended to a list item using list
+  continuations (provided they are legal list item children in
+  the backend markup).")
+(defconst adoc-help-table
+  "The AsciiDoc table syntax looks and behaves like other
+  delimited block types and supports standard block configuration
+  entries.")
+(defconst adoc-help-macros
+  "Inline Macros occur in an inline element context. A Block
+  macro reference must be contained in a single line separated
+  either side by a blank line or a block delimiter. Block macros
+  behave just like Inline macros, with the following differences:
+  1) They occur in a block context. 2) The default syntax is
+  <name>::<target>[<attrlist>] (two colons, not one). 3) Markup
+  template section names end in -blockmacro instead of
+  -inlinemacro.")
+(defconst adoc-help-url
+  "If you don’t need a custom link caption you can enter the
+  http, https, ftp, file URLs and email addresses without any
+  special macro syntax.")
+(defconst adoc-help-anchor
+  "Used to specify hypertext link targets. The `<id>` is a unique
+  string that conforms to the output markup's anchor syntax. The
+  optional `<xreflabel>` is the text to be displayed by
+  captionless 'xref' macros that refer to this anchor.")
+(defconst adoc-help-xref
+  "Creates a hypertext link to a document anchor. The `<id>`
+  refers to an anchor ID. The optional `<caption>` is the link's
+  displayed text.")
+(defconst adoc-help-local-doc-link
+  "Hypertext links to files on the local file system are
+  specified using the link inline macro.")
+(defconst adoc-help-local-doc-link
+  "Hypertext links to files on the local file system are
+  specified using the link inline macro.")
+(defconst adoc-help-comment
+  "Single lines starting with two forward slashes hard up against
+  the left margin are treated as comments. Comment lines do not
+  appear in the output unless the showcomments attribute is
+  defined. Comment lines have been implemented as both block and
+  inline macros so a comment line can appear as a stand-alone
+  block or within block elements that support inline macro
+  expansion.")
+(defconst adoc-help-passthrough-macros
+  "Passthrough macros are analogous to passthrough blocks and are
+  used to pass text directly to the output. The substitution
+  performed on the text is determined by the macro definition but
+  can be overridden by the <subslist>. Passthroughs, by
+  definition, take precedence over all other text
+  substitutions.")
+(defconst adoc-help-pass
+  "Inline and block. Passes text unmodified (apart from
+  explicitly specified substitutions).")
+(defconst adoc-help-asciimath
+  "Inline and block. Passes text unmodified. A (backend
+  dependent) mechanism for rendering mathematical formulas given
+  using the ASCIIMath syntax.")
+(defconst adoc-help-latexmath
+  "Inline and block. Passes text unmodified. A (backend
+  dependent) mechanism for rendering mathematical formulas given
+  using the LaTeX math syntax.")
+(defconst adoc-help-pass-+++
+  "Inline and block. The triple-plus passthrough is functionally
+  identical to the pass macro but you don’t have to escape ]
+  characters and you can prefix with quoted attributes in the
+  inline version.")
+(defconst adoc-help-pass-$$
+  "Inline and block. The double-dollar passthrough is
+  functionally identical to the triple-plus passthrough with one
+  exception: special characters are escaped.")
+(defconst adoc-help-monospace-literal
+  "Text quoted with single backtick characters constitutes an
+  inline literal passthrough. The enclosed text is rendered in a
+  monospaced font and is only subject to special character
+  substitution. This makes sense since monospace text is usually
+  intended to be rendered literally and often contains characters
+  that would otherwise have to be escaped. If you need monospaced
+  text containing inline substitutions use a plus character
+  instead of a backtick.")
+
+
+;;; Code:
 
 ;; from asciidoc.conf:
 ;; ^:(?P<attrname>\w[^.]*?)(\.(?P<attrname2>.*?))?:(\s+(?P<attrvalue>.*))?$
@@ -1634,6 +1825,7 @@ considered to be meta characters."
    ;;The double-dollar passthrough is functionally identical to the triple-plus
    ;;passthrough with one exception: special characters are escaped.
    (adoc-kw-quote 'adoc-unconstrained "$$" markup-typewriter-face nil nil t)  ;2)
+   ;; todo: add pass:[...], latexmath:[...], asciimath[...]
 
    ;; special characters
    ;; ------------------
@@ -1932,10 +2124,407 @@ new customization demands."
 
   (setq adoc-font-lock-keywords (adoc-get-font-lock-keywords))
   (when (and font-lock-mode (eq major-mode 'adoc-mode))
-    (font-lock-fontify-buffer)))
+    (font-lock-fontify-buffer))
+
+  (adoc-easy-menu-define))
+
+(defun adoc-easy-menu-define()
+  (easy-menu-define
+    adoc-mode-menu adoc-mode-map "Menu for adoc mode"
+    `("AsciiDoc"
+      ["Promote" adoc-promote]
+      ["Denote" adoc-denote]
+      ["Toggle title type" adoc-toggle-title-type]
+      ["Adjust title underline" adoc-adjust-title-del]
+      ["Goto anchor" adoc-goto-ref-label]
+      "---"
+      ;; names|wording / rough order/ help texts are from asciidoc manual
+      ("Templates / cheat sheet" 
+       ("Text formatting - constrained quotes"
+	:help ,adoc-help-constrained-quotes
+	["_Emphasis_" tempo-template-adoc-emphasis
+	 :help ,adoc-help-emphasis ]
+	["*Strong*" tempo-template-adoc-strong
+	 :help ,adoc-help-strong ]
+	["+Monospaced+" tempo-template-adoc-monospace
+	 :help ,adoc-help-monospace]
+	["`Monospaced literal`" tempo-template-adoc-monospace-literal ; redundant to the one in the passthrough section
+	 :help ,adoc-help-monospace-literal]
+	["`Single quote'" tempo-template-adoc-single-quote
+	 :help ,adoc-help-single-quote] 
+	["``Double quote''" tempo-template-adoc-double-quote
+	 :help ,adoc-help-double-quote]
+	;; todo: insert underline, overline, strikethrough, big, small
+	["[attributes]##text##" tempo-template-adoc-attributed
+	 :help ,adoc-help-attributed]) 
+       ("Text formatting - unconstrained quotes"
+	:help ,adoc-help-unconstrained-quotes
+	["^Superscript^" tempo-template-adoc-superscript]
+	["~Subscript~" tempo-template-adoc-subscript]
+	["__Emphasis__" tempo-template-adoc-emphasis-uc
+	 :help ,adoc-help-emphasis ]
+	["**Strong**" tempo-template-adoc-strong-uc
+	 :help ,adoc-help-strong ]
+	["++Monospaced++" tempo-template-adoc-monospace-uc
+	 :help ,adoc-help-monospace]
+	["[attributes]##text##" tempo-template-adoc-attributed-uc
+	 :help ,adoc-help-attributed])
+       ("Text formatting - misc"
+	["Line break: <SPC>+<NEWLINE>" tempo-template-adoc-line-break
+	 :help ,adoc-help-line-break]
+	["Page break: <<<" tempo-template-adoc-page-break
+	 :help ,adoc-help-page-break]
+	["Ruler line: ---" tempo-template-adoc-ruler-line
+	 :help ,adoc-help-ruler-line])
+       ("Text formatting - replacements"
+	["Copyright: (C) \u2192 \u00A9" tempo-template-adoc-copyright]
+	["Trademark: (TM) \u2192 \u00AE" tempo-template-adoc-trademark]
+	["Registered trademark: (R) \u2192 \u2122" tempo-template-adoc-registered-trademark]
+	["Dash: -- \u2192 \u2014" tempo-template-adoc-dash]
+	["Ellipsis: ... \u2192 \u2026" tempo-template-adoc-ellipsis]
+	["Right arrow: -> \u2192 \u2192" tempo-template-adoc-right-arrow]
+	["Left arrow: <- \u2192 \u2190" tempo-template-adoc-left-arrow]
+	["Right double arrow: => \u2192 \u21D2" tempo-template-adoc-right-double-arrow]
+	["Left double arrow: <= \u2192 \u21D0" tempo-template-adoc-left-double-arrow]
+	"---"
+	["Character entity reference: &...;" tempo-template-adoc-entity-reference
+	 :help ,adoc-help-entity-reference])
+       ("Titles"
+	[,(concat "Document title (level 0): " (adoc-template-str-title 0))
+	 tempo-template-adoc-title-1]
+	[,(concat "Section title (level 1): " (adoc-template-str-title 1))
+	 tempo-template-adoc-title-2]
+	[,(concat "Section title (level 2): " (adoc-template-str-title 2))
+	 tempo-template-adoc-title-3]
+	[,(concat "Section title (level 3): " (adoc-template-str-title 3))
+	 tempo-template-adoc-title-4]
+	[,(concat "Section title (level 4): " (adoc-template-str-title 4))
+	 tempo-template-adoc-title-5]
+	["Block title: .foo" tempo-template-adoc-block-title]
+	["BlockId: [[id]]" tempo-template-adoc-anchor]) ; redundant to anchor below
+       ("Paragraphs"
+	["Literal paragraph" tempo-template-adoc-literal-paragraph
+	 :help ,adoc-help-literal-paragraph]
+	"---"
+	["TIP: " tempo-template-adoc-paragraph-tip]
+	["NOTE: " tempo-template-adoc-paragraph-note]
+	["IMPORTANT: " tempo-template-adoc-paragraph-important]
+	["WARNING: " tempo-template-adoc-paragraph-warning]
+	["CAUTION: " tempo-template-adoc-paragraph-caution])
+       ("Delimited blocks"
+	:help ,adoc-help-delimited-block
+	;; BUG: example does not reflect the content of adoc-delimited-block-del
+	["Comment: ////" tempo-template-adoc-delimited-block-comment
+	 :help ,adoc-help-delimited-block-comment]
+	["Passthrough: ++++" tempo-template-adoc-delimited-block-passthrough
+	 :help ,adoc-help-delimited-block-passthrouh]
+	["Listing: ----" tempo-template-adoc-delimited-block-listing
+	 :help ,adoc-help-delimited-block-listing]
+	["Literal: ...." tempo-template-adoc-delimited-block-literal
+	 :help ,adoc-help-delimited-block-literal]
+	["Quote: ____" tempo-template-adoc-delimited-block-quote
+	 :help ,adoc-help-delimited-block-quote]
+	["Example: ====" tempo-template-adoc-delimited-block-example
+	 :help ,adoc-help-delimited-block-example]
+	["Sidebar: ****" tempo-template-adoc-delimited-block-sidebar
+	 :help ,adoc-help-delimited-block-sidebar]
+	["Open: --" tempo-template-adoc-delimited-block-open-block
+	 :help ,adoc-help-delimited-block-open-block])
+       ("Lists"
+	:help ,adoc-help-list
+	("Bulleted"
+	 :help ,adoc-help-bulleted-list
+	 ["Item: -" tempo-template-adoc-bulleted-list-item-1]
+	 ["Item: **" tempo-template-adoc-bulleted-list-item-2]
+	 ["Item: ***" tempo-template-adoc-bulleted-list-item-3]
+	 ["Item: ****" tempo-template-adoc-bulleted-list-item-4]
+	 ["Item: *****" tempo-template-adoc-bulleted-list-item-5])
+	("Numbered - explicit"
+	 ["Arabic (decimal) numbered item: 1." tempo-template-adoc-numbered-list-item]
+	 ["Lower case alpha (letter) numbered item: a." tempo-template-adoc-numbered-list-item]
+	 ["Upper case alpha (letter) numbered item: A." tempo-template-adoc-numbered-list-item]
+	 ["Lower case roman numbered list item: i)" tempo-template-adoc-numbered-list-item-roman]
+	 ["Upper case roman numbered list item: I)" tempo-template-adoc-numbered-list-item-roman])
+	("Numbered - implicit"
+	 ["Arabic (decimal) numbered item: ." tempo-template-adoc-implicit-numbered-list-item-1]
+	 ["Lower case alpha (letter) numbered item: .." tempo-template-adoc-implicit-numbered-list-item-2]
+	 ["Upper case alpha (letter)numbered item: ..." tempo-template-adoc-implicit-numbered-list-item-3]
+	 ["Lower case roman numbered list item: ...." tempo-template-adoc-implicit-numbered-list-item-4]
+	 ["Upper case roman numbered list item: ....." tempo-template-adoc-implicit-numbered-list-item-5])
+	["Labeled item: label:: text" tempo-template-adoc-labeled-list-item]
+	["List item continuation: <NEWLINE>+<NEWLINE>" tempo-template-adoc-list-item-continuation
+	 :help ,adoc-help-list-item-continuation])
+       ("Tables"
+	:help ,adoc-help-table
+        ["Example table" tempo-template-adoc-example-table])
+       ("Macros (inline & block)"
+	:help ,adoc-help-macros
+	["URL: http://foo.com" tempo-template-adoc-url
+	 :help ,adoc-help-url]
+	["URL with caption: http://foo.com[caption]" tempo-template-adoc-url-caption
+	 :help ,adoc-help-url]
+	["EMail: bob@foo.com" tempo-template-adoc-email
+	 :help ,adoc-help-url]
+	["EMail with caption: mailto:address[caption]" tempo-template-adoc-email-caption
+	 :help ,adoc-help-url]
+	["Anchor aka BlockId (syntax 1): [[id,xreflabel]]" tempo-template-adoc-anchor
+	 :help ,adoc-help-anchor]
+	["Anchor (syntax 2): anchor:id[xreflabel]" tempo-template-adoc-anchor-default-syntax
+	 :help ,adoc-help-anchor]
+	["Xref (syntax 1): <<id,caption>>" adoc-xref
+	 :help ,adoc-help-xref]
+	["Xref (syntax 2): xref:id[caption]" adoc-xref-default-syntax
+	 :help ,adoc-help-xref]
+	["Image: image:target-path[caption]" adoc-image]
+	["Comment: //" tempo-template-adoc-comment
+	 :help ,adoc-help-comment]
+	("Passthrough macros"
+	 :help adoc-help-passthrough-macros
+	 ["pass:[text]" tempo-template-adoc-pass
+	  :help ,adoc-help-pass]
+	 ["ASCIIMath: asciimath:[text]" tempo-template-adoc-asciimath
+	  :help ,adoc-help-asciimath]
+	 ["LaTeX math: latexmath[text]" tempo-template-adoc-latexmath
+	  :help ,adoc-help-latexmath]
+	 ["+++text+++" tempo-template-adoc-pass-+++
+	  :help ,adoc-help-pass-+++]
+	 ["$$text$$" tempo-template-pass-$$
+	  :help ,adoc-help-pass-$$]
+	 ["`text`" tempo-template-monospace-literal ; redundant to the one in the quotes section
+	  :help ,adoc-help-monospace-literal]))))))
+
+
+;;;; tempos
+;; todo: tell user to make use of tempo-interactive
+;; todo: tell user to how to use tempo-snippets?? that there are clear methods
+;; todo: tell user to how to use tempo-snippets?? suggested customizations working best with adoc
+;; todo: after changing adoc-tempo-frwk, all adoc-tempo-define need to be
+;;       evaluated again. This doesn't feel right
+;; todo: titles,block titles,blockid,... should start on a new line
+;; PROBLEM: snippets dont allow empty 'field', e.g. empty caption
+;;       Workaround: mark whole 'edit-field' and delete it
+(if (eq adoc-tempo-frwk 'tempo-snippets)
+    (require 'tempo-snippets)
+  (require 'tempo))
+
+(defun adoc-tempo-define (&rest args)
+  (if (eq adoc-tempo-frwk 'tempo-snippets)
+      (apply 'tempo-define-snippet args)
+    (apply 'tempo-define-template args)))
+
+(defun adoc-template-str-title (&optional level title-text)
+  "Returns the string tempo-template-adoc-title-x would insert"
+  (with-temp-buffer
+    (insert (or title-text "foo"))
+    (set-mark (point-min))
+    (funcall (intern-soft (concat "tempo-template-adoc-title-" (number-to-string (1+ (or level 0))))))
+    (replace-regexp-in-string "\n" "\\\\n" 
+			      (buffer-substring-no-properties (point-min) (point-max)))))
+
+;; Text formatting - constrained quotes
+(adoc-tempo-define "adoc-emphasis" '("_" (r "text" text) "_") nil adoc-help-emphasis)
+(adoc-tempo-define "adoc-strong" '("*" (r "text" text) "*") nil adoc-help-strong)
+(adoc-tempo-define "adoc-monospace" '("+" (r "text" text) "+") nil adoc-help-monospace)
+(adoc-tempo-define "adoc-monospace-literal" '("`" (r "text" text) "`"))
+(adoc-tempo-define "adoc-single-quote" '("`" (r "text" text) "'") nil adoc-help-single-quote)
+(adoc-tempo-define "adoc-double-quote" '("``" (r "text" text) "''") nil adoc-help-double-quote)
+(adoc-tempo-define "adoc-attributed" '("[" p "]#" (r "text" text) "#") nil adoc-help-double-quote)
+
+;; Text formatting - unconstrained quotes
+(adoc-tempo-define "adoc-emphasis-uc" '("__" (r "text" text) "__") nil adoc-help-emphasis)
+(adoc-tempo-define "adoc-strong-uc" '("**" (r "text" text) "**") nil adoc-help-strong)
+(adoc-tempo-define "adoc-monospace-uc" '("++" (r "text" text) "++") nil adoc-help-monospace)
+(adoc-tempo-define "adoc-attributed-uc" '("[" p "]##" (r "text" text) "##") nil adoc-help-attributed)
+(adoc-tempo-define "adoc-superscript" '("^" (r "text" text) "^"))
+(adoc-tempo-define "adoc-subscript" '("~" (r "text" text) "~"))
+
+;; Text formatting - misc
+(adoc-tempo-define "adoc-line-break" '((if (looking-back " ") "" " ") "+" %) nil adoc-help-line-break)
+(adoc-tempo-define "adoc-page-break" '(bol "<<<" %) nil adoc-help-page-break)
+(adoc-tempo-define "adoc-ruler-line" '(bol "---" %) nil adoc-help-ruler-line)
+
+;; Text formatting - replacements
+(adoc-tempo-define "adoc-copyright" '("(C)"))
+(adoc-tempo-define "adoc-trademark" '("(T)"))
+(adoc-tempo-define "adoc-registered-trademark" '("(R)"))
+(adoc-tempo-define "adoc-dash" '("---"))
+(adoc-tempo-define "adoc-ellipsis" '("..."))
+(adoc-tempo-define "adoc-right-arrow" '("->"))
+(adoc-tempo-define "adoc-left-arrow" '("<-"))
+(adoc-tempo-define "adoc-right-double-arrow" '("=>"))
+(adoc-tempo-define "adoc-left-double-arrow" '("<="))
+(adoc-tempo-define "adoc-entity-reference" '("&" r ";") nil adoc-help-entity-reference)
+
+;; Titles
+;; todo
+;; - merge with adoc-make-title
+;; - dwim:
+;;   - when point is on a text line, convert that line to a title
+;;   - when it is already a title .... correct underlines?
+;;   - ensure n blank lines before and m blank lines after title, or unchanged if n/m nil
+(dotimes (level 5) ; level starting at 0
+  (let ((one-line-del (make-string (1+ level) ?\=)))
+
+    (adoc-tempo-define
+     (concat "adoc-title-" (number-to-string (1+ level)))
+     ;; see adoc-tempo-handler for what the (tr ...) does.
+     (list
+      `(cond
+	((eq adoc-title-style 'adoc-title-style-one-line)
+	 '(tr bol ,one-line-del " " (r "text" text)))
+	((eq adoc-title-style 'adoc-title-style-one-line-enclosed)
+	 '(tr bol ,one-line-del " " (r "text" text) " " ,one-line-del))
+	;; BUG in tempo: when first thing is a tempo element which introduces a marker, that
+	;; marker is skipped
+	((eq adoc-title-style 'adoc-title-style-two-line)
+	 '(tr bol (r "text" text) "\n"
+	      (adoc-make-two-line-title-underline ,level (if on-region (- tempo-region-stop tempo-region-start)))))
+	(t
+	 (error "Unknown title style"))))
+     nil
+     (concat
+      "Inserts a level " (number-to-string (1+ level)) " (starting at 1) title.
+Is influenced by customization variables such as `adoc-title-style'."))))
+
+(adoc-tempo-define "adoc-block-title" '(bol "." (r "text" text) %))
+
+;; Paragraphs
+(adoc-tempo-define "adoc-literal-paragraph" '(bol "  " (r "text" text) %) nil adoc-help-literal-paragraph)
+(adoc-tempo-define "adoc-paragraph-tip" '(bol "TIP: " (r "text" text) %))
+(adoc-tempo-define "adoc-paragraph-note" '(bol "NOTE: " (r "text" text) %))
+(adoc-tempo-define "adoc-paragraph-important" '(bol "IMPORTANT: " (r "text" text) %))
+(adoc-tempo-define "adoc-paragraph-warning" '(bol "WARNING: " (r "text" text) %))
+(adoc-tempo-define "adoc-paragraph-caution" '(bol "CAUTION: " (r "text" text) %))
+
+;; delimited blocks
+(adoc-tempo-define "adoc-delimited-block-comment" 
+  '(bol (make-string 50 ?/) n (r-or-n "text" text) bol (make-string 50 ?/) %)
+  nil adoc-help-delimited-block-comment)
+(adoc-tempo-define "adoc-delimited-block-passthrough"
+ '(bol (make-string 50 ?+) n (r-or-n "text" text) bol (make-string 50 ?+) %)
+ nil adoc-help-delimited-block-passthrouh)
+(adoc-tempo-define "adoc-delimited-block-listing"
+  '(bol (make-string 50 ?-) n (r-or-n "text" text) bol (make-string 50 ?-) %)
+  nil adoc-help-delimited-block-listing)
+(adoc-tempo-define "adoc-delimited-block-literal"
+  '(bol (make-string 50 ?.) n (r-or-n "text" text) bol (make-string 50 ?.) %)
+  nil adoc-help-delimited-block-literal)
+(adoc-tempo-define "adoc-delimited-block-quote"
+  '(bol (make-string 50 ?_) n (r-or-n "text" text) bol (make-string 50 ?_) %)
+  nil adoc-help-delimited-block-quote)
+(adoc-tempo-define "adoc-delimited-block-example"
+  '(bol (make-string 50 ?=) n (r-or-n "text" text) bol (make-string 50 ?=) %)
+  nil adoc-help-delimited-block-example)
+(adoc-tempo-define "adoc-delimited-block-sidebar"
+  '(bol (make-string 50 ?*) n (r-or-n "text" text) bol (make-string 50 ?*) %)
+  nil adoc-help-delimited-block-sidebar)
+(adoc-tempo-define "adoc-delimited-block-open-block"
+  '(bol "--" n (r-or-n "text" text) bol "--" %)
+  nil adoc-help-delimited-block-open-block)
+
+;; Lists
+;; todo: customize indentation
+(adoc-tempo-define "adoc-bulleted-list-item-1" '(bol "- " (r "text" text)))
+(adoc-tempo-define "adoc-bulleted-list-item-2" '(bol " ** " (r "text" text)))
+(adoc-tempo-define "adoc-bulleted-list-item-3" '(bol "  *** " (r "text" text)))
+(adoc-tempo-define "adoc-bulleted-list-item-4" '(bol "   **** " (r "text" text)))
+(adoc-tempo-define "adoc-bulleted-list-item-5" '(bol "    ***** " (r "text" text)))
+(adoc-tempo-define "adoc-numbered-list-item" '(bol (p "number" number) ". " (r "text" text)))
+(adoc-tempo-define "adoc-numbered-list-item-roman" '(bol (p "number" number) ") " (r "text" text)))
+(adoc-tempo-define "adoc-implicit-numbered-list-item-1" '(bol ". " (r "text" text)))
+(adoc-tempo-define "adoc-implicit-numbered-list-item-2" '(bol " .. " (r "text" text)))
+(adoc-tempo-define "adoc-implicit-numbered-list-item-3" '(bol "  ... " (r "text" text)))
+(adoc-tempo-define "adoc-implicit-numbered-list-item-4" '(bol "   .... " (r "text" text)))
+(adoc-tempo-define "adoc-implicit-numbered-list-item-5" '(bol "    ..... " (r "text" text)))
+(adoc-tempo-define "adoc-labeled-list-item" '(bol (p "label" label) ":: " (r "text" text)))
+(adoc-tempo-define "adoc-list-item-continuation" '(bol "+" %) nil adoc-help-list-item-continuation)
+
+;; tables
+(adoc-tempo-define "adoc-example-table"
+  '(bol "|====================\n" 
+    "| cell 11 | cell 12\n"
+    "| cell 21 | cell 22\n"
+    "|====================\n" % ))
+
+;; Macros (inline & block)
+(adoc-tempo-define "adoc-url" '("http://foo.com") nil adoc-help-url)
+(adoc-tempo-define "adoc-url-caption" '("http://foo.com[" (r "caption" caption) "]") nil adoc-help-url)
+(adoc-tempo-define "adoc-email" '("bob@foo.com") nil adoc-help-url)
+(adoc-tempo-define "adoc-email-caption" '("mailto:" (p "address" address) "[" (r "caption" caption) "]") nil adoc-help-url)
+(adoc-tempo-define "adoc-anchor" '("[[" (r "id" id) "]]") nil adoc-help-anchor)
+(adoc-tempo-define "adoc-anchor-default-syntax" '("anchor:" (r "id" id) "[" (p "xreflabel" xreflabel) "]") nil adoc-help-anchor)
+(adoc-tempo-define "adoc-xref" '("<<" (p "id" id) "," (r "caption" caption) ">>") nil adoc-help-xref)
+(adoc-tempo-define "adoc-xref-default-syntax" '("xref:" (p "id" id) "[" (r "caption" caption) "]") nil adoc-help-xref)
+(adoc-tempo-define "adoc-image" '("image:" (r "target-path" target-path) "[" (p "caption" caption) "]"))
+
+;; Passthrough
+(adoc-tempo-define "adoc-pass" '("pass:[" (r "text" text) "]") nil adoc-help-pass)
+(adoc-tempo-define "adoc-asciimath" '("asciimath:[" (r "text" text) "]") nil adoc-help-asciimath)
+(adoc-tempo-define "adoc-latexmath" '("latexmath:[" (r "text" text) "]") nil adoc-help-latexmath)
+(adoc-tempo-define "adoc-pass-+++" '("+++" (r "text" text) "+++") nil adoc-help-pass-+++)
+(adoc-tempo-define "adoc-pass-$$" '("$$" (r "text" text) "$$") nil adoc-help-pass-$$)
+; backticks handled in tempo-template-adoc-monospace-literal
 
 
 ;;;; misc
+(defun adoc-repeat-string (str n)
+  "Returns str n times concatenated"
+  (let ((retval ""))
+    (dotimes (i n)
+      (setq retval (concat retval str)))
+    retval))
+
+(defun adoc-tempo-handler (element)
+  "Tempo user element handler, see `tempo-user-elements'."
+  (let ((on-region (adoc-tempo-on-region)))
+    (cond
+
+     ;; tr / tempo-recurse : tempo-insert the remaining args of the list
+     ((and (listp element)
+	   (memq (car element) '(tr tempo-recurse)))
+      (mapc (lambda (elt) (tempo-insert elt on-region)) (cdr element))
+      "")
+
+     ;; bol: ensure point is at the beginning of a line by inserting a newline if needed
+     ((eq element 'bol)
+      (if (bolp) "" "\n"))
+     
+     ;; r-or-n
+     ((eq element 'r-or-n)
+      (if on-region 'r '(tr p n)))
+     ;; (r-or-n ...)
+     ((and (consp element)
+	   (eq (car element) 'r-or-n)) 
+      (if on-region (cons 'r (cdr element)) '(tr p n))))))
+
+(add-to-list 'tempo-user-elements 'adoc-tempo-handler)
+
+(defun adoc-tempo-on-region ()
+  "Guesses the on-region argument `tempo-insert' is given.
+
+Is a workaround the problem that tempo's user handlers don't get
+passed the on-region argument."
+  (let* (
+	 ;; try to determine the arg with which the tempo-template-xxx was
+	 ;; called that eventually brought us here. If we came here not by an
+	 ;; interactive call to tempo-template-xxx we can't have a clue - assume
+	 ;; nil.
+	 (arg (if (string-match "^tempo-template-" (symbol-name this-command))
+		  current-prefix-arg
+		nil)) 
+	 ;; copy from tempo-define-template
+	 (on-region (if tempo-insert-region
+			(not arg)
+		      arg)))
+    ;; copy from tempo-insert-template
+    (if (or (and (boundp 'transient-mark-mode) ; For Emacs
+		 transient-mark-mode
+		 mark-active)
+	    (if (featurep 'xemacs)
+		(and zmacs-regions (mark))))
+	(setq on-region t))
+    on-region))
+
 (defun adoc-forward-xref (&optional bound)
   "Move forward to next xref and return it's id.
 
@@ -2238,8 +2827,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
     (make-local-variable 'compilation-error-regexp-alist)
     (add-to-list 'compilation-error-regexp-alist 'asciidoc))
 
-  (if (featurep 'easymenu)
-      (easy-menu-add cperl-menu))	; A NOP in Emacs.
+  (easy-menu-add adoc-mode-menu)
   (run-hooks 'adoc-mode-hook))
 
 
