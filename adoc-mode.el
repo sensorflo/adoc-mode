@@ -6,7 +6,7 @@
 ;; URL: Current official: http://code.google.com/p/adoc-mode/
 ;;      Develop, future official: https://github.com/sensorflo/adoc-mode
 ;; Created: 2009
-;; Version: 0.5.1
+;; Version: 0.6.0
 ;; Keywords: wp AsciiDoc
 ;; 
 ;; This file is not part of GNU Emacs.
@@ -114,7 +114,7 @@
 ;; tempo or tempo-snippet is required later below
 
 
-(defconst adoc-mode-version "0.5.1" 
+(defconst adoc-mode-version "0.6.0" 
   "adoc mode version number.
 
 Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are
