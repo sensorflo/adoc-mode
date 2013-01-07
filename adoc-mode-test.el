@@ -58,24 +58,44 @@
       (kill-buffer buf-name))))
 
 (defun adoctest-trans (original-text expected-text transform)
-  (if (string-match "!" original-text)
+  "Calling TRANSFORM on EXPECTED-TEXT, ORIGINAL-TEXT `should' result.
+ORIGINAL-TEXT is put in an temporary buffer and TRANSFORM is
+evaluated using `eval'. The resulting buffer content is compared
+to EXPECTED-TEXT.
+
+ORIGINAL-TEXT optionaly may contain the following special
+charachters. Escaping them is not (yet) supported. They are
+removed before TRANSFORM is evaluated.
+
+!  Position of point before TRANSFORM is evaluated
+
+<> Position of mark (<) and point (>) before TRANSFORM is
+   evaluatred"
+  (if (string-match "[!<>]" original-text)
       ;; original-text has ! markers
-      (let ((pos 0)
-	    (pos-old 0)
-	    (pos-list)
-	    (new-original-text ""))
+      (let ((pos 0)      ; pos in original-text
+	    (pos-old 0)	 ; pos of the last iteration
+	    (pos-in-new-region-start 0)
+	    (pos-new-list) ; list of positions in new-original-text
+	    (new-original-text "")) ; as original-text, but with < > ! stripped
 	;; original-text -> new-original-text by removing ! and remembering their positions
 	(while (and (< pos (length original-text))
-		    (setq pos (string-match "!" original-text pos)))
+		    (setq pos (string-match "[!<>]" original-text pos)))
 	  (setq new-original-text (concat new-original-text (substring original-text pos-old pos)))
-	  (setq pos-list (cons (length new-original-text) pos-list))
+	  (cond
+	   ((eq (aref original-text pos) ?<)
+	    (setq pos-in-new-region-start (length new-original-text)))
+	   ((eq (aref original-text pos) ?>)
+	    (setq pos-new-list (cons (cons pos-in-new-region-start (length new-original-text)) pos-new-list)))
+	   (t
+	    (setq pos-new-list (cons (length new-original-text) pos-new-list))))
 	  (setq pos (1+ pos))
 	  (setq pos-old pos))
 	(setq new-original-text (concat new-original-text (substring original-text pos-old pos)))
 	;; run adoctest-trans-inner for each remembered pos 
-	(while pos-list
-	  (adoctest-trans-inner new-original-text expected-text transform (car pos-list))
-	  (setq pos-list (cdr pos-list))))
+	(while pos-new-list
+	  (adoctest-trans-inner new-original-text expected-text transform (car pos-new-list))
+	  (setq pos-new-list (cdr pos-new-list))))
     ;; original-text has no ! markers
     (adoctest-trans-inner original-text expected-text transform)))
 
@@ -89,8 +109,12 @@
   	  (delete-region (point-min) (point-max))
   	  (adoc-mode)
   	  (insert original-text)
-	  (when pos
-	    (goto-char (1+ pos)))	; buffer pos starts at 1, but string pos at 0
+	  (cond ; 1+: buffer pos starts at 1, but string pos at 0
+	   ((consp pos)
+	    (goto-char (1+ (car pos)))
+	    (set-mark (1+ (cdr pos))))
+	   (pos
+	    (goto-char (1+ pos)))) 
 	  ;; exercise
   	  (eval transform)
 	  ;; verify
