@@ -686,7 +686,7 @@ To become a customizable variable when regexps for list items become customizabl
   "Returns a regex matching a one line title of the given LEVEL.
 When LEVEL is nil, a one line title of any level is matched.
 
-match-data has this sub groups:
+match-data has these sub groups:
 1 leading delimiter inclusive whites between delimiter and title text
 2 title's text exclusive leading/trailing whites
 3 trailing delimiter with all whites 
@@ -746,7 +746,7 @@ has the correct length.
 
 DEL is described in `adoc-re-two-line-title-undlerline'.
 
-match-data has his this sub groups:
+match-data has these sub groups:
 1 title's text
 2 delimiter
 0 only chars that belong to the title block element"
