@@ -783,13 +783,34 @@ line of the title's text. When nil it defaults to 4."
 (defun adoc-re-oulisti (type &optional level sub-type)
   "Returns a regexp matching an (un)ordered list item.
 
-match-data his this sub groups:
+TYPE & SUB-TYPE defiine the type of the listem item to be
+matched. TYPE and can be one of 'adoc-unordered,
+'adoc-explicitly-numbered, 'adoc-implicitly-numbered or
+'adoc-callout. SUB-TYPE is dependent on TYPE:
+
+adoc-unordered:
+  nil or 'adoc-normal: Normal unordered list items (- * ** etc)
+  'adoc-bibliography:  Bibliography list item
+adoc-explicitly-numbered:
+  0: decimal
+  1: lower alpha
+  2: upper alpha
+  3: lower roman
+  4: upper roman
+  nil or 'adoc-all-subtypes: matches all of the above
+adoc-implicitly-numbered: ignored  
+adoc-callout: ignored
+
+LEVEL is only meaningfull for adoc-unordered and
+adoc-implicitly-numbered. In those cases it can be a number
+stating the ('indent') level of the list item, starting at 0. Or
+it is nil or 'adoc-all-levels, which matches all possible levels.
+
+match-data has these sub groups:
 1 leading whites
 2 delimiter
 3 trailing whites between delimiter and item's text
-0 only chars belonging to delimiter/whites. I.e. none of text.
-
-WARNING: See warning about list item nesting level in `adoc-list-descriptor'."
+0 only chars belonging to delimiter/whites. I.e. none of text."
   (cond
 
    ;;   ^\s*- +(?P<text>.+)$                     normal 0           
