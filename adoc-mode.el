@@ -980,7 +980,7 @@ this id. If ID is nil, the regexp matches any anchor."
     ;; ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
     (concat "^\\[\\["
 	    "\\(" (if id (regexp-quote id) (adoc-re-id)) "\\)"
-	    "\\(?:,?\\(.*?\\)\\)?"
+	    "\\(?:,\\(.*?\\)\\)?"
 	    "\\]\\][ \t]*$"))
 
    ((eq type 'inline-special)
