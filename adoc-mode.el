@@ -258,6 +258,20 @@ configuration file."
           (string :tag "level 4") )
   :group 'adoc)
 
+(defcustom adoc-bulleted-list-item-del '("-" "**" "***" "****" "*****")
+  "Delimiter used for bulleted list items.
+
+This vaguely corresponds to AsciiDoc's listdef-bulleted1 through
+listdef-bulleted5 definitions in the config file. Only that here
+only strings, opposed to regexes, can be given."
+  :type '(list
+          (string :tag "level 1") 
+          (string :tag "level 2") 
+          (string :tag "level 3") 
+          (string :tag "level 4") 
+          (string :tag "level 5") )
+  :group 'adoc)
+
 (defcustom adoc-delimited-block-del
   '("^/\\{4,\\}"	 ; 0 comment
     "^\\+\\{4,\\}"	 ; 1 pass
