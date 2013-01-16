@@ -769,6 +769,25 @@ removed before TRANSFORM is evaluated.
     (adoctest-trans "" "  x"   '(adoc-insert-indented "x" 1))
     (adoctest-trans "" "\t  x" '(adoc-insert-indented "x" 2))))
 
+(ert-deftest adoctest-test-denote-list-item ()
+  (let ((tab-width 2)
+  	(indent-tabs-mode nil))
+    (adoctest-trans "- foo"         " ** foo"       '(adoc-denote-list-item))
+    (adoctest-trans " ** foo"       "  *** foo"     '(adoc-denote-list-item))
+    (adoctest-trans "  *** foo"     "   **** foo"   '(adoc-denote-list-item))
+    (adoctest-trans "   **** foo"   "    ***** foo" '(adoc-denote-list-item))
+    ;; last level stays unchanged
+    (adoctest-trans "    ***** foo" "    ***** foo" '(adoc-denote-list-item))))
+
+(ert-deftest adoctest-test-promote-list-item ()
+  (let ((tab-width 2)
+  	(indent-tabs-mode nil))
+    (adoctest-trans "    ***** foo" "   **** foo" '(adoc-promote-list-item))
+    (adoctest-trans "   **** foo"   "  *** foo"   '(adoc-promote-list-item))
+    (adoctest-trans "  *** foo"     " ** foo"     '(adoc-promote-list-item))
+    (adoctest-trans " ** foo"       "- foo"       '(adoc-promote-list-item))
+    (adoctest-trans "- foo"         "- foo"       '(adoc-promote-list-item))))
+
 ;; purpose
 ;; - ensure that the latest version, i.e. the one currently in buffer(s), of
 ;;   adoc-mode and adoc-mode-test is used for the test

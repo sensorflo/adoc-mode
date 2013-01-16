@@ -2171,6 +2171,38 @@ ARG is 0, see `adoc-adjust-title-del'."
   (adoc-promote-title (- arg)))
 
 ;; todo:
+;; - for other types of list items, not only unordered
+(defun adoc-denote-list-item ()
+  (interactive)
+  (beginning-of-line)
+  (when (looking-at (adoc-re-oulisti 'adoc-unordered))
+    (let ((del (match-string 2)))
+      (delete-region (point) (match-end 3))
+      (cond
+       ((string-equal del "-") (adoc-insert-indented "** " 2))
+       ((string-equal del "**") (adoc-insert-indented "*** " 3))
+       ((string-equal del "***") (adoc-insert-indented "**** " 4))
+       ((string-equal del "****") (adoc-insert-indented "***** " 5))
+       ((string-equal del "*****") (adoc-insert-indented "***** " 5)) ; i.e. re-instert level 5 again
+       (t (error "Invalid del"))))))
+
+(defun adoc-promote-list-item ()
+  (interactive)
+  (beginning-of-line)
+  (when (looking-at (adoc-re-oulisti 'adoc-unordered))
+    (let ((del (match-string 2)))
+      (delete-region (point) (match-end 3))
+      (cond
+       ((string-equal del "-") (adoc-insert-indented "- " 1)) ;i.e. re-insert level 1 again
+       ((string-equal del "**") (adoc-insert-indented "- " 1))
+       ((string-equal del "***") (adoc-insert-indented "** " 2))
+       ((string-equal del "****") (adoc-insert-indented "*** " 3))
+       ((string-equal del "*****") (adoc-insert-indented "**** " 4))
+       (t (error "Invalid del"))))))
+
+;tempo-template-adoc-bulleted-list-item-1
+
+;; todo:
 ;; - adjust while user is typing title
 ;; - tempo template which uses alreay typed text to insert a 'new' title
 ;; - auto convert one line title to two line title. is easy&fast to type, but
