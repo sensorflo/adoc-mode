@@ -251,7 +251,7 @@ Each string must be exactly 2 characters long. Corresponds to the
 underlines element in the titles section of the asciidoc
 configuration file."
   :type '(list
-          (string :tag "level 0") 
+          (string :tag "level 0 / document title") 
           (string :tag "level 1") 
           (string :tag "level 2") 
           (string :tag "level 3") 
