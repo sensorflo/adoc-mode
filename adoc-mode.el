@@ -3,10 +3,10 @@
 ;; Copyright 2010-2013 Florian Kaufmann <sensorflo@gmail.com>
 ;;
 ;; Author: Florian Kaufmann <sensorflo@gmail.com>
-;; URL: Current official: http://code.google.com/p/adoc-mode/
-;;      Develop, future official: https://github.com/sensorflo/adoc-mode
+;; URL: https://github.com/sensorflo/adoc-mode/wiki
 ;; Created: 2009
 ;; Version: 0.6.0
+;; Package-Requires: ((markup-faces "1.0.0"))
 ;; Keywords: wp AsciiDoc
 ;; 
 ;; This file is not part of GNU Emacs.
