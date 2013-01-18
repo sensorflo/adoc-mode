@@ -5,7 +5,7 @@
 ;; Author: Florian Kaufmann <sensorflo@gmail.com>
 ;; URL: https://github.com/sensorflo/adoc-mode/wiki
 ;; Created: 2009
-;; Version: 0.6.1
+;; Version: 0.6.2
 ;; Package-Requires: ((markup-faces "1.0.0"))
 ;; Keywords: wp AsciiDoc
 ;; 
@@ -178,7 +178,7 @@
 ;; tempo or tempo-snippet is required later below
 
 
-(defconst adoc-mode-version "0.6.1" 
+(defconst adoc-mode-version "0.6.2" 
   "adoc mode version number.
 
 Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are
