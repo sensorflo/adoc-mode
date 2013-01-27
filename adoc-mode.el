@@ -2193,7 +2193,7 @@ ARG is 0, see `adoc-adjust-title-del'."
     (let ((del (match-string 2)))
       (delete-region (point) (match-end 3))
       (cond
-       ((string-equal del "-") (adoc-insert-indented "** " 2))
+       ((string-match "^\\(-\\|\\*\\)$" del) (adoc-insert-indented "** " 2))
        ((string-equal del "**") (adoc-insert-indented "*** " 3))
        ((string-equal del "***") (adoc-insert-indented "**** " 4))
        ((string-equal del "****") (adoc-insert-indented "***** " 5))
@@ -2207,7 +2207,7 @@ ARG is 0, see `adoc-adjust-title-del'."
     (let ((del (match-string 2)))
       (delete-region (point) (match-end 3))
       (cond
-       ((string-equal del "-") (adoc-insert-indented "- " 1)) ;i.e. re-insert level 1 again
+       ((string-match "^\\(-\\|\\*\\)$" del) (adoc-insert-indented "- " 1)) ;i.e. re-insert level 1 again
        ((string-equal del "**") (adoc-insert-indented "- " 1))
        ((string-equal del "***") (adoc-insert-indented "** " 2))
        ((string-equal del "****") (adoc-insert-indented "*** " 3))

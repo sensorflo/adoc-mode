@@ -773,6 +773,7 @@ removed before TRANSFORM is evaluated.
   (let ((tab-width 2)
   	(indent-tabs-mode nil))
     (adoctest-trans "- foo"         " ** foo"       '(adoc-denote-list-item))
+    (adoctest-trans "* foo"         " ** foo"       '(adoc-denote-list-item))
     (adoctest-trans " ** foo"       "  *** foo"     '(adoc-denote-list-item))
     (adoctest-trans "  *** foo"     "   **** foo"   '(adoc-denote-list-item))
     (adoctest-trans "   **** foo"   "    ***** foo" '(adoc-denote-list-item))
@@ -786,6 +787,7 @@ removed before TRANSFORM is evaluated.
     (adoctest-trans "   **** foo"   "  *** foo"   '(adoc-promote-list-item))
     (adoctest-trans "  *** foo"     " ** foo"     '(adoc-promote-list-item))
     (adoctest-trans " ** foo"       "- foo"       '(adoc-promote-list-item))
+    (adoctest-trans "* foo"         "- foo"       '(adoc-promote-list-item))
     (adoctest-trans "- foo"         "- foo"       '(adoc-promote-list-item))))
 
 ;; purpose
