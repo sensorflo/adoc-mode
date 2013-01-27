@@ -841,6 +841,7 @@ removed before TRANSFORM is evaluated.
 
   ;; todo: execute tests in an smart order: the basic/simple tests first, so
   ;; when a complicated test fails one knows that the simple things do work
-  (ert-run-tests-interactively "^adoctest-test-"))
+  (let (adoc-mode-hook)
+    (ert-run-tests-interactively "^adoctest-test-")))
 
 ;;; adoc-mode-test.el ends here
