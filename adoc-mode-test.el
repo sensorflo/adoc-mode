@@ -790,6 +790,9 @@ removed before TRANSFORM is evaluated.
     (adoctest-trans "* foo"         "- foo"       '(adoc-promote-list-item))
     (adoctest-trans "- foo"         "- foo"       '(adoc-promote-list-item))))
 
+;; todo (inclusive correcting tests): if tab-with > 2, first bullet still sould be on first column
+;; todo: shall denote/promote keep or fix 'wrong' indentation on the fly
+
 ;; case tab-with = 2 already handled in adoctest-test-denote-list-item
 (ert-deftest adoctest-test-denote-list-item-honor-tab-width ()
   (let ((tab-width 4) (indent-tabs-mode nil))
@@ -807,11 +810,11 @@ removed before TRANSFORM is evaluated.
   (let ((tab-width 4) (indent-tabs-mode t))
     (adoctest-trans "*   foo" "	 ** foo" '(adoc-denote-list-item))))
 
-
-;; (ert-deftest adoctest-test-denote-promote-list-item-honor-indent-tabs-mode ()
-;;   (let ((tab-width 4) (indent-tabs-mode nil))
-;;     (adoctest-trans "*   foo" " ** foo" '(adoc-denote-list-item))
-;;     (adoctest-trans "     ** foo" "*   foo" '(adoc-promote-list-item))))
+(ert-deftest adoctest-test-promote-multi-line-list-item ()
+  (let ((tab-width 2)
+        (indent-tabs-mode nil))
+    (adoctest-trans "!* foo\n  bar\n  car"     " ** foo\n    bar\n    car" '(adoc-denote-list-item))
+    (adoctest-trans "! ** foo\n    bar\n    car" "  *** foo\n      bar\n      car" '(adoc-denote-list-item))))
 
 ;; purpose
 ;; - ensure that the latest version, i.e. the one currently in buffer(s), of

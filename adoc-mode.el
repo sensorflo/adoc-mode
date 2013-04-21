@@ -2193,11 +2193,11 @@ ARG is 0, see `adoc-adjust-title-del'."
     (let ((del (match-string 2)))
       (delete-region (point) (match-end 3))
       (cond
-       ((string-match "^\\(-\\|\\*\\)$" del) (adoc-insert-indented "** " 2))
-       ((string-equal del "**") (adoc-insert-indented "*** " 3))
-       ((string-equal del "***") (adoc-insert-indented "**** " 4))
-       ((string-equal del "****") (adoc-insert-indented "***** " 5))
-       ((string-equal del "*****") (adoc-insert-indented "***** " 5)) ; i.e. re-instert level 5 again
+       ((string-match "^\\(-\\|\\*\\)$" del) (adoc-set-paragraph-indentation "** " 2))
+       ((string-equal del "**") (adoc-set-paragraph-indentation "*** " 3))
+       ((string-equal del "***") (adoc-set-paragraph-indentation "**** " 4))
+       ((string-equal del "****") (adoc-set-paragraph-indentation "***** " 5))
+       ((string-equal del "*****") (adoc-set-paragraph-indentation "***** " 5)) ; i.e. re-instert level 5 again
        (t (error "Invalid del"))))))
 
 (defun adoc-promote-list-item ()
@@ -2207,12 +2207,19 @@ ARG is 0, see `adoc-adjust-title-del'."
     (let ((del (match-string 2)))
       (delete-region (point) (match-end 3))
       (cond
-       ((string-match "^\\(-\\|\\*\\)$" del) (adoc-insert-indented "- " 1)) ;i.e. re-insert level 1 again
-       ((string-equal del "**") (adoc-insert-indented "- " 1))
-       ((string-equal del "***") (adoc-insert-indented "** " 2))
-       ((string-equal del "****") (adoc-insert-indented "*** " 3))
-       ((string-equal del "*****") (adoc-insert-indented "**** " 4))
+       ((string-match "^\\(-\\|\\*\\)$" del) (adoc-set-paragraph-indentation "- " 1)) ;i.e. re-insert level 1 again
+       ((string-equal del "**") (adoc-set-paragraph-indentation "- " 1))
+       ((string-equal del "***") (adoc-set-paragraph-indentation "** " 2))
+       ((string-equal del "****") (adoc-set-paragraph-indentation "*** " 3))
+       ((string-equal del "*****") (adoc-set-paragraph-indentation "**** " 4))
        (t (error "Invalid del"))))))
+
+(defun adoc-set-paragraph-indentation (str level)
+  (adoc-insert-indented str level)
+  (forward-line)
+  (while (not (eobp))
+    (indent-to tab-width)
+    (forward-line)))
 
 ;tempo-template-adoc-bulleted-list-item-1
 
