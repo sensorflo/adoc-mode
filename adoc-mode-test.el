@@ -790,6 +790,29 @@ removed before TRANSFORM is evaluated.
     (adoctest-trans "* foo"         "- foo"       '(adoc-promote-list-item))
     (adoctest-trans "- foo"         "- foo"       '(adoc-promote-list-item))))
 
+;; case tab-with = 2 already handled in adoctest-test-denote-list-item
+(ert-deftest adoctest-test-denote-list-item-honor-tab-width ()
+  (let ((tab-width 4) (indent-tabs-mode nil))
+    (adoctest-trans "*   foo"     "     ** foo" '(adoc-denote-list-item))
+    (adoctest-trans "     ** foo" "          *** foo" '(adoc-denote-list-item))))
+
+;; case tab-with = 2 already handled in adoctest-test-promote-list-item
+(ert-deftest adoctest-test-promote-list-item-honor-tab-width ()
+  (let ((tab-width 4) (indent-tabs-mode nil))
+    (adoctest-trans "          *** foo" "     ** foo"  '(adoc-promote-list-item))
+    (adoctest-trans "     ** foo"       "  - foo" '(adoc-promote-list-item))))
+
+;; case indent-tabs-mode nil already handled in adoctest-test-promote-list-item
+(ert-deftest adoctest-test-denote-list-item-honor-tab-width ()
+  (let ((tab-width 4) (indent-tabs-mode t))
+    (adoctest-trans "*   foo" "	 ** foo" '(adoc-denote-list-item))))
+
+
+;; (ert-deftest adoctest-test-denote-promote-list-item-honor-indent-tabs-mode ()
+;;   (let ((tab-width 4) (indent-tabs-mode nil))
+;;     (adoctest-trans "*   foo" " ** foo" '(adoc-denote-list-item))
+;;     (adoctest-trans "     ** foo" "*   foo" '(adoc-promote-list-item))))
+
 ;; purpose
 ;; - ensure that the latest version, i.e. the one currently in buffer(s), of
 ;;   adoc-mode and adoc-mode-test is used for the test
