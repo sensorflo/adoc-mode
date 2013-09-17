@@ -2242,8 +2242,8 @@ new customization demands."
 	 :help ,adoc-help-ruler-line])
        ("Text formatting - replacements"
 	["Copyright: (C) \u2192 \u00A9" tempo-template-adoc-copyright]
-	["Trademark: (TM) \u2192 \u00AE" tempo-template-adoc-trademark]
-	["Registered trademark: (R) \u2192 \u2122" tempo-template-adoc-registered-trademark]
+	["Trademark: (TM) \u2192 \u2122" tempo-template-adoc-trademark]
+	["Registered trademark: (R) \u2192 \u00AE" tempo-template-adoc-registered-trademark]
 	["Dash: -- \u2192 \u2014" tempo-template-adoc-dash]
 	["Ellipsis: ... \u2192 \u2026" tempo-template-adoc-ellipsis]
 	["Right arrow: -> \u2192 \u2192" tempo-template-adoc-right-arrow]
