@@ -1277,22 +1277,34 @@ text having adoc-reserved set to 'block-del."
 
 (defun adoc-kwf-attriblist (end)
   (let* ((end2 end)
-	 pos-or-id)	
-    (while (< (point) end)
-      (goto-char (or (text-property-not-all (point) end 'adoc-attribute-list nil)
-		     end))
+         pos-or-id)
+    (while
+        (< (point) end)
+      (goto-char (or
+                  ;; addresses a bug where a zero width match (for instance
+                  ;; with the text [,] causes a loop. As the return of
+                  ;; text-property-not-all would be the same as point, an
+                  ;; infinite loop would result
+                  (let ((tpna
+                         (text-property-not-all (point) end 'adoc-attribute-list nil)))
+                    (when (< (point) tpna)
+                      tpna))
+                  end))
+      ;; if this doesn't move point forward we are stuffed
       (when (< (point) end)
-	(setq pos-or-id 0)
-	(setq end2 (or (text-property-any (point) end 'adoc-attribute-list nil)
-		       end))
-	(while (re-search-forward (adoc-re-attribute-list-elt) end2 t)
-	  (when (match-beginning 1)
-	    (setq pos-or-id (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
-	    (put-text-property (match-beginning 1) (match-end 1) 'face markup-attribute-face))
-	  (let ((group (if (match-beginning 2) 2 3))
-	  	(face (adoc-attribute-elt-face pos-or-id (get-text-property (match-beginning 0) 'adoc-attribute-list))))
-	    (put-text-property (match-beginning group) (match-end group) 'face face))
-	  (when (numberp pos-or-id) (setq pos-or-id (1+ pos-or-id)))))))
+        (setq pos-or-id 0)
+        (setq end2 (or (text-property-any (point) end 'adoc-attribute-list nil)
+                       end))
+        (let ((n 0))
+          (while
+              (re-search-forward (adoc-re-attribute-list-elt) end2 t)
+            (when (match-beginning 1)
+              (setq pos-or-id (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+              (put-text-property (match-beginning 1) (match-end 1) 'face markup-attribute-face))
+            (let ((group (if (match-beginning 2) 2 3))
+                  (face (adoc-attribute-elt-face pos-or-id (get-text-property (match-beginning 0) 'adoc-attribute-list))))
+              (put-text-property (match-beginning group) (match-end group) 'face face))
+            (when (numberp pos-or-id) (setq pos-or-id (1+ pos-or-id))))))))
   nil)
 
 (defun adoc-facespec-subscript ()
