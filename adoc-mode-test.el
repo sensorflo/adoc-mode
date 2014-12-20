@@ -299,6 +299,20 @@ removed before TRANSFORM is evaluated.
     ;; multiple positional attributes
     "[" markup-meta-face "hello" markup-value-face "," markup-meta-face "world" markup-value-face "]" markup-meta-face "\n" nil 		  
 
+    ;; multiple positional attributes, however one or both are empty (really empty or only one space)
+    "[" markup-meta-face "hello" markup-value-face ",]" markup-meta-face "\n" nil
+    "[" markup-meta-face "hello" markup-value-face "," markup-meta-face " " markup-value-face "]" markup-meta-face "\n" nil
+    "[," markup-meta-face "hello" markup-value-face "]" markup-meta-face "\n" nil
+    "[" markup-meta-face " " markup-value-face "," markup-meta-face "hello" markup-value-face "]" markup-meta-face "\n" nil
+    "[,]" markup-meta-face "\n" nil
+    "[," markup-meta-face " " markup-value-face "]" markup-meta-face "\n" nil
+    "[" markup-meta-face " " markup-value-face ",]" markup-meta-face "\n" nil
+    "[" markup-meta-face " " markup-value-face "," markup-meta-face " " markup-value-face "]" markup-meta-face "\n" nil
+
+    ;; zero positional attributes
+    "[]" markup-meta-face "\n" nil
+    "[" markup-meta-face " " markup-value-face "]" markup-meta-face "\n" nil
+
     ;; keyword attribute
     "[" markup-meta-face "salute" markup-attribute-face "=" markup-meta-face "hello" markup-value-face "]" markup-meta-face "\n" nil 		  
     ;; keyword attribute where value is a string

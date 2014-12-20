@@ -1293,6 +1293,8 @@ text having adoc-reserved set to 'block-del."
 	  	(face (adoc-attribute-elt-face pos-or-id (get-text-property (match-beginning 0) 'adoc-attribute-list))))
 	    (put-text-property (match-beginning group) (match-end group) 'face face))
 	  (when (numberp pos-or-id) (setq pos-or-id (1+ pos-or-id)))))))
+
+        (goto-char end2))))
   nil)
 
 (defun adoc-facespec-subscript ()
