@@ -1,6 +1,6 @@
-;;; adoc-mode.el --- a major-mode for editing AsciiDoc files in Emacs
+;;; adoc-mode.el --- a major-mode for editing AsciiDoc files in Emacs -*- coding: us-ascii -*-
 ;;
-;; Copyright 2010-2013 Florian Kaufmann <sensorflo@gmail.com>
+;; Copyright 2010-2014 Florian Kaufmann <sensorflo@gmail.com>
 ;;
 ;; Author: Florian Kaufmann <sensorflo@gmail.com>
 ;; URL: https://github.com/sensorflo/adoc-mode/wiki
@@ -497,6 +497,31 @@ To become a customizable variable when regexps for list items become customizabl
     map)
   "Keymap used in adoc mode.")
 
+(defvar adoc-syntax-table
+  (let ((st (copy-syntax-table text-mode-syntax-table)))
+    (modify-syntax-entry ?$ "." st)
+    (modify-syntax-entry ?% "." st)
+    (modify-syntax-entry ?& "." st)
+    (modify-syntax-entry ?' "." st)
+    (modify-syntax-entry ?* "." st)
+    (modify-syntax-entry ?+ "." st)
+    (modify-syntax-entry ?- "." st)
+    (modify-syntax-entry ?/ "." st)
+    (modify-syntax-entry ?< "." st)
+    (modify-syntax-entry ?= "." st)
+    (modify-syntax-entry ?> "." st)
+    (modify-syntax-entry ?\\ "." st)
+    (modify-syntax-entry ?_ "." st)
+    (modify-syntax-entry ?| "." st)
+    (modify-syntax-entry ?\u00ab "." st)
+    (modify-syntax-entry ?\u00bb "." st)
+    (modify-syntax-entry ?\u2018 "." st)
+    (modify-syntax-entry ?\u2019 "." st)
+    (modify-syntax-entry ?\u201c "." st)
+    (modify-syntax-entry ?\u201d "." st)
+    st)
+  "Syntax table used while in `adoc-mode'.")
+
 
 ;;;; help text copied from asciidoc manual
 (defconst adoc-help-constrained-quotes
@@ -622,7 +647,7 @@ To become a customizable variable when regexps for list items become customizabl
   template section names end in -blockmacro instead of
   -inlinemacro.")
 (defconst adoc-help-url
-  "If you don’t need a custom link caption you can enter the
+  "If you don't need a custom link caption you can enter the
   http, https, ftp, file URLs and email addresses without any
   special macro syntax.")
 (defconst adoc-help-anchor
@@ -668,7 +693,7 @@ To become a customizable variable when regexps for list items become customizabl
   using the LaTeX math syntax.")
 (defconst adoc-help-pass-+++
   "Inline and block. The triple-plus passthrough is functionally
-  identical to the pass macro but you don’t have to escape ]
+  identical to the pass macro but you don't have to escape ]
   characters and you can prefix with quoted attributes in the
   inline version.")
 (defconst adoc-help-pass-$$
@@ -1213,10 +1238,29 @@ Subgroups of returned regexp:
         ;; empty line
         "[ \t]*$"
         
-        ;; delimited blocks / two line titles
+        ;; one line titles and block titles. Title's text can be interpreted
+        ;; as an paragraph of its own, but tagging the whole line as paragraph
+        ;; separator, i.e.  not being a paragraph itfself, allows having a
+        ;; proper paragraphs without intervening blank line after a one line
+        ;; title.
+        "\\|"
+        "=+[ \t].*$\\|" ; one line title 
+        "\\." ;; block title
+
+        ;; block id
+        "\\|"
+        "\[\[.*?\]\][ \t]*$"
+
+        ;; labeled list, term being defined on own line
+        "\\|"
+        (adoc-re-llisti 'adoc-labeled-normal 0) "[ \t]*$\\|"
+        (adoc-re-llisti 'adoc-labeled-normal 1) "[ \t]*$\\|"
+        (adoc-re-llisti 'adoc-labeled-normal 2) "[ \t]*$\\|"
+        (adoc-re-llisti 'adoc-labeled-normal 3) "[ \t]*$"
+
+        ;; delimited blocks / underline of two line titles
         "\\|"
         "\\("
-          "^+" "\\|"
           "\\++" "\\|"
           "/+" "\\|"
           "-+" "\\|"
@@ -1250,16 +1294,55 @@ Subgroups of returned regexp:
             ".*?:\\{2,4\\}"
         "\\)"
         "\\( \\|$\\)"
+
+        ;; labeled list, term and its definition on same line
+        "\\|"
+        "\\(?:" (adoc-re-llisti 'adoc-labeled-normal 0) "\\)[^ \t\n]\\|"
+        "\\(?:" (adoc-re-llisti 'adoc-labeled-normal 1) "\\)[^ \t\n]\\|"
+        "\\(?:" (adoc-re-llisti 'adoc-labeled-normal 2) "\\)[^ \t\n]\\|"
+        "\\(?:" (adoc-re-llisti 'adoc-labeled-normal 3) "\\)[^ \t\n]"
         
         ;; table rows
         "\\|"
         "|"
 
-        ;; one line titles
-        "\\|"
-        "[=.].*$"
-        
         ))
+
+(defun adoc-re-sentence-end()
+  (concat
+   "\\(?:" (let (sentence-end) (sentence-end)) "\\)\\|"
+
+   ;; one line titles
+   "^=+[ \t]*\\|"
+
+   ;; delimited blocks / underline of two line titles
+   "^\\("
+   "\\++" "\\|"
+   "/+" "\\|"
+   "-+" "\\|"
+   "\\.+" "\\|"
+   "\\*+" "\\|"
+   "_*+" "\\|"
+   "=*+" "\\|"
+   "~*+" "\\|"
+   "^*+" "\\|"
+   "--"
+   "\\)"
+   "[ \t]*$\\|"
+
+   ;; list items
+   "^\\(?:" (adoc-re-oulisti 'adoc-unordered 'adoc-all-levels) "\\)\\|"
+   "^\\(?:" (adoc-re-oulisti 'adoc-unordered nil 'adoc-bibliography) "\\)\\|"
+   "^\\(?:" (adoc-re-oulisti 'adoc-explicitly-numbered ) "\\)\\|"
+   "^\\(?:" (adoc-re-oulisti 'adoc-implicitly-numbered 'adoc-all-levels) "\\)\\|"
+   "^\\(?:" (adoc-re-oulisti 'adoc-callout) "\\)\\|"
+
+   ;; labeled list
+   "^\\(?:" (adoc-re-llisti 'adoc-labeled-normal 0) "\\)\\|"
+   "^\\(?:" (adoc-re-llisti 'adoc-labeled-normal 1) "\\)\\|"
+   "^\\(?:" (adoc-re-llisti 'adoc-labeled-normal 2) "\\)\\|"
+   "^\\(?:" (adoc-re-llisti 'adoc-labeled-normal 3) "\\)"
+))
 
 (defun adoc-re-aor(e1 e2)
   "all or: Returns a regex matching \(e1\|e2\|e1e2\)? "
@@ -1614,8 +1697,8 @@ considered to be meta characters."
     (if (and adoc-insert-replacement ,replacement)
         ;; '((1 (if adoc-replacement-failed adoc-warning adoc-hide-delimiter) t)
         ;;   (1 '(face nil adoc-reserved t) t))
-        '(1 '(face adoc-hide-delimiter adoc-reserved t) t)
-      '(1 '(face adoc-replacement adoc-reserved t) t))))
+        '(1 '(face adoc-hide-delimiter adoc-reserved t) prepend)
+      '(1 '(face adoc-replacement adoc-reserved t) prepend))))
 
 ;; - To ensure that indented lines are nicely aligned. They only look aligned if
 ;;   the whites at line beginning have a fixed with font.
@@ -1918,7 +2001,7 @@ considered to be meta characters."
    ;; character substitution.
    (adoc-kw-quote 'adoc-constrained "`" markup-typewriter-face nil nil t)     ;1)
    ;; AsciiDoc Manual: The triple-plus passthrough is functionally identical to
-   ;; the pass macro but you don’t have to escape ] characters and you can
+   ;; the pass macro but you don't have to escape ] characters and you can
    ;; prefix with quoted attributes in the inline version
    (adoc-kw-quote 'adoc-unconstrained "+++" markup-typewriter-face nil nil t) ;2)
    ;;The double-dollar passthrough is functionally identical to the triple-plus
@@ -2215,11 +2298,19 @@ ARG is 0, see `adoc-adjust-title-del'."
        (t (error "Invalid del"))))))
 
 (defun adoc-set-paragraph-indentation (str level)
-  (adoc-insert-indented str level)
-  (forward-line)
-  (while (not (eobp))
-    (indent-to tab-width)
-    (forward-line)))
+  (let ((marker (point-marker)))
+    (adoc-insert-indented str level)
+    (forward-line)
+    (while (not (or (eobp)
+                    (looking-at "^[ \t]*$") ; blank line
+                    (looking-at (adoc-re-oulisti 'adoc-unordered))))
+      ;; skip list continuation line and first line of paragraph that follows it
+      (if (looking-at "^+[ \t]*$")
+          (forward-line 2) 
+        (delete-region (point) (re-search-forward "^[ \t]*"))
+        (indent-to (* level tab-width))
+        (forward-line)))
+    (goto-char marker)))
 
 ;tempo-template-adoc-bulleted-list-item-1
 
@@ -2905,26 +2996,9 @@ knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
 (define-derived-mode adoc-mode text-mode "adoc"
   "Major mode for editing AsciiDoc text files.
 Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
+  :syntax-table adoc-syntax-table
+  :group 'adoc
   
-  ;; syntax table
-  ;; todo: do it as other modes do it, eg rst-mode?
-  (modify-syntax-entry ?$ ".")
-  (modify-syntax-entry ?% ".")
-  (modify-syntax-entry ?& ".")
-  (modify-syntax-entry ?' ".")
-  (modify-syntax-entry ?` ".")
-  (modify-syntax-entry ?\" ".")
-  (modify-syntax-entry ?* ".")
-  (modify-syntax-entry ?+ ".")
-  (modify-syntax-entry ?. ".")
-  (modify-syntax-entry ?/ ".")
-  (modify-syntax-entry ?< ".")
-  (modify-syntax-entry ?= ".")
-  (modify-syntax-entry ?> ".")
-  (modify-syntax-entry ?\\ ".")
-  (modify-syntax-entry ?| ".")
-  (modify-syntax-entry ?_ ".")
-
   ;; comments
   (set (make-local-variable 'comment-column) 0)
   (set (make-local-variable 'comment-start) "// ")
@@ -2932,10 +3006,11 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   (set (make-local-variable 'comment-start-skip) "^//[ \t]*")
   (set (make-local-variable 'comment-end-skip) "[ \t]*\\(?:\n\\|\\'\\)")
   
-  ;; paragraphs
+  ;; paragraphs & sentences
   (set (make-local-variable 'paragraph-separate) (adoc-re-paragraph-separate))
   (set (make-local-variable 'paragraph-start) (adoc-re-paragraph-start))
   (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
+  (set (make-local-variable 'sentence-end) (adoc-re-sentence-end))
   
   ;; font lock
   (set (make-local-variable 'font-lock-defaults)

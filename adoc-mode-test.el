@@ -810,11 +810,32 @@ removed before TRANSFORM is evaluated.
   (let ((tab-width 4) (indent-tabs-mode t))
     (adoctest-trans "*   foo" "	 ** foo" '(adoc-denote-list-item))))
 
-(ert-deftest adoctest-test-promote-multi-line-list-item ()
+(ert-deftest adoctest-test-denote-multi-line-list-item ()
   (let ((tab-width 2)
         (indent-tabs-mode nil))
     (adoctest-trans "!* foo\n  bar\n  car"     " ** foo\n    bar\n    car" '(adoc-denote-list-item))
     (adoctest-trans "! ** foo\n    bar\n    car" "  *** foo\n      bar\n      car" '(adoc-denote-list-item))))
+
+(ert-deftest adoctest-test-denote-multi-line-list-item ()
+  (let ((tab-width 2)
+        (indent-tabs-mode nil))
+    ;; followed by next list item
+    (adoctest-trans "!* foo\n  bar\n* car"     " ** foo\n    bar\n* car" '(adoc-denote-list-item))
+    ;; followed by empty line
+    (adoctest-trans "!* foo\n  bar\n\ncar"     " ** foo\n    bar\n\ncar" '(adoc-denote-list-item))
+    ;; list coninuation
+    ;; first line of paragraph cannot be indenten, else it would be a literal paragraph
+    ;; 2nd+ line can be indentent: adaptively indent too if it already is, else dont
+    (adoctest-trans "!* foo\n  bar\n+\ncar\n  car\n* hello"
+                    " ** foo\n    bar\n+\ncar\n    car\n* hello" '(adoc-denote-list-item))))
+
+(ert-deftest adoctest-test-denote-list-item-undo ()
+  (let ((tab-width 2)
+        (indent-tabs-mode nil))
+    (adoctest-trans "!* foo\n  bar\n  car" "* foo\n  bar\n  car"
+                    '(progn (call-interactively 'adoc-denote-list-item)
+                            (call-interactively 'undo)))))
+
 
 ;; purpose
 ;; - ensure that the latest version, i.e. the one currently in buffer(s), of
