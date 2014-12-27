@@ -191,6 +191,47 @@ removed before TRANSFORM is evaluated.
    "sidebar line 1\nsidebar line 2" markup-secondary-text-face "\n" nil
    "********" markup-meta-hide-face "\n"))
 
+;; Don't mistake text between two same delimited blocks as a delimited block,
+;; i.e. wrongly treating the end of block 1 as a beginning and wrongly
+;; treating the beginning of block 2 as ending.
+(ert-deftest adoctest-test-delimited-blocks-simple ()
+  (adoctest-faces "delimited-blocks-special-case"
+
+   "--------" markup-meta-hide-face "\n" nil
+   "11\n12\n13\n14" markup-code-face "\n" nil
+   "--------" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "lorem" 'no-face "\n" nil
+   "\n" nil
+   "--------" markup-meta-hide-face "\n" nil
+   "21\n22\n23\n24" markup-code-face "\n" nil
+   "--------" markup-meta-hide-face "\n" nil
+   "\n" nil
+   "ipsum" 'no-face "\n" nil))
+
+(ert-deftest adoctest-test-delimited-blocks-simple ()
+  (adoctest-faces "delimited-blocks-empty"
+    "////////" markup-meta-hide-face "\n" nil
+    "////////" markup-meta-hide-face "\n" nil
+    "\n" nil
+    "++++++++" markup-meta-hide-face "\n" nil
+    "++++++++" markup-meta-hide-face "\n" nil
+    "\n" nil
+    "--------" markup-meta-hide-face "\n" nil
+    "--------" markup-meta-hide-face "\n" nil
+    "\n" nil
+    "........" markup-meta-hide-face "\n" nil
+    "........" markup-meta-hide-face "\n" nil
+    "\n" nil
+    "________" markup-meta-hide-face "\n" nil
+    "________" markup-meta-hide-face "\n" nil
+    "\n" nil
+    "========" markup-meta-hide-face "\n" nil
+    "========" markup-meta-hide-face "\n" nil
+    "\n" nil
+    "********" markup-meta-hide-face "\n" nil
+    "********" markup-meta-hide-face "\n"))
+
 (ert-deftest adoctest-test-open-block ()
   (adoctest-faces "open-block"
    "--" markup-meta-hide-face "\n" nil

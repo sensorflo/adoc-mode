@@ -900,13 +900,32 @@ Subgroups:
     adoc-delimited-block-del "\\|")
    "\\)"))
 
+;; KLUDGE: Contrary to what the AsciiDoc manual specifies, adoc-mode does not
+;; allow that either the first or the last line within a delmited block is
+;; blank. That shall help to prevent the case that adoc-mode wrongly
+;; interprets the end of a delimited block as the beginning, and the beginning
+;; of a following delimited block as the ending, thus wrongly interpreting the
+;; text between two adjacent delimited blocks as delimited block.  It is
+;; expected that it is unlikely that one wants to begin or end a delimited
+;; block with a blank line, and it is expected that it is likely that
+;; delimited blocks are surrounded by blank lines.
 (defun adoc-re-delimited-block (del)
   (let* ((tmp (nth del adoc-delimited-block-del))
 	 (start (if (consp tmp) (car tmp) tmp))
 	 (end (if (consp tmp) (cdr tmp) tmp)))
     (concat
      "\\(" start "\\)[ \t]*\n"
-     "\\(\\(?:.*\n\\)*?\\)"
+     "\\("
+       ;; a single leading non-blank line 
+       "[ \t]*[^ \t\n].*\n"
+       ;; optionally followed by
+       "\\(?:"
+         ;; any number of arbitrary lines followed by
+         "\\(?:.*\n\\)*?"
+         ;; a trailing non blank line
+         "[ \t]*[^ \t\n].*\n"
+       "\\)??" 
+     "\\)??"
      "\\(" end "\\)[ \t]*$")))
 
 ;; TODO: since its multiline, it doesn't yet work properly.
@@ -1399,8 +1418,8 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
    '(0 '(face nil font-lock-multiline t) t)
    '(1 '(face markup-meta-hide-face adoc-reserved block-del) t)
    (if (not inhibit-text-reserved)
-       `(2 '(face ,text-face face markup-verbatim-face adoc-reserved t) t)
-     `(2 ,text-face t))
+       `(2 '(face ,text-face face markup-verbatim-face adoc-reserved t) t t)
+     `(2 ,text-face t t))
    '(3 '(face markup-meta-hide-face adoc-reserved block-del) t)))
 
 ;; if adoc-kw-delimited-block, adoc-kw-two-line-title don't find the whole
