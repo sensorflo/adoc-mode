@@ -187,7 +187,12 @@ taken from that version's asciidoc.conf / manual.")
 
 ;;;; customization  
 (defgroup adoc nil
-  "Support for AsciiDoc documents."
+  "Major-mode for editing AsciiDoc files in Emacs.
+
+Most faces adoc-mode uses belong to the markup-faces
+customization group, see link below, and have to be customized
+there.  adoc-mode has only a few faces of its own, which can be
+customized on this page."
   :group 'wp
   :link '(custom-group-link markup-faces))
 
