@@ -1448,13 +1448,13 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
     '(1 '(face adoc-complex-replacement adoc-reserved t))
     '(2 '(face adoc-align adoc-reserved t))))
 
-(defmacro adoc-kw-verbatim-paragraph-sequence ()
+(defun adoc-kw-verbatim-paragraph-sequence ()
   "Creates a keyword which highlights a sequence of verbatim paragraphs."
-  `(list
+  (list
     ;; matcher function
-    (lambda (end)
+    `(lambda (end)
       (and (re-search-forward ,(adoc-re-verbatim-paragraph-sequence) end t)
-           (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
+           (not (text-property-not-all (match-beginning 0) (match-end 0) adoc-reserved nil))))
     ;; highlighers
     '(1 '(face adoc-monospace adoc-reserved t font-lock-multiline t))))
 
