@@ -74,7 +74,7 @@
 ;;    first only loads adoc mode when necessary, the 2nd always during startup
 ;;    of Emacs.
 ;; 
-;;    * `(autoload 'adoc-mode "adoc-mode")`
+;;    * `(autoload 'adoc-mode "adoc-mode" nil t)`
 ;; 
 ;;    * `(require 'adoc-mode)`
 ;; 
