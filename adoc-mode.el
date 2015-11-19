@@ -466,9 +466,6 @@ To become a customizable variable when regexps for list items become customizabl
     ("citetitle" . markup-secondary-text-face))
   "An alist, key=attribute id, value=face.")
 
-(defvar adoc-mode-hook nil
-  "Normal hook run when entering Adoc Text mode.")
-
 (defvar adoc-mode-abbrev-table nil
   "Abbrev table in use in adoc-mode buffers.")
 
@@ -2924,8 +2921,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
     (make-local-variable 'compilation-error-regexp-alist)
     (add-to-list 'compilation-error-regexp-alist 'asciidoc))
 
-  (easy-menu-add adoc-mode-menu)
-  (run-hooks 'adoc-mode-hook))
+  (easy-menu-add adoc-mode-menu))
 
 
 ;;;; non-definitions evaluated during load  
