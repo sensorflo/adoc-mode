@@ -2876,6 +2876,24 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   (modify-syntax-entry ?| ".")
   (modify-syntax-entry ?_ ".")
 
+  ;; imenu
+  (setq
+   imenu-create-index-function 'imenu-default-create-index-function
+   imenu-generic-expression
+   '(
+     ; Underline style headers don't enforce length requirements
+     (nil "^\\([^# \t\n=\\-].*\\)\r?\n===+" 1)
+     (nil "^\\([^# \t\n=\\-].*\\)\r?\n---+" 1)
+     (nil "^\\([^# \t\n=\\-].*\\)\r?\n~~~+" 1)
+     (nil "^\\([^# \t\n=\\-].*\\)\r?\n\\^\\^\\^+" 1)
+     (nil "^\\([^# \t\n=\\-].*\\)\r?\n\\+\\+\\++" 1)
+     (nil "^==[ \t]+\\([^# \t\n=\\-].*\\)" 1)
+     (nil "^===[ \t]+\\([^# \t\n=\\-].*\\)" 1)
+     (nil "^====[ \t]+\\([^# \t\n=\\-].*\\)" 1)
+     (nil "^=====[ \t]+\\([^# \t\n=\\-].*\\)" 1)
+     )
+  )
+
   ;; comments
   (set (make-local-variable 'comment-column) 0)
   (set (make-local-variable 'comment-start) "// ")
