@@ -610,12 +610,12 @@ removed before TRANSFORM is evaluated.
   (adoctest-trans "foo!\n+++!" "foo\n===" '(adoc-promote-title 1))
   (adoctest-trans "foo!\n---!" "foo\n^^^" '(adoc-promote-title 2)))
 
-;; since it's a whitebox test we know denote and promote only differ by inverse
-;; arg. So denote doesn't need to be throuhly tested again
-(ert-deftest adoctest-test-denote-title ()
-  (adoctest-trans "= foo" "===== foo" '(adoc-denote-title 1))
-  (adoctest-trans "= foo =" "===== foo =====" '(adoc-denote-title 1))
-  (adoctest-trans "foo!\n===!" "foo\n+++" '(adoc-denote-title 1)))
+;; since it's a whitebox test we know demote and promote only differ by inverse
+;; arg. So demote doesn't need to be throuhly tested again
+(ert-deftest adoctest-test-demote-title ()
+  (adoctest-trans "= foo" "===== foo" '(adoc-demote-title 1))
+  (adoctest-trans "= foo =" "===== foo =====" '(adoc-demote-title 1))
+  (adoctest-trans "foo!\n===!" "foo\n+++" '(adoc-demote-title 1)))
 
 ;; todo: test after transition point is still on title lines
 (ert-deftest adoctest-test-toggle-title-type ()

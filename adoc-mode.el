@@ -114,7 +114,7 @@
 ;; 
 ;; - sophisticated highlighting
 ;; 
-;; - promote / denote title
+;; - promote / demote title
 ;; 
 ;; - toggle title type between one line title and two line title
 ;; 
@@ -129,7 +129,7 @@
 ;; 
 ;; The next features I plan to implement
 ;; 
-;; - Denote / promote for list items
+;; - Demote / promote for list items
 ;; - Outline support also for two line titles
 ;; - Correctly highlighting backslash escapes
 ;; 
@@ -153,7 +153,7 @@
 ;;     line spawns should be covered - replace all .*? by .*?\\(?:\n.*?\\)??
 ;;   - backslash escapes are seldom highlighted correctly
 ;; - Other common Emacs functionality/features
-;;   - denote/promote/create/delete titles/list-items. Also put emphasis on a
+;;   - demote/promote/create/delete titles/list-items. Also put emphasis on a
 ;;     convenient simple user interface.
 ;;   - imenu / hideshow
 ;;   - outline mode shall support two line titles
@@ -478,7 +478,7 @@ To become a customizable variable when regexps for list items become customizabl
 
 (defvar adoc-mode-map
   (let ((map (make-sparse-keymap)))
-    (define-key map "\C-c\C-d" 'adoc-denote)
+    (define-key map "\C-c\C-d" 'adoc-demote)
     (define-key map "\C-c\C-p" 'adoc-promote)
     (define-key map "\C-c\C-t" 'adoc-toggle-title-type)
     (define-key map "\C-c\C-g" 'adoc-goto-ref-label)
@@ -2145,7 +2145,7 @@ considered to be meta characters."
   "Promotes the structure at point ARG levels.
 
 When ARG is nil (i.e. when no prefix arg is given), it defaults
-to 1. When ARG is negative, level is denoted that many levels.
+to 1. When ARG is negative, level is demoted that many levels.
 
 The intention is that the structure can be a title or a list
 element or anything else which has a 'level'. However currently
@@ -2153,23 +2153,23 @@ it works only for titles."
   (interactive "p")
   (adoc-promote-title arg))
 
-(defun adoc-denote (&optional arg)
-  "Denotes the structure at point ARG levels.
+(defun adoc-demote (&optional arg)
+  "Demotes the structure at point ARG levels.
 
 Analogous to `adoc-promote', see there."
   (interactive "p")
-  (adoc-denote-title arg))
+  (adoc-demote-title arg))
 
 (defun adoc-promote-title (&optional arg)
   "Promotes the title at point ARG levels.
 
 When ARG is nil (i.e. when no prefix arg is given), it defaults
-to 1. When ARG is negative, level is denoted that many levels. If
+to 1. When ARG is negative, level is demoted that many levels. If
 ARG is 0, see `adoc-adjust-title-del'."
   (interactive "p")
   (adoc-modify-title arg))
 
-(defun adoc-denote-title (&optional arg)
+(defun adoc-demote-title (&optional arg)
   "Completely analgous to `adoc-promote-title'."
   (interactive "p")
   (adoc-promote-title (- arg)))
@@ -2222,7 +2222,7 @@ new customization demands."
     adoc-mode-menu adoc-mode-map "Menu for adoc mode"
     `("AsciiDoc"
       ["Promote" adoc-promote]
-      ["Denote" adoc-denote]
+      ["Demote" adoc-demote]
       ["Toggle title type" adoc-toggle-title-type]
       ["Adjust title underline" adoc-adjust-title-del]
       ["Goto anchor" adoc-goto-ref-label]
@@ -2713,7 +2713,7 @@ NEW-LEVEL-REL and NEW-LEVEL-ABS are non-nil, NEW-LEVEL-REL takes
 precedence. When both are nil, level is not affected.
 
 When ARG is nil, it defaults to 1. When ARG is negative, level is
-denoted that many levels. If ARG is 0, see `adoc-adjust-title-del'.
+demoted that many levels. If ARG is 0, see `adoc-adjust-title-del'.
 
 When NEW-TYPE is nil, the title type is unaffected. If NEW-TYPE
 is t, the type is toggled. If it's 1 or 2, the new type is one
