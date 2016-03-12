@@ -2011,13 +2011,6 @@ considered to be meta characters."
      '("alt"))
    (adoc-kw-inline-macro "xref" nil '(markup-reference-face markup-internal-reference-face) t
      '(("caption") (("caption" . markup-reference-face))))
-   
-   ;; Macros using default syntax and having default highlighting in adoc-mod
-   (adoc-kw-inline-macro)  
-   
-   ;; URLs & Email addresses
-   (adoc-kw-standalone-urls)
-
    (list "\\(\\bfootnote:\\)\\(\\[\\)\\(.*?\\(?:\n.*?\\)?\\)\\(\\]\\)"
          '(1 adoc-delimiter)            ; name
          '(2 adoc-hide-delimiter)       ; [
@@ -2036,7 +2029,10 @@ considered to be meta characters."
          '(3 adoc-reference)            ; reference-id to footnote
          ;; '(3 (adoc-facespec-superscript)) bug: does also fontify the version having anchor-id
          '(4 adoc-hide-delimiter))      ; ]
+   (adoc-kw-standalone-urls)
 
+   ;; Macros using default syntax and having default highlighting in adoc-mod
+   (adoc-kw-inline-macro)
 
    ;; bibliographic anchor ala [[[id]]]
    ;; actually in AsciiDoc the part between the innermost brackets is an
