@@ -1169,13 +1169,15 @@ subgroups:
 ;; asciidoc.conf itself says: Default (catchall) inline macro is not
 ;; implemented. It _would_ be
 ;; (?su)[\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]=
-(defun adoc-re-inline-macro (&optional cmd-name target only-empty-attriblist)
+(defun adoc-re-inline-macro (&optional cmd-name target unconstrained only-empty-attriblist)
   "Returns regex matching an inline macro.
 
 Id CMD-NAME is nil, any command is matched. It maybe a regexp
 itself in order to match multiple commands. If TARGET is nil, any
-target is matched. When ONLY-EMPTY-ATTRIBLIST is non-nil, only an
-empty attribut list is matched.
+target is matched. When UNCONSTRAINED is nil, the returned regexp
+begins with '\<', i.e. it will _not_ match when CMD-NAME is part
+of a previous word. When ONLY-EMPTY-ATTRIBLIST is non-nil, only
+an empty attribut list is matched.
 
 Subgroups of returned regexp:
 1 cmd name
@@ -1186,7 +1188,8 @@ Subgroups of returned regexp:
 6 ]"
   ;; !!! \< is not exactly what AsciiDoc does, see regex above
   (concat
-   "\\(\\<" (if cmd-name (concat "\\(?:" cmd-name "\\)") "\\w+") "\\)"
+   (unless unconstrained "\\<")
+   "\\(" (if cmd-name (concat "\\(?:" cmd-name "\\)") "\\w+") "\\)"
    "\\(:\\)"
    "\\(" (if target (regexp-quote target) "[^ \t\n]*?") "\\)"
    "\\(\\[\\)\\(" (unless only-empty-attriblist ".*?\\(?:\n.*?\\)??") "\\)\\(\\]\\)" ))
@@ -1534,7 +1537,7 @@ considered to be meta characters."
 (defun adoc-kw-inline-macro-urls-no-attribute-list ()
   (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link"))))
     (list
-     `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil t) '(0) '(0)))
+     `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil nil t) '(0) '(0)))
      '(1 '(face markup-reference-face adoc-reserved t) append) ; cmd-name
      '(2 '(face markup-reference-face adoc-reserved t) append)		     ; :
      '(3 '(face markup-reference-face adoc-reserved t) append)		     ; target
