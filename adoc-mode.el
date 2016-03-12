@@ -1170,22 +1170,25 @@ subgroups:
 ;; asciidoc.conf itself says: Default (catchall) inline macro is not
 ;; implemented. It _would_ be
 ;; (?su)[\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]=
-(defun adoc-re-inline-macro (&optional cmd-name target unconstrained only-empty-attriblist)
+(defun adoc-re-inline-macro (&optional cmd-name target unconstrained attribute-list-constraints)
   "Returns regex matching an inline macro.
 
 Id CMD-NAME is nil, any command is matched. It maybe a regexp
 itself in order to match multiple commands. If TARGET is nil, any
 target is matched. When UNCONSTRAINED is nil, the returned regexp
 begins with '\<', i.e. it will _not_ match when CMD-NAME is part
-of a previous word. When ONLY-EMPTY-ATTRIBLIST is non-nil, only
-an empty attribut list is matched.
+of a previous word. When ATTRIBUTE-LIST-CONSTRAINTS is 'empty,
+only an empty attribut list is matched, if it's
+'single-attribute, only an attribute list with exactly one
+attribute is matched.
 
 Subgroups of returned regexp:
 1 cmd name
 2 :
 3 target
 4 [
-5 attribute list, exclusive brackets [], also when only-empty-attriblist is non-nil
+5 attribute list, exclusive brackets [], also when
+  attribute-list-constraints is non-nil
 6 ]"
   ;; !!! \< is not exactly what AsciiDoc does, see regex above
   (concat
@@ -1193,7 +1196,12 @@ Subgroups of returned regexp:
    "\\(" (if cmd-name (concat "\\(?:" cmd-name "\\)") "\\w+") "\\)"
    "\\(:\\)"
    "\\(" (if target (regexp-quote target) "[^ \t\n]*?") "\\)"
-   "\\(\\[\\)\\(" (unless only-empty-attriblist ".*?\\(?:\n.*?\\)??") "\\)\\(\\]\\)" ))
+   "\\(\\[\\)\\("
+   (cond
+    ((eq attribute-list-constraints 'empty) "")
+    ((eq attribute-list-constraints 'single-attribute) "[^\n,]*?\\(?:\n[^\n,]*?\\)??")
+    (t ".*?\\(?:\n.*?\\)??"))
+   "\\)\\(\\]\\)" ))
 
 ;; todo: use same regexps as for font lock
 (defun adoc-re-paragraph-separate ()
@@ -1504,7 +1512,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
       '(3 nil)) ; grumbl, I dont know how to get rid of it
    `(4 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t))); close del
 
-(defun adoc-kw-inline-macro (&optional cmd-name unconstrained cmd-face target-faces target-meta-p attribute-list)
+(defun adoc-kw-inline-macro (&optional cmd-name unconstrained attribute-list-constraints cmd-face target-faces target-meta-p attribute-list)
   "Returns a kewyword which highlights an inline macro.
 
 For CMD-NAME and UNCONSTRAINED see
@@ -1516,7 +1524,7 @@ empty string, the second is used if its not the empty string. If
 TARGET-META-P is non-nil, the target text is considered to be
 meta characters."
   (list
-   `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil unconstrained) '(1 2 4 5) '(0)))
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil unconstrained attribute-list-constraints) '(1 2 4 5) '(0)))
    `(1 '(face ,(or cmd-face markup-command-face) adoc-reserved t) t) ; cmd-name
    '(2 '(face markup-meta-face adoc-reserved t) t)		     ; :
    `(3 ,(cond ((not target-faces) markup-meta-face)		     ; target
@@ -1547,7 +1555,7 @@ meta characters."
 (defun adoc-kw-inline-macro-urls-no-attribute-list ()
   (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link"))))
     (list
-     `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil nil t) '(0) '(0)))
+     `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil nil 'empty) '(0) '(0)))
      '(1 '(face markup-reference-face adoc-reserved t) append) ; cmd-name
      '(2 '(face markup-reference-face adoc-reserved t) append)		     ; :
      '(3 '(face markup-reference-face adoc-reserved t) append)		     ; target
@@ -2019,13 +2027,15 @@ meta characters."
    ;; Macros using default syntax, but having special highlighting in adoc-mode
    (adoc-kw-inline-macro-urls-no-attribute-list)
    (adoc-kw-inline-macro-urls-attribute-list)
-   (adoc-kw-inline-macro "anchor" nil nil markup-anchor-face t '("xreflabel"))
-   (adoc-kw-inline-macro "image" nil markup-complex-replacement-face markup-internal-reference-face t
+   (adoc-kw-inline-macro "anchor" nil nil nil markup-anchor-face t '("xreflabel"))
+   (adoc-kw-inline-macro "image" nil nil markup-complex-replacement-face markup-internal-reference-face t
      '("alt"))
-   (adoc-kw-inline-macro "xref" nil nil '(markup-reference-face markup-internal-reference-face) t
+   (adoc-kw-inline-macro "xref" nil nil nil '(markup-reference-face markup-internal-reference-face) t
      '(("caption") (("caption" . markup-reference-face))))
-   (adoc-kw-inline-macro "footnote" t nil nil nil 'entire-attribute-list)
-   (adoc-kw-inline-macro "footnoteref" t nil nil nil '("id" "text"))
+   (adoc-kw-inline-macro "footnote" t nil nil nil nil 'entire-attribute-list)
+   (adoc-kw-inline-macro "footnoteref" t 'single-attribute nil nil nil
+    '(("id") (("id" . markup-internal-reference-face))))
+   (adoc-kw-inline-macro "footnoteref" t nil nil nil nil '("id" "text"))
    (adoc-kw-standalone-urls)
 
    ;; Macros using default syntax and having default highlighting in adoc-mod

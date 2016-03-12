@@ -314,7 +314,7 @@ removed before TRANSFORM is evaluated.
      ;; simple example
      "footnoteref" markup-command-face ":" markup-meta-face
      "[" markup-meta-face
-     "myid" markup-anchor-face
+     "myid" markup-internal-reference-face
      "]" markup-meta-face "\n" nil
 
      "footnoteref" markup-command-face ":" markup-meta-face
@@ -328,7 +328,7 @@ removed before TRANSFORM is evaluated.
      "lorem" 'no-face
      "footnoteref" markup-command-face ":" markup-meta-face
      "[" markup-meta-face
-     "myid" markup-anchor-face
+     "myid" markup-internal-reference-face
      "]" markup-meta-face "\n" nil
 
      "lorem" 'no-face
