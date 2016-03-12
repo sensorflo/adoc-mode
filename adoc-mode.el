@@ -1163,13 +1163,12 @@ subgroups:
    (t
     (error "Invalid type"))))
 
-;; asciidoc.conf:
-;; # Macros using default syntax.
+;; Macros using default syntax. From asciidoc.conf:
 ;; (?<!\w)[\\]?(?P<name>http|https|ftp|file|irc|mailto|callto|image|link|anchor|xref|indexterm):(?P<target>\S*?)\[(?P<attrlist>.*?)\]
-;; # Default (catchall) inline macro is not implemented
-;; # [\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]
-;; Asciidocbug: At least with http, an attriblist only with whites lets AsciiDoc
-;; crash
+;;
+;; asciidoc.conf itself says: Default (catchall) inline macro is not
+;; implemented. It _would_ be
+;; (?su)[\\]?(?P<name>\w(\w|-)*?):(?P<target>\S*?)\[(?P<passtext>.*?)(?<!\\)\]=
 (defun adoc-re-inline-macro (&optional cmd-name target only-empty-attriblist)
   "Returns regex matching an inline macro.
 
@@ -1296,7 +1295,7 @@ text having adoc-reserved set to 'block-del."
 	(goto-char (1+ saved-point))))
     (and found (not prevented))))
 
-(defun adoc-kwf-attriblist (end)
+(defun adoc-kwf-attribute-list (end)
   ;; for each attribute list before END
   (while (< (point) end)
     (goto-char (or (text-property-not-all (point) end 'adoc-attribute-list nil)
@@ -1305,17 +1304,32 @@ text having adoc-reserved set to 'block-del."
       (let ((attribute-list-end
              (or (text-property-any (point) end 'adoc-attribute-list nil)
                  end))
-            (pos-or-id 0))
+            ;; position (number) or name (string) of current
+            ;; attribute. Attribute list start with positional attributes, as
+            ;; opposed to named attributes, thus init with 0.
+            (pos-or-name-of-attribute 0))
 
         ;; for each attribute in current attribute list
         (while (re-search-forward (adoc-re-attribute-list-elt) attribute-list-end t)
-          (when (match-beginning 1)
-            (setq pos-or-id (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
-            (put-text-property (match-beginning 1) (match-end 1) 'face markup-attribute-face))
-          (let ((group (if (match-beginning 2) 2 3))
-                (face (adoc-attribute-elt-face pos-or-id (get-text-property (match-beginning 0) 'adoc-attribute-list))))
-            (put-text-property (match-beginning group) (match-end group) 'face face))
-          (when (numberp pos-or-id) (setq pos-or-id (1+ pos-or-id))))
+          (when (match-beginning 1); i.e. when it'a named attribute
+            ;; get attribute's name
+            (setq pos-or-name-of-attribute
+                  (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+            ;; fontify the attribute's name with markup-attribute-face
+            (put-text-property
+             (match-beginning 1) (match-end 1) 'face markup-attribute-face))
+
+          ;; fontify the attribute's value
+          (let ((match-group-of-attribute-value (if (match-beginning 2) 2 3))
+                (attribute-value-face
+                 (adoc-face-for-attribute pos-or-name-of-attribute (get-text-property (match-beginning 0) 'adoc-attribute-list))))
+            (put-text-property
+             (match-beginning match-group-of-attribute-value)
+             (match-end match-group-of-attribute-value)
+             'face attribute-value-face))
+
+          (when (numberp pos-or-name-of-attribute)
+            (setq pos-or-name-of-attribute (1+ pos-or-name-of-attribute))))
 
         (goto-char attribute-list-end))))
   nil)
@@ -1503,7 +1517,7 @@ considered to be meta characters."
 ;; largely copied from adoc-kw-inline-macro
 ;; todo: output text should be affected by quotes & co, e.g. bold, emph, ...
 ;; todo: for simplicity maybe split up in one for url[] and url[caption]
-(defun adoc-kw-inline-macro-urls-attriblist ()
+(defun adoc-kw-inline-macro-urls-attribute-list ()
   (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link")))
 	(attribute-list '(("caption") (("caption" . markup-reference-face)))))
     (list
@@ -1515,7 +1529,7 @@ considered to be meta characters."
      `(5 '(face markup-reference-face adoc-attribute-list ,attribute-list) append)
      '(6 '(face markup-meta-face adoc-reserved t) t))))            ; ]
 
-(defun adoc-kw-inline-macro-urls-no-attriblist ()
+(defun adoc-kw-inline-macro-urls-no-attribute-list ()
   (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link"))))
     (list
      `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil t) '(0) '(0)))
@@ -1747,7 +1761,8 @@ considered to be meta characters."
    ;; I don't know what the [\\]? should mean
    (list "^\\(//\\(?:[^/].*\\|\\)\\(?:\n\\|\\'\\)\\)"
          '(1 '(face markup-comment-face adoc-reserved block-del)))    
-   ;; image
+   ;; image. The first positional attribute is per definition 'alt', see
+   ;; asciidoc manual, sub chapter 'Image macro attributes'.
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro "image") '(0)))
          '(0 '(face markup-meta-face adoc-reserved block-del) t) ; whole match
          '(1 markup-complex-replacement-face t)	; 'image'  
@@ -1985,12 +2000,10 @@ considered to be meta characters."
    ;; - currently escpapes are not looked at
    ;; - adapt to the adoc-reserved scheme
    ;; - same order as in asciidoc.conf (is that in 'reverse'? cause 'default syntax' comes first)
-   ;; 
-   ;; 
 
    ;; Macros using default syntax, but having special highlighting in adoc-mode
-   (adoc-kw-inline-macro-urls-no-attriblist)
-   (adoc-kw-inline-macro-urls-attriblist)
+   (adoc-kw-inline-macro-urls-no-attribute-list)
+   (adoc-kw-inline-macro-urls-attribute-list)
    (adoc-kw-inline-macro "anchor" nil markup-anchor-face t '("xreflabel"))
    (adoc-kw-inline-macro "image" markup-complex-replacement-face markup-internal-reference-face t
      '("alt"))
@@ -2108,7 +2121,7 @@ considered to be meta characters."
    (list "^\\(\\+[ \t]*\\)\n\\([ \t]+\\)[^ \t\n]" '(1 adoc-warning t) '(2 adoc-warning t)) 
 
    ;; content of attribute lists
-   (list 'adoc-kwf-attriblist)
+   (list 'adoc-kwf-attribute-list)
 
    ;; cleanup
    (list 'adoc-flf-meta-face-cleanup)
@@ -2836,18 +2849,42 @@ knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
                    (match-string 1 entity)))))
       (when (characterp ch) (make-string 1 ch)))))
 
-(defun adoc-attribute-elt-face (pos-or-id &optional attribute-list-prop-val)
-  "Returns the face to be used for the given id or position"
-  (let* ((has-pos-to-id (listp attribute-list-prop-val))
-	 (has-local-alist (and has-pos-to-id (listp (car-safe attribute-list-prop-val))))
-	 (pos-to-id (cond ((not has-pos-to-id) nil)
+(defun adoc-face-for-attribute (pos-or-name &optional attribute-list-prop-val)
+  "Returns the face to be used for the given attribute.
+
+The face to be used is looked up in `adoc-attribute-face-alist',
+unless that alist is overwritten by the content of
+ATTRIBUTE-LIST-PROP-VAL.
+
+POS-OR-NAME identifies the attribute for which the face is
+returned. When POS-OR-NAME satifies numberp, it is the number of
+the positional attribute, where as the first positinal attribute
+has position 0. Otherwise POS-OR-NAME is the name of the named
+attribute.
+
+The value of ATTRIBUTE-LIST-PROP-VAL is one of the following:
+- nil
+- POS-TO-NAME
+- (POS-TO-NAME LOCAL-ATTRIBUTE-FACE-ALIST)
+
+POS-TO-NAME is a list of strings mapping positions to attribute
+names. E.g. (\"foo\" \"bar\") means that the first positional
+attribute corresponds to the named attribute foo, and the 2nd
+positional attribute corresponds to the named attribute bar.
+
+An attribute name is first looked up in
+LOCAL-ATTRIBUTE-FACE-ALIST before it is looked up in
+`adoc-attribute-face-alist'."
+  (let* ((has-pos-to-name (listp attribute-list-prop-val))
+	 (has-local-alist (and has-pos-to-name (listp (car-safe attribute-list-prop-val))))
+	 (pos-to-name (cond ((not has-pos-to-name) nil)
 			  (has-local-alist (car attribute-list-prop-val))
 			  (t attribute-list-prop-val)))
 	 (local-attribute-face-alist (when has-local-alist (cadr attribute-list-prop-val)))
-	 (id (cond ((stringp pos-or-id) pos-or-id)
-		   ((numberp pos-or-id) (nth pos-or-id pos-to-id)))))
-    (or (when id (or (cdr (assoc id local-attribute-face-alist))
-		     (cdr (assoc id adoc-attribute-face-alist))))
+	 (name (cond ((stringp pos-or-name) pos-or-name)
+		   ((numberp pos-or-name) (nth pos-or-name pos-to-name)))))
+    (or (when name (or (cdr (assoc name local-attribute-face-alist))
+		     (cdr (assoc name adoc-attribute-face-alist))))
 	markup-value-face)))
 
 
