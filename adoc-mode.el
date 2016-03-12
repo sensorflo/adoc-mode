@@ -1301,13 +1301,15 @@ text having adoc-reserved set to 'block-del."
     (goto-char (or (text-property-not-all (point) end 'adoc-attribute-list nil)
                    end))
     (when (< (point) end)
-      (let ((attribute-list-end
-             (or (text-property-any (point) end 'adoc-attribute-list nil)
-                 end))
-            ;; position (number) or name (string) of current
-            ;; attribute. Attribute list start with positional attributes, as
-            ;; opposed to named attributes, thus init with 0.
-            (pos-or-name-of-attribute 0))
+      (let* ((attribute-list-end
+              (or (text-property-any (point) end 'adoc-attribute-list nil)
+                  end))
+             (prop-of-attribute-list
+              (get-text-property (point) 'adoc-attribute-list))
+             ;; position (number) or name (string) of current
+             ;; attribute. Attribute list start with positional attributes, as
+             ;; opposed to named attributes, thus init with 0.
+             (pos-or-name-of-attribute 0))
 
         ;; for each attribute in current attribute list
         (while (re-search-forward (adoc-re-attribute-list-elt) attribute-list-end t)
@@ -1322,7 +1324,7 @@ text having adoc-reserved set to 'block-del."
           ;; fontify the attribute's value
           (let ((match-group-of-attribute-value (if (match-beginning 2) 2 3))
                 (attribute-value-face
-                 (adoc-face-for-attribute pos-or-name-of-attribute (get-text-property (match-beginning 0) 'adoc-attribute-list))))
+                 (adoc-face-for-attribute pos-or-name-of-attribute prop-of-attribute-list)))
             (put-text-property
              (match-beginning match-group-of-attribute-value)
              (match-end match-group-of-attribute-value)
