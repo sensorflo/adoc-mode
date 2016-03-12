@@ -1314,27 +1314,34 @@ text having adoc-reserved set to 'block-del."
              ;; opposed to named attributes, thus init with 0.
              (pos-or-name-of-attribute 0))
 
-        ;; for each attribute in current attribute list
-        (while (re-search-forward (adoc-re-attribute-list-elt) attribute-list-end t)
-          (when (match-beginning 1); i.e. when it'a named attribute
-            ;; get attribute's name
-            (setq pos-or-name-of-attribute
-                  (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
-            ;; fontify the attribute's name with markup-attribute-face
+        (if (eq 'entire-attribute-list prop-of-attribute-list)
+            ;; The attribute list is not really an attribute list. As a whole
+            ;; it counts as text.
             (put-text-property
-             (match-beginning 1) (match-end 1) 'face markup-attribute-face))
+             (point) attribute-list-end
+             'face markup-secondary-text-face)
 
-          ;; fontify the attribute's value
-          (let ((match-group-of-attribute-value (if (match-beginning 2) 2 3))
-                (attribute-value-face
-                 (adoc-face-for-attribute pos-or-name-of-attribute prop-of-attribute-list)))
-            (put-text-property
-             (match-beginning match-group-of-attribute-value)
-             (match-end match-group-of-attribute-value)
-             'face attribute-value-face))
+          ;; for each attribute in current attribute list
+          (while (re-search-forward (adoc-re-attribute-list-elt) attribute-list-end t)
+            (when (match-beginning 1); i.e. when it'a named attribute
+              ;; get attribute's name
+              (setq pos-or-name-of-attribute
+                    (buffer-substring-no-properties (match-beginning 1) (match-end 1)))
+              ;; fontify the attribute's name with markup-attribute-face
+              (put-text-property
+               (match-beginning 1) (match-end 1) 'face markup-attribute-face))
 
-          (when (numberp pos-or-name-of-attribute)
-            (setq pos-or-name-of-attribute (1+ pos-or-name-of-attribute))))
+            ;; fontify the attribute's value
+            (let ((match-group-of-attribute-value (if (match-beginning 2) 2 3))
+                  (attribute-value-face
+                   (adoc-face-for-attribute pos-or-name-of-attribute prop-of-attribute-list)))
+              (put-text-property
+               (match-beginning match-group-of-attribute-value)
+               (match-end match-group-of-attribute-value)
+               'face attribute-value-face))
+
+            (when (numberp pos-or-name-of-attribute)
+              (setq pos-or-name-of-attribute (1+ pos-or-name-of-attribute)))))
 
         (goto-char attribute-list-end))))
   nil)
@@ -1496,17 +1503,19 @@ When LITERAL-P is non-nil, the contained text is literal text."
       '(3 nil)) ; grumbl, I dont know how to get rid of it
    `(4 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t))); close del
 
-(defun adoc-kw-inline-macro (&optional cmd-name cmd-face target-faces target-meta-p attribute-list)
+(defun adoc-kw-inline-macro (&optional cmd-name unconstrained cmd-face target-faces target-meta-p attribute-list)
   "Returns a kewyword which highlights an inline macro.
-For CMD-NAME see `adoc-re-inline-macro'. CMD-FACE determines face
-for the command text. If nil, `markup-command-face' is used.
-TARGET-FACES determines face for the target text. If nil
-`markup-meta-face' is used. If a list, the first is used if the
-attribute list is the empty string, the second is used if its not
-the empty string. If TARGET-META-P is non-nil, the target text is
-considered to be meta characters."
+
+For CMD-NAME and UNCONSTRAINED see
+`adoc-re-inline-macro'. CMD-FACE determines face for the command
+text. If nil, `markup-command-face' is used.  TARGET-FACES
+determines face for the target text. If nil `markup-meta-face' is
+used. If a list, the first is used if the attribute list is the
+empty string, the second is used if its not the empty string. If
+TARGET-META-P is non-nil, the target text is considered to be
+meta characters."
   (list
-   `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name) '(1 2 4 5) '(0)))
+   `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil unconstrained) '(1 2 4 5) '(0)))
    `(1 '(face ,(or cmd-face markup-command-face) adoc-reserved t) t) ; cmd-name
    '(2 '(face markup-meta-face adoc-reserved t) t)		     ; :
    `(3 ,(cond ((not target-faces) markup-meta-face)		     ; target
@@ -2009,16 +2018,12 @@ considered to be meta characters."
    ;; Macros using default syntax, but having special highlighting in adoc-mode
    (adoc-kw-inline-macro-urls-no-attribute-list)
    (adoc-kw-inline-macro-urls-attribute-list)
-   (adoc-kw-inline-macro "anchor" nil markup-anchor-face t '("xreflabel"))
-   (adoc-kw-inline-macro "image" markup-complex-replacement-face markup-internal-reference-face t
+   (adoc-kw-inline-macro "anchor" nil nil markup-anchor-face t '("xreflabel"))
+   (adoc-kw-inline-macro "image" nil markup-complex-replacement-face markup-internal-reference-face t
      '("alt"))
-   (adoc-kw-inline-macro "xref" nil '(markup-reference-face markup-internal-reference-face) t
+   (adoc-kw-inline-macro "xref" nil nil '(markup-reference-face markup-internal-reference-face) t
      '(("caption") (("caption" . markup-reference-face))))
-   (list "\\(\\bfootnote:\\)\\(\\[\\)\\(.*?\\(?:\n.*?\\)?\\)\\(\\]\\)"
-         '(1 adoc-delimiter)            ; name
-         '(2 adoc-hide-delimiter)       ; [
-         '(3 adoc-secondary-text)       ; footnote text
-         '(4 adoc-hide-delimiter))      ; ]
+   (adoc-kw-inline-macro "footnote" t nil nil nil 'entire-attribute-list)
    (list "\\(\\bfootnoteref:\\)\\(\\[\\)\\(.*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)?\\)\\(\\]\\)"
          '(1 adoc-delimiter)            ; name
          '(2 adoc-hide-delimiter)       ; [

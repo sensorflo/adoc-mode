@@ -289,6 +289,26 @@ removed before TRANSFORM is evaluated.
        "bla bli bla blu" markup-reference-face "]" markup-meta-face
        ))
 
+(ert-deftest adoctest-test-footnotes ()
+  (adoctest-faces "footnotes"
+     ;; simple example
+     "footnote" markup-command-face ":" markup-meta-face
+     "[" markup-meta-face "lorem ipsum" markup-secondary-text-face
+     "]" markup-meta-face "\n" nil
+
+     ;; footnote can be hard up against the preceding word
+     "lorem" 'no-face "footnote" markup-command-face ":" markup-meta-face
+     "[" markup-meta-face "ipsum" markup-secondary-text-face
+     "]" markup-meta-face "\n" nil
+
+     ;; attribute-list is not really an attribute list but normal text,
+     ;; i.e. comma, equal, double quotes are not fontified as meta characters
+     "footnote" markup-command-face ":" markup-meta-face
+     "[" markup-meta-face
+     "lorem, ipsum=dolor, sit=\"amen\"" markup-secondary-text-face
+     "]" markup-meta-face "\n" nil
+     ))
+
 (ert-deftest adoctest-test-images ()
   (adoctest-faces "images"
      ;; block macros
