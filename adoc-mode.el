@@ -990,8 +990,12 @@ Subgroups:
 1 cmd name
 2 target
 3 attribute list, exclusive brackets []"
-  (concat "^\\(" (or cmd-name "[a-zA-Z0-9_]+") "\\)::\\([^ \t\n]*?\\)\\[\\(.*?\\)\\][ \t]*$"))
-
+  (concat
+   "^\\(" (or cmd-name "[a-zA-Z0-9_]+") "\\)::"
+   "\\([^ \t\n]*?\\)"
+   "\\["
+   "\\(.*?\\)"
+   "\\][ \t]*$"))
 
 ;; ?P<id>[\w\-_]+
 (defun adoc-re-id ()
