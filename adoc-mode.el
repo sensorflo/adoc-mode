@@ -1574,7 +1574,6 @@ meta characters."
 
 ;; largely copied from adoc-kw-inline-macro
 ;; todo: output text should be affected by quotes & co, e.g. bold, emph, ...
-;; todo: for simplicity maybe split up in one for url[] and url[caption]
 (defun adoc-kw-inline-macro-urls-attribute-list ()
   (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link")))
 	(attribute-list '(("caption") (("caption" . markup-reference-face)))))
