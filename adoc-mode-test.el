@@ -309,6 +309,37 @@ removed before TRANSFORM is evaluated.
      "]" markup-meta-face "\n" nil
      ))
 
+(ert-deftest adoctest-test-footnoterefs ()
+  (adoctest-faces "footnoterefs"
+     ;; simple example
+     "footnoteref" markup-command-face ":" markup-meta-face
+     "[" markup-meta-face
+     "myid" markup-anchor-face
+     "]" markup-meta-face "\n" nil
+
+     "footnoteref" markup-command-face ":" markup-meta-face
+     "[" markup-meta-face
+     "myid" markup-anchor-face
+     "," markup-meta-face
+     "lorem ipsum" markup-secondary-text-face
+     "]" markup-meta-face "\n" nil
+
+     ;; footnoteref can be hard up against the preceding word
+     "lorem" 'no-face
+     "footnoteref" markup-command-face ":" markup-meta-face
+     "[" markup-meta-face
+     "myid" markup-anchor-face
+     "]" markup-meta-face "\n" nil
+
+     "lorem" 'no-face
+     "footnoteref" markup-command-face ":" markup-meta-face
+     "[" markup-meta-face
+     "myid" markup-anchor-face
+     "," markup-meta-face
+     "lorem ipsum" markup-secondary-text-face
+     "]" markup-meta-face "\n" nil
+     ))
+
 (ert-deftest adoctest-test-images ()
   (adoctest-faces "images"
      ;; block macros

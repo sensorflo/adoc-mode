@@ -463,7 +463,8 @@ To become a customizable variable when regexps for list items become customizabl
     ("alt" . markup-secondary-text-face)
     ("title" . markup-secondary-text-face)
     ("attribution" . markup-secondary-text-face)
-    ("citetitle" . markup-secondary-text-face))
+    ("citetitle" . markup-secondary-text-face)
+    ("text" . markup-secondary-text-face))
   "An alist, key=attribute id, value=face.")
 
 (defvar adoc-mode-abbrev-table nil
@@ -2024,19 +2025,7 @@ meta characters."
    (adoc-kw-inline-macro "xref" nil nil '(markup-reference-face markup-internal-reference-face) t
      '(("caption") (("caption" . markup-reference-face))))
    (adoc-kw-inline-macro "footnote" t nil nil nil 'entire-attribute-list)
-   (list "\\(\\bfootnoteref:\\)\\(\\[\\)\\(.*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)?\\)\\(\\]\\)"
-         '(1 adoc-delimiter)            ; name
-         '(2 adoc-hide-delimiter)       ; [
-         '(3 adoc-anchor)               ; anchor-id
-         '(4 adoc-hide-delimiter)       ; ,
-         '(5 adoc-secondary-text)       ; footnote text
-         '(6 adoc-hide-delimiter))      ; ]
-   (list "\\(\\bfootnoteref:\\)\\(\\[\\)\\([^,\n].*?\\(?:\n.*?\\)?\\)\\(\\]\\)"
-         '(1 adoc-delimiter)            ; name
-         '(2 adoc-hide-delimiter)       ; [
-         '(3 adoc-reference)            ; reference-id to footnote
-         ;; '(3 (adoc-facespec-superscript)) bug: does also fontify the version having anchor-id
-         '(4 adoc-hide-delimiter))      ; ]
+   (adoc-kw-inline-macro "footnoteref" t nil nil nil '("id" "text"))
    (adoc-kw-standalone-urls)
 
    ;; Macros using default syntax and having default highlighting in adoc-mod
