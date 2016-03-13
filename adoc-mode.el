@@ -677,14 +677,18 @@ To become a customizable variable when regexps for list items become customizabl
 
 ;;; Code:
 
+;;;; regexps
+;; from AsciiDoc manual: The attribute name/value syntax is a single line ...
 ;; from asciidoc.conf:
 ;; ^:(?P<attrname>\w[^.]*?)(\.(?P<attrname2>.*?))?:(\s+(?P<attrvalue>.*))?$
-;;;; regexps
+;; asciidoc src code: AttributeEntry.isnext shows that above regexp is matched
+;; against single line.
 (defun adoc-re-attribute-entry ()
   (concat "^\\(:[a-zA-Z0-9_][^.\n]*?\\(?:\\..*?\\)?:[ \t]*\\)\\(.*?\\)$"))
 
-;; from asciidoc.conf:
-;; ^= +(?P<title>[\S].*?)( +=)?$
+;; from asciidoc.conf: ^= +(?P<title>[\S].*?)( +=)?$
+;; asciidoc src code: Title.isnext reads two lines, which are then parsed by
+;; Title.parse. The second line is only for the underline of two line titles.
 (defun adoc-re-one-line-title (level)
   "Returns a regex matching a one line title of the given LEVEL.
 When LEVEL is nil, a one line title of any level is matched.
@@ -703,8 +707,8 @@ match-data has these sub groups:
                  (make-string (+ level 1) ?=)
                (concat "=\\{1," (+ adoc-title-max-level 1) "\\}"))))
     (concat
-     "^\\("  del "[ \t]+\\)"		      ; 1
-     "\\([^ \t\n].*?\\)"		      ; 2
+     "^\\(" del "[ \t]+\\)"		      ; 1
+     "\\([^ \t\n].*?\\)"                          ; 2
      ;; using \n instad $ is important so group 3 is guaranteed to be at least 1
      ;; char long (except when at the end of the buffer()). That is important to
      ;; to have a place to put the text property adoc-reserved on.
@@ -715,7 +719,8 @@ match-data has these sub groups:
   (let ((del (make-string (+ level 1) ?=)))
     (concat del " " text (when (eq sub-type 2) (concat " " del)))))   
 
-;; AsciiDoc handles that by source code, there is no regexp in AsciiDoc
+;; AsciiDoc handles that by source code, there is no regexp in AsciiDoc.  See
+;; also adoc-re-one-line-title.
 (defun adoc-re-two-line-title-undlerline (&optional del)
   "Returns a regexp matching the underline of a two line title.
 
@@ -738,8 +743,8 @@ a two line title underline, see also `adoc-re-two-line-title'."
    ;; also here use \n instead $
    "\\)[ \t]*\\(?:\n\\|\\'\\)"))
 
-;; asciidoc.conf regexps for _first_ line
-;; ^(?P<title>.*?)$   
+;; asciidoc.conf: regexp for _first_ line
+;; ^(?P<title>.*?)$  additionally, must contain (?u)\w, see Title.parse
 (defun adoc-re-two-line-title (del)
   "Returns a regexps that matches a two line title.
 
@@ -756,9 +761,9 @@ match-data has these sub groups:
   (when (not (eq (length del) 2))
     (error "two line title delimiters must be 2 chars long"))
   (concat
-   ;; 1st line: title text must contain at least one \w character. You don't see
-   ;; that in asciidoc.conf, only in asciidoc source code.
-   "\\(^.*?[a-zA-Z0-9_].*?\\)[ \t]*\n" 
+   ;; 1st line: title text must contain at least one \w character, see
+   ;; asciidoc src, Title.parse,
+   "\\(^.*?[a-zA-Z0-9_].*?\\)[ \t]*\n"
    ;; 2nd line: underline
    (adoc-re-two-line-title-undlerline del)))
 
@@ -956,7 +961,8 @@ Subgroups:
 
 ;; ^\.(?P<title>([^.\s].*)|(\.[^.\s].*))$
 ;; Isn't that asciidoc.conf regexp the same as: ^\.(?P<title>(.?[^.\s].*))$
-;; insertion: so that this whole regex doesn't mistake a line starting with a cell specifier like .2+| as a block title 
+;; insertion: so that this whole regex doesn't mistake a line starting with a
+;; cell specifier like .2+| as a block title
 (defun adoc-re-block-title ()
   "Returns a regexp matching an block title
 
@@ -974,7 +980,10 @@ Subgroups:
    "\\|[^. \t\n]\\).*\\)"
    "\\(\n\\|\\'\\)"))
 
-;; (?u)^(?P<name>image|unfloat)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
+;; (?u)^(?P<name>image|unfloat|toc)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
+;; note that altough it hasn't got the s Python regular expression flag, it
+;; still can spawn multiple lines. Probably asciidoc removes newlines before
+;; it applies the regexp above
 (defun adoc-re-block-macro (&optional cmd-name)
   "Returns a regexp matching an attribute list elment.
 Subgroups:
@@ -1165,7 +1174,7 @@ subgroups:
     (error "Invalid type"))))
 
 ;; Macros using default syntax. From asciidoc.conf:
-;; (?<!\w)[\\]?(?P<name>http|https|ftp|file|irc|mailto|callto|image|link|anchor|xref|indexterm):(?P<target>\S*?)\[(?P<attrlist>.*?)\]
+;; (?su)(?<!\w)[\\]?(?P<name>http|https|ftp|file|irc|mailto|callto|image|link|anchor|xref|indexterm):(?P<target>\S*?)\[(?P<attrlist>.*?)\]
 ;;
 ;; asciidoc.conf itself says: Default (catchall) inline macro is not
 ;; implemented. It _would_ be
