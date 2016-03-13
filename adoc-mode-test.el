@@ -286,7 +286,12 @@ removed before TRANSFORM is evaluated.
        "foo" markup-reference-face "[]" markup-meta-face "\n" nil
      "lorem " 'no-face "xref" markup-command-face ":" markup-meta-face
        "foo" markup-internal-reference-face "[" markup-meta-face
-       "bla bli bla blu" markup-reference-face "]" markup-meta-face
+       "bla bli bla blu" markup-reference-face "]" markup-meta-face "\n" nil
+
+     ;; caption spawns multiple lines
+     "xref" markup-command-face ":" markup-meta-face
+       "foo" markup-internal-reference-face "[" markup-meta-face
+       "bla\nbli\nbla\nblu" markup-reference-face "]" markup-meta-face "\n" nil
        ))
 
 (ert-deftest adoctest-test-footnotes ()
@@ -306,6 +311,12 @@ removed before TRANSFORM is evaluated.
      "footnote" markup-command-face ":" markup-meta-face
      "[" markup-meta-face
      "lorem, ipsum=dolor, sit=\"amen\"" markup-secondary-text-face
+     "]" markup-meta-face "\n" nil
+
+     ;; multiline attribute list
+     "footnote" markup-command-face ":" markup-meta-face
+     "[" markup-meta-face
+     "lorem\nipsum\ndolor\nsit\namen" markup-secondary-text-face
      "]" markup-meta-face "\n" nil
      ))
 
@@ -338,6 +349,15 @@ removed before TRANSFORM is evaluated.
      "," markup-meta-face
      "lorem ipsum" markup-secondary-text-face
      "]" markup-meta-face "\n" nil
+
+     ;; multiline text
+     "lorem" 'no-face
+     "footnoteref" markup-command-face ":" markup-meta-face
+     "[" markup-meta-face
+     "myid" markup-anchor-face
+     "," markup-meta-face
+     "lorem\nipsum\ndolor\nsit" markup-secondary-text-face
+     "]" markup-meta-face "\n" nil
      ))
 
 (ert-deftest adoctest-test-images ()
@@ -360,6 +380,13 @@ removed before TRANSFORM is evaluated.
        "./foo/bar.png" markup-internal-reference-face
        "[" markup-meta-face "alt" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "," markup-meta-face
        "title" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "\n" nil
+     ;; multiline alt and title
+     "image" markup-complex-replacement-face "::" markup-meta-face
+       "./foo/bar.png" markup-internal-reference-face
+       "[" markup-meta-face "alt" markup-attribute-face "=" markup-meta-face
+       "lorem\nipsum\nsit" markup-secondary-text-face "," markup-meta-face
+       "title" markup-attribute-face "=" markup-meta-face
+       "lorem\nipsum\nsit" markup-secondary-text-face "]" markup-meta-face "\n" nil
 
      ;; no everything again with inline macros
      "foo " 'no-face "image" markup-complex-replacement-face ":" markup-meta-face 
@@ -377,7 +404,14 @@ removed before TRANSFORM is evaluated.
      "foo " 'no-face "image" markup-complex-replacement-face ":" markup-meta-face 
        "./foo/bar.png" markup-internal-reference-face
        "[" markup-meta-face "alt" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "," markup-meta-face
-       "title" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "bar" 'no-face))
+       "title" markup-attribute-face "=" markup-meta-face "lorem ipsum" markup-secondary-text-face "]" markup-meta-face "bar" 'no-face "\n" nil
+
+     "image" markup-complex-replacement-face ":" markup-meta-face
+       "./foo/bar.png" markup-internal-reference-face
+       "[" markup-meta-face "alt" markup-attribute-face "=" markup-meta-face
+       "lorem\nipsum\nsit" markup-secondary-text-face "," markup-meta-face
+       "title" markup-attribute-face "=" markup-meta-face
+       "lorem\nipsum\nsit" markup-secondary-text-face "]" markup-meta-face "\n" nil))
 
 (ert-deftest adoctest-test-attribute-list ()
   (adoctest-faces "attribute-list"

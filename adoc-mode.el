@@ -994,7 +994,7 @@ Subgroups:
    "^\\(" (or cmd-name "[a-zA-Z0-9_]+") "\\)::"
    "\\([^ \t\n]*?\\)"
    "\\["
-   "\\(.*?\\)"
+   "\\(" (adoc-re-content) "\\)"
    "\\][ \t]*$"))
 
 ;; ?P<id>[\w\-_]+
@@ -1213,7 +1213,7 @@ Subgroups of returned regexp:
    (cond
     ((eq attribute-list-constraints 'empty) "")
     ((eq attribute-list-constraints 'single-attribute) "[^\n,]*?\\(?:\n[^\n,]*?\\)??")
-    (t ".*?\\(?:\n.*?\\)??"))
+    (t (adoc-re-content)))
    "\\)\\(\\]\\)" ))
 
 ;; todo: use same regexps as for font lock
