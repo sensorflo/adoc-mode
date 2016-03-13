@@ -1122,7 +1122,7 @@ NOT-ALLOWED-CHARS are chars not allowed before the quote."
      (adoc-re-quote-precondition "")
      "\\(\\[[^][]+?\\]\\)?"
      "\\(" qldel "\\)"
-     "\\(.+?\\(?:\n.*?\\)\\{,1\\}?\\)"
+     "\\(" (adoc-re-content "+") "\\)"
      "\\(" qrdel "\\)")))
 
 ;; AsciiDoc src for constrained quotes
@@ -1149,7 +1149,7 @@ subgroups:
      (adoc-re-quote-precondition "A-Za-z0-9;:}&<>")  
      "\\(\\[[^][]+?\\]\\)?"
      "\\(" qldel "\\)"
-     "\\([^ \t\n]\\|[^ \t\n].*?\\(?:\n.*?\\)\\{,1\\}?[^ \t\n]\\)"
+     "\\([^ \t\n]\\|[^ \t\n]" (adoc-re-content) "[^ \t\n]\\)"
      "\\(" qrdel "\\)"
      ;; BUG: now that Emacs doesn't has look-ahead, the match is too long, and
      ;; adjancted quotes of the same type wouldn't be recognized.
@@ -1272,6 +1272,28 @@ Subgroups of returned regexp:
          (align (adoc-re-ror "[<^>]" "\\.[<^>]"))
          (style "[demshalv]"))
     (concat "\\(?:" fullspan "\\)?\\(?:" align "\\)?\\(?:" style "\\)?")))
+
+;; bug: if qualifier is "+", and the thing to match starts at the end of a
+;;      line (i.e. the first char is newline), then wrongly this regexp does
+;;      never match.
+;; Note: asciidoc uses Python's \s to determine blank lines, while _not_
+;;       setting either the LOCALE or UNICODE flag, see
+;;       Reader.skip_blank_lines. Python uses [ \t\n\r\f\v] for it's \s . So
+;;       the horizontal spaces are [ \t].
+(defun adoc-re-content (&optional qualifier) 
+  "Matches content, possibly spawning multiple non-blank lines"
+  (concat
+   "\\(?:"
+   ;; content on initial line
+   "." (or qualifier "*") "?" 
+   ;; if content spawns multiple lines
+   "\\(?:\n"
+     ;; complete non blank lines
+     "\\(?:[ \t]*\\S-.*\n\\)*?"
+     ;; leading content on last line
+     ".*?"
+   "\\)??"
+   "\\)"))
 
 
 ;;;; font lock keywords 

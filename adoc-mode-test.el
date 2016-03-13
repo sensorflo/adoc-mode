@@ -449,11 +449,17 @@ removed before TRANSFORM is evaluated.
 (ert-deftest adoctest-test-quotes-medium ()
   (adoctest-faces "test-quotes-medium"
    ;; test wheter constrained/unconstrained quotes can spawn multiple lines
-   "Lorem " 'no-face "*" markup-meta-hide-face "ipsum" markup-strong-face "\n" nil
-   "dolor" markup-strong-face "*" markup-meta-hide-face " sit" 'no-face "\n" nil
-   "Lorem " 'no-face "__" markup-meta-hide-face "ipsum" markup-emphasis-face "\n" nil
-   "dolor" markup-emphasis-face "__" markup-meta-hide-face " sit" 'no-face "\n" nil
-   "\n" nil
+   "Lorem " 'no-face "*" markup-meta-hide-face "ipsum" markup-strong-face
+   "\n" nil "dolor" markup-strong-face "\n" nil "dolor" markup-strong-face
+   "\n" nil "dolor" markup-strong-face "\n" nil "dolor" markup-strong-face
+   "*" markup-meta-hide-face
+   " sit" 'no-face "\n" nil
+
+   "Lorem " 'no-face "__" markup-meta-hide-face "ipsum" markup-emphasis-face
+   "\n" nil "dolor" markup-emphasis-face "\n" nil "dolor" markup-emphasis-face
+   "\n" nil "dolor" markup-emphasis-face "\n" nil "dolor" markup-emphasis-face
+   "__" markup-meta-hide-face
+   " sit" 'no-face "\n" nil
 
    ;; tests border case that delimiter is at the beginnin/end of an paragraph/line
    ;; constrained at beginning
