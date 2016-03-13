@@ -1358,12 +1358,12 @@ text having adoc-reserved set to 'block-del."
              ;; opposed to named attributes, thus init with 0.
              (pos-or-name-of-attribute 0))
 
-        (if (eq 'entire-attribute-list prop-of-attribute-list)
+        (if (facep prop-of-attribute-list)
             ;; The attribute list is not really an attribute list. As a whole
             ;; it counts as text.
             (put-text-property
              (point) attribute-list-end
-             'face markup-secondary-text-face)
+             'face prop-of-attribute-list)
 
           ;; for each attribute in current attribute list
           (while (re-search-forward (adoc-re-attribute-list-elt) attribute-list-end t)
@@ -2066,7 +2066,7 @@ meta characters."
      '("alt"))
    (adoc-kw-inline-macro "xref" nil nil nil '(markup-reference-face markup-internal-reference-face) t
      '(("caption") (("caption" . markup-reference-face))))
-   (adoc-kw-inline-macro "footnote" t nil nil nil nil 'entire-attribute-list)
+   (adoc-kw-inline-macro "footnote" t nil nil nil nil markup-secondary-text-face)
    (adoc-kw-inline-macro "footnoteref" t 'single-attribute nil nil nil
     '(("id") (("id" . markup-internal-reference-face))))
    (adoc-kw-inline-macro "footnoteref" t nil nil nil nil '("id" "text"))
@@ -2903,6 +2903,7 @@ attribute.
 
 The value of ATTRIBUTE-LIST-PROP-VAL is one of the following:
 - nil
+- FACE
 - POS-TO-NAME
 - (POS-TO-NAME LOCAL-ATTRIBUTE-FACE-ALIST)
 
@@ -2910,6 +2911,10 @@ POS-TO-NAME is a list of strings mapping positions to attribute
 names. E.g. (\"foo\" \"bar\") means that the first positional
 attribute corresponds to the named attribute foo, and the 2nd
 positional attribute corresponds to the named attribute bar.
+
+FACE is something that satisfies facep; in that case the whole
+attribute list is fontified with that face. However that case is
+handled outside this function.
 
 An attribute name is first looked up in
 LOCAL-ATTRIBUTE-FACE-ALIST before it is looked up in
