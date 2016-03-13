@@ -616,6 +616,12 @@ removed before TRANSFORM is evaluated.
     "http://www.lorem.com/ipsum.html" markup-internal-reference-face
     "[" markup-meta-face "sit amet" markup-reference-face "]" markup-meta-face
     " bar \n" nil
+    ;; link text contains newlines and commas
+    "http://www.lorem.com/ipsum.html" markup-internal-reference-face
+    "[" markup-meta-face
+    "sit,\namet,\nconsectetur" markup-reference-face
+    "]" markup-meta-face
+    " bar \n" nil
     ;; url inline macro withOUT attriblist 
     "http://www.lorem.com/ipsum.html" markup-reference-face
     "[]" markup-meta-face

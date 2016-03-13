@@ -1575,15 +1575,14 @@ meta characters."
 ;; largely copied from adoc-kw-inline-macro
 ;; todo: output text should be affected by quotes & co, e.g. bold, emph, ...
 (defun adoc-kw-inline-macro-urls-attribute-list ()
-  (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link")))
-	(attribute-list '(("caption") (("caption" . markup-reference-face)))))
+  (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link"))))
     (list
      `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name) '(0) '(0)))
      `(1 '(face markup-internal-reference-face adoc-reserved t) t) ; cmd-name
      `(2 '(face markup-internal-reference-face adoc-reserved t) t) ; :
      `(3 '(face markup-internal-reference-face adoc-reserved t) t) ; target
      '(4 '(face markup-meta-face adoc-reserved t) t)		   ; [
-     `(5 '(face markup-reference-face adoc-attribute-list ,attribute-list) append)
+     `(5 '(face markup-reference-face adoc-attribute-list markup-reference-face) append)
      '(6 '(face markup-meta-face adoc-reserved t) t))))            ; ]
 
 (defun adoc-kw-inline-macro-urls-no-attribute-list ()
