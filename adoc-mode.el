@@ -755,15 +755,18 @@ has the correct length.
 DEL is described in `adoc-re-two-line-title-undlerline'.
 
 match-data has these sub groups:
-1 title's text
-2 delimiter
+
+1 dummy, so that group 2 is the title's text as in
+  adoc-re-one-line-title
+2 title's text
+3 delimiter
 0 only chars that belong to the title block element"
   (when (not (eq (length del) 2))
     (error "two line title delimiters must be 2 chars long"))
   (concat
    ;; 1st line: title text must contain at least one \w character, see
    ;; asciidoc src, Title.parse,
-   "\\(^.*?[a-zA-Z0-9_].*?\\)[ \t]*\n"
+   "\\(\\)\\(^.*?[a-zA-Z0-9_].*?\\)[ \t]*\n"
    ;; 2nd line: underline
    (adoc-re-two-line-title-undlerline del)))
 
@@ -1435,13 +1438,13 @@ text having adoc-reserved set to 'block-del."
    `(lambda (end)
       (and adoc-enable-two-line-title
            (re-search-forward ,(adoc-re-two-line-title del) end t)
-           (< (abs (- (length (match-string 1)) (length (match-string 2)))) 3)
+           (< (abs (- (length (match-string 2)) (length (match-string 3)))) 3)
 	   (or (not (numberp adoc-enable-two-line-title))
 	       (not (equal adoc-enable-two-line-title (length (match-string 2)))))
            (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
    ;; highlighers
-   `(1 ,text-face t)
-   `(2 '(face markup-meta-hide-face adoc-reserved block-del) t)))
+   `(2 ,text-face t)
+   `(3 '(face markup-meta-hide-face adoc-reserved block-del) t)))
 
 ;; (defun adoc-?????-attributes (endpos enddelchar)
 ;;   (list
@@ -2738,7 +2741,7 @@ trailing delimiter ('== my title ==').
 		(beginning-of-line)
 		(looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))))
           (setq type 2)
-          (setq text (match-string 1))
+          (setq text (match-string 2))
           (setq found t))
          (t
           (setq level (+ level 1)))))        
