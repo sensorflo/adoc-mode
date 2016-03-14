@@ -921,6 +921,28 @@ removed before TRANSFORM is evaluated.
     (adoctest-trans "" "  x"   '(adoc-insert-indented "x" 1))
     (adoctest-trans "" "\t  x" '(adoc-insert-indented "x" 2))))
 
+(ert-deftest adoctest-test-imenu-create-index ()
+  (unwind-protect
+      (progn
+        (set-buffer (get-buffer-create "adoc-test"))
+        (insert "= document title\n"
+                "== chapter 1\n"
+                "=== sub chapter 1.1\n"
+                "chapter 2\n"
+                "----------\n"
+                "sub chapter 2.1\n"
+                "~~~~~~~~~~~~~~\n")
+        (should
+         (equal
+          (adoc-imenu-create-index)
+          (list
+           (cons "document title" 1)
+           (cons "chapter 1" 18)
+           (cons "sub chapter 1.1" 31)
+           (cons "chapter 2" 51)
+           (cons "sub chapter 2.1" 72)))))
+    (kill-buffer "adoc-test")))
+
 ;; purpose
 ;; - ensure that the latest version, i.e. the one currently in buffer(s), of
 ;;   adoc-mode and adoc-mode-test is used for the test

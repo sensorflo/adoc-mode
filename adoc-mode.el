@@ -155,7 +155,7 @@
 ;; - Other common Emacs functionality/features
 ;;   - demote/promote/create/delete titles/list-items. Also put emphasis on a
 ;;     convenient simple user interface.
-;;   - imenu / hideshow
+;;   - hideshow
 ;;   - outline mode shall support two line titles
 ;;   - tags tables for anchors, indixes, bibliography items, titles, ...
 ;;   - spell check shall ignore meta characters
@@ -2933,6 +2933,31 @@ LOCAL-ATTRIBUTE-FACE-ALIST before it is looked up in
 		     (cdr (assoc name adoc-attribute-face-alist))))
 	markup-value-face)))
 
+(defun adoc-imenu-create-index ()
+  (let* ((index-alist)
+         (re-all-titles-core
+          (mapconcat
+           (lambda (level)
+             (concat
+              (adoc-re-one-line-title level)
+              "\\|"
+              (adoc-re-two-line-title (nth level adoc-two-line-title-del))))
+           '(0 1 2 3 4)
+           "\\)\\|\\(?:"))
+         (re-all-titles
+          (concat "\\(?:" re-all-titles-core "\\)")))
+    (save-restriction
+      (widen)
+      (goto-char 0)
+      (while (re-search-forward re-all-titles nil t)
+        (backward-char) ; skip backwards the trailing \n of a title
+        (let* ((descriptor (adoc-title-descriptor))
+               (title-text (nth 3 descriptor))
+               (title-pos (nth 4 descriptor)))
+          (setq
+           index-alist
+           (cons (cons title-text title-pos) index-alist)))))
+    (nreverse index-alist)))
 
 
 ;;;###autoload
@@ -2994,6 +3019,11 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   (set (make-local-variable 'require-final-newline) t)
   (set (make-local-variable 'parse-sexp-lookup-properties) t)
   
+  ;; it's the user's decision whether he wants to set imenu-sort-function to
+  ;; nil, or even something else. See also similar comment in sgml-mode.
+  (set (make-local-variable 'imenu-create-index-function)
+       'adoc-imenu-create-index)
+
   ;; compilation
   (when (boundp 'compilation-error-regexp-alist-alist)
     (add-to-list 'compilation-error-regexp-alist-alist
