@@ -373,6 +373,16 @@ See for example `tempo-template-adoc-title-1'."
 		 (const :tag "tempo-snippets" tempo-snippets))
   :group 'adoc)
 
+(defcustom adoc-imenu-indent "   "
+  "Per-level indentation prefix for imenu entries.
+
+When building imenu section listing, this prefix will be used to
+distinguish different section levels. The document title will not
+be prefixed. Each section will be prefixed by this string. Each
+subsection prefixed twice, and so on..."
+  :type 'string
+  :group 'adoc)
+
 
 ;;;; faces / font lock  
 (define-obsolete-face-alias 'adoc-orig-default 'adoc-align "23.3")
@@ -2952,11 +2962,12 @@ LOCAL-ATTRIBUTE-FACE-ALIST before it is looked up in
       (while (re-search-forward re-all-titles nil t)
         (backward-char) ; skip backwards the trailing \n of a title
         (let* ((descriptor (adoc-title-descriptor))
+               (title-indent (mapconcat 'identity (make-list (nth 2 descriptor) adoc-imenu-indent) ""))
                (title-text (nth 3 descriptor))
                (title-pos (nth 4 descriptor)))
           (setq
            index-alist
-           (cons (cons title-text title-pos) index-alist)))))
+           (cons (cons (concat title-indent title-text) title-pos) index-alist)))))
     (nreverse index-alist)))
 
 
