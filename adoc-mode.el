@@ -3036,6 +3036,11 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
 
   (easy-menu-add adoc-mode-menu))
 
+;;;###autoload
+(progn
+  (add-to-list 'auto-mode-alist '("\\.adoc\\'" . adoc-mode))
+  (add-to-list 'auto-mode-alist '("\\.asciidoc\\'" . adoc-mode)))
+
 
 ;;;; non-definitions evaluated during load  
 (adoc-calc)
