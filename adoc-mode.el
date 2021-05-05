@@ -2985,8 +2985,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   (when (boundp 'compilation-error-regexp-alist)
     (make-local-variable 'compilation-error-regexp-alist)
     (add-to-list 'compilation-error-regexp-alist 'asciidoc))
-
-  (easy-menu-add adoc-mode-menu))
+  )
 
 
 ;;;; non-definitions evaluated during load  
