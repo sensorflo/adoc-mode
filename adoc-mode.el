@@ -418,7 +418,8 @@ aligned.
 ;; profiling profes otherwise. Nevertheless I can't stop doing it.
 (defconst adoc-summarize-re-uolisti t
   "When non-nil, sumarize regexps for unordered list items into one regexp.
-To become a customizable variable when regexps for list items become customizable.")
+To become a customizable variable when regexps for list items
+become customizable.")
 
 (defconst adoc-summarize-re-olisti t
   "As `adoc-summarize-re-uolisti', but for ordered list items.")
