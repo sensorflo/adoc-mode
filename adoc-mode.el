@@ -175,8 +175,7 @@
 
 (require 'markup-faces) ; https://github.com/sensorflo/markup-faces
 (require 'cl-lib)
-;; tempo or tempo-snippet is required later below
-
+(require 'tempo)
 
 (defconst adoc-mode-version "0.6.6"
   "adoc mode version number.
