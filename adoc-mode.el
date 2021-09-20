@@ -174,9 +174,8 @@
 ;;; Variables:
 
 (require 'markup-faces) ; https://github.com/sensorflo/markup-faces
-(require 'cl) ; I know, I should remove it, I will, eventually
-;; tempo or tempo-snippet is required later below
-
+(require 'cl-lib)
+(require 'tempo)
 
 (defconst adoc-mode-version "0.6.6"
   "adoc mode version number.
@@ -220,34 +219,9 @@ E.g. after '&amp;' an '&' is displayed, after '(C)' the copy right
 sign is displayed. It's only about display, neither the file nor
 the buffer content is affected.
 
-You need to call `adoc-calc' after you change
-`adoc-insert-replacement'. For named character entities (e.g.
-'&amp;', in contrast to '&#20;' or '(C)' ) to be displayed you
-need to set `adoc-unichar-name-resolver'.
-
 Setting it to non-nil interacts very badly with minor-modes using
 overlays."
   :type 'boolean
-  :group 'adoc)
-
-(defcustom adoc-unichar-name-resolver nil
-  "Function taking a unicode char name and returing it's codepoint.
-
-E.g. when given \"amp\" (as in the character entity reference
-\"&amp;\"), it shall return 38 (#x26). Is used to insert the
-character a character entity reference is refering to after the
-entity. When adoc-unichar-name-resolver is nil, or when its
-function returns nil, nothing is done with named character
-entities. Note that if `adoc-insert-replacement' is nil,
-adoc-unichar-name-resolver is not used.
-
-You can set it to `adoc-unichar-by-name'; however it requires
-unichars.el (http://nwalsh.com/emacs/xmlchars/unichars.el). When
-you set adoc-unichar-name-resolver to adoc-unichar-by-name, you
-need to call `adoc-calc' for the change to take effect."
-  :type '(choice (const nil)
-                 (const adoc-unichar-by-name)
-                 function)
   :group 'adoc)
 
 (defcustom adoc-two-line-title-del '("==" "--" "~~" "^^" "++")
@@ -333,15 +307,17 @@ AsciiDoc config file would the probably be '^[<>]-{4,}$'"
 ;; todo: limit value range to 1 or 2
 (defcustom adoc-default-title-type 1
   "Default title type, see `adoc-title-descriptor'."
+  :type 'integer
   :group 'adoc)
 
 ;; todo: limit value range to 1 or 2
 (defcustom adoc-default-title-sub-type 1
   "Default title sub type, see `adoc-title-descriptor'."
+  :type 'integer
   :group 'adoc  )
 
 (defcustom adoc-enable-two-line-title t
-  "Wether or not two line titles shall be fontified.
+  "Whether or not two line titles shall be fontified.
 
 nil means never fontify. t means always fontify. A number means
 only fontify if the line below has NOT the lenght of the given
@@ -441,7 +417,8 @@ aligned.
 ;; profiling profes otherwise. Nevertheless I can't stop doing it.
 (defconst adoc-summarize-re-uolisti t
   "When non-nil, sumarize regexps for unordered list items into one regexp.
-To become a customizable variable when regexps for list items become customizable.")
+To become a customizable variable when regexps for list items
+become customizable.")
 
 (defconst adoc-summarize-re-olisti t
   "As `adoc-summarize-re-uolisti', but for ordered list items.")
@@ -1329,13 +1306,13 @@ text having adoc-reserved set to 'block-del."
       (setq prevented 
 	    (and found
 		 (or
-		  (some (lambda(x)
+		  (cl-some (lambda(x)
 			  (and (match-beginning x)
 			       (text-property-not-all (match-beginning x)
 						      (match-end x)
 						      'adoc-reserved nil)))
 			must-free-groups)
-		  (some (lambda(x)
+		  (cl-some (lambda(x)
 			  (and (match-beginning x))
 			  (text-property-any (match-beginning x)
 			         	     (match-end x)
@@ -2258,16 +2235,9 @@ variables. Mostly in order font lock highlighting works as the
 new customization demands."
   (interactive)
 
-  (when (and (null adoc-insert-replacement)
-             adoc-unichar-name-resolver)
-    (message "Warning: adoc-unichar-name-resolver is non-nil, but is adoc-insert-replacement is nil"))
-  (when (and (eq adoc-unichar-name-resolver 'adoc-unichar-by-name)
-             (null adoc-unichar-alist))
-    (adoc-make-unichar-alist))
-
   (setq adoc-font-lock-keywords (adoc-get-font-lock-keywords))
   (when (and font-lock-mode (eq major-mode 'adoc-mode))
-    (font-lock-fontify-buffer))
+    (font-lock-ensure))
 
   (adoc-easy-menu-define))
 
@@ -2815,7 +2785,7 @@ and title's text are not preserved, afterwards its always one space."
 		       ((or (null new-level-rel) (eq new-level-rel 0))
 			level)
 		       ((not (null new-level-rel))
-			(let ((x (% (+ level arg) (+ adoc-title-max-level 1))))
+			(let ((x (% (+ level new-level-rel) (+ adoc-title-max-level 1))))
 			  (if (< x 0)
 			      (+ x adoc-title-max-level 1)
 			    x)))
@@ -2849,30 +2819,12 @@ and title's text are not preserved, afterwards its always one space."
         (forward-line -1))
       (move-to-column saved-col))))
 
-(defun adoc-make-unichar-alist()
-  "Creates `adoc-unichar-alist' from `unicode-character-list'"
-  (unless (boundp 'unicode-character-list)
-    (load-library "unichars.el"))
-  (let ((i unicode-character-list))
-    (setq adoc-unichar-alist nil)
-    (while i
-      (let ((name (nth 2 (car i)))
-            (codepoint (nth 0 (car i))))
-        (when name
-          (push (cons name codepoint) adoc-unichar-alist))
-        (setq i (cdr i))))))
-
-(defun adoc-unichar-by-name (name)
-  "Returns unicode codepoint of char with the given NAME"
-  (cdr (assoc name adoc-unichar-alist)))
-
 (defun adoc-entity-to-string (entity)
   "Returns a string containing the character referenced by ENTITY.
 
 ENTITY is a string containing a character entity reference like
 e.g. '&#38;' or '&amp;'. nil is returned if its an invalid
-entity, or when customizations prevent `adoc-entity-to-string' from
-knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
+entity."
   (save-match-data
     (let (ch)
       (setq ch
@@ -2884,10 +2836,10 @@ knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
          ((string-match "&#\\([0-9]+?\\);" entity)
           (string-to-number (match-string 1 entity)))
          ;; name
-         ((and adoc-unichar-name-resolver
-               (string-match "&\\(.+?\\);" entity))
-          (funcall adoc-unichar-name-resolver
-                   (match-string 1 entity)))))
+         ((string-match "&\\(.+?\\);" entity)
+          (char-from-name
+           (match-string 1 entity)))
+         ))
       (when (characterp ch) (make-string 1 ch)))))
 
 (defun adoc-face-for-attribute (pos-or-name &optional attribute-list-prop-val)
@@ -3033,8 +2985,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   (when (boundp 'compilation-error-regexp-alist)
     (make-local-variable 'compilation-error-regexp-alist)
     (add-to-list 'compilation-error-regexp-alist 'asciidoc))
-
-  (easy-menu-add adoc-mode-menu))
+  )
 
 
 ;;;; non-definitions evaluated during load  

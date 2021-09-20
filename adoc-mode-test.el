@@ -32,7 +32,7 @@
 
       ;; exercise
       (adoc-mode)
-      (font-lock-fontify-buffer)
+      (font-lock-ensure)
 
       ;; verify
       (goto-char (point-min))
