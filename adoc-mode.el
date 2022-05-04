@@ -1528,7 +1528,7 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
     ;; matcher function
     `(lambda (end)
       (and (re-search-forward ,(adoc-re-verbatim-paragraph-sequence) end t)
-           (not (text-property-not-all (match-beginning 0) (match-end 0) adoc-reserved nil))))
+           (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
     ;; highlighers
     '(1 '(face adoc-monospace adoc-reserved t font-lock-multiline t))))
 
