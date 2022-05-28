@@ -3016,7 +3016,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   
   ;; misc
   (set (make-local-variable 'page-delimiter) "^<<<+$")
-  (set (make-local-variable 'require-final-newline) t)
+  (set (make-local-variable 'require-final-newline) mode-require-final-newline)
   (set (make-local-variable 'parse-sexp-lookup-properties) t)
   
   ;; it's the user's decision whether he wants to set imenu-sort-function to
