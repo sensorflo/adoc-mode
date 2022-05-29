@@ -2853,7 +2853,8 @@ and title's text are not preserved, afterwards its always one space."
 
 (defun adoc-make-unichar-alist()
   "Creates `adoc-unichar-alist' from `unicode-character-list'"
-  (require 'unichars nil t)
+  (unless (boundp 'unicode-character-list)
+    (load "unichars"))
   (let ((i unicode-character-list))
     (setq adoc-unichar-alist nil)
     (while i
