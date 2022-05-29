@@ -174,7 +174,7 @@
 ;;; Variables:
 
 (require 'markup-faces) ; https://github.com/sensorflo/markup-faces
-(require 'cl) ; I know, I should remove it, I will, eventually
+(require 'cl-lib)
 ;; tempo or tempo-snippet is required later below
 
 
@@ -333,12 +333,14 @@ AsciiDoc config file would the probably be '^[<>]-{4,}$'"
 ;; todo: limit value range to 1 or 2
 (defcustom adoc-default-title-type 1
   "Default title type, see `adoc-title-descriptor'."
+  :type 'integer
   :group 'adoc)
 
 ;; todo: limit value range to 1 or 2
 (defcustom adoc-default-title-sub-type 1
   "Default title sub type, see `adoc-title-descriptor'."
-  :group 'adoc  )
+  :type 'integer
+  :group 'adoc)
 
 (defcustom adoc-enable-two-line-title t
   "Wether or not two line titles shall be fontified.
@@ -1329,17 +1331,17 @@ text having adoc-reserved set to 'block-del."
       (setq prevented 
 	    (and found
 		 (or
-		  (some (lambda(x)
-			  (and (match-beginning x)
-			       (text-property-not-all (match-beginning x)
-						      (match-end x)
-						      'adoc-reserved nil)))
-			must-free-groups)
-		  (some (lambda(x)
-			  (and (match-beginning x))
-			  (text-property-any (match-beginning x)
-			         	     (match-end x)
-					     'adoc-reserved 'block-del))
+		  (cl-some (lambda(x)
+			     (and (match-beginning x)
+				  (text-property-not-all (match-beginning x)
+							 (match-end x)
+							 'adoc-reserved nil)))
+			   must-free-groups)
+		  (cl-some (lambda(x)
+			     (and (match-beginning x))
+			     (text-property-any (match-beginning x)
+			         		(match-end x)
+						'adoc-reserved 'block-del))
 			no-block-del-groups))))
       (when (and found prevented (<= (point) end))
 	(goto-char (1+ saved-point))))
@@ -2267,7 +2269,8 @@ new customization demands."
 
   (setq adoc-font-lock-keywords (adoc-get-font-lock-keywords))
   (when (and font-lock-mode (eq major-mode 'adoc-mode))
-    (font-lock-fontify-buffer))
+    (font-lock-flush)
+    (font-lock-ensure))
 
   (adoc-easy-menu-define))
 
@@ -2766,9 +2769,6 @@ NEW-LEVEL-ABS defines the new level absolutely. When both
 NEW-LEVEL-REL and NEW-LEVEL-ABS are non-nil, NEW-LEVEL-REL takes
 precedence. When both are nil, level is not affected.
 
-When ARG is nil, it defaults to 1. When ARG is negative, level is
-demoted that many levels. If ARG is 0, see `adoc-adjust-title-del'.
-
 When NEW-TYPE is nil, the title type is unaffected. If NEW-TYPE
 is t, the type is toggled. If it's 1 or 2, the new type is one
 line title or two line title respectively.
@@ -2809,13 +2809,13 @@ and title's text are not preserved, afterwards its always one space."
 			       (error "Invalid title sub-type"))
 			      ((eq new-sub-type nil) sub-type)
 			      ((eq new-sub-type t) (if (eq sub-type 1) 2 1))
-			      (t (error "NEW-SUB-TYPE has invalid value"))))           
+			      (t (error "NEW-SUB-TYPE has invalid value"))))
            (level (nth 2 descriptor))
            (new-level (cond
 		       ((or (null new-level-rel) (eq new-level-rel 0))
 			level)
 		       ((not (null new-level-rel))
-			(let ((x (% (+ level arg) (+ adoc-title-max-level 1))))
+			(let ((x (% (+ level new-level-rel) (+ adoc-title-max-level 1))))
 			  (if (< x 0)
 			      (+ x adoc-title-max-level 1)
 			    x)))
@@ -2826,7 +2826,7 @@ and title's text are not preserved, afterwards its always one space."
            (start (nth 4 descriptor))
            (end (nth 5 descriptor))
            (saved-col (current-column)))
-      
+
       ;; set new title descriptor
       (setcar (nthcdr 0 descriptor) new-type-val)
       (setcar (nthcdr 1 descriptor) new-sub-type-val)
@@ -2849,10 +2849,11 @@ and title's text are not preserved, afterwards its always one space."
         (forward-line -1))
       (move-to-column saved-col))))
 
+(defvar unicode-character-list) ;; From unichars.el
+
 (defun adoc-make-unichar-alist()
   "Creates `adoc-unichar-alist' from `unicode-character-list'"
-  (unless (boundp 'unicode-character-list)
-    (load-library "unichars.el"))
+  (require 'unichars nil t)
   (let ((i unicode-character-list))
     (setq adoc-unichar-alist nil)
     (while i
