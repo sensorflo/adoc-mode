@@ -21,8 +21,17 @@
 ;;   - beginning/end of buffer
 ;;   - beginning/end of paragraph
 ;;   - side-to-side yes/no with next same construct
+;; checkdoc-params: (NAME ARGS)
 (defun adoctest-faces (name &rest args)
-  "Todo document adoctest-faces NAME ARGS."
+  "Test font-lock on concatenation of STRING1 ... STRINGn.
+
+The k-th string STRINGk with k=1,...,n `should' be fontified
+with FACEk.
+STRING1, FACE1, ..., STRINGn, FACEn are free.
+
+NAME is just for identifying the test.
+
+\(fn NAME STRING1 FACE1 ... STRINGn FACEn)"
   (let ((not-done t)
 	(font-lock-support-mode))
     (with-temp-buffer
@@ -33,7 +42,7 @@
 
       ;; exercise
       (adoc-mode)
-      (font-lock-fontify-buffer)
+      (font-lock-fontify-region (point-min) (point-max))
 
       ;; verify
       (goto-char (point-min))

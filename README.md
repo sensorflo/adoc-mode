@@ -15,12 +15,12 @@ be easily ignored.
 ## Download
 
 The raw file (adoc-mode.el) can be found
-[here](https://raw.github.com/sensorflo/adoc-mode/master/adoc-mode.el).
+[here](https://raw.github.com/emacsorphanage/adoc-mode/master/adoc-mode.el).
 Optionally you can get the sources from the [git
 repository](https://github.com/emacsorphanage/adoc-mode).
 
 You will also need to download the library
-[markup-faces](https://github.com/emacsorphanage/markup-faces). If you install
+[markup-faces](https://github.com/sensorflo/markup-faces). If you install
 adoc-mode via Emacs Lisp Packages, see below, markup-faces is installed
 automatically if you don't have it yet.
 
