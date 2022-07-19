@@ -8,7 +8,7 @@
 ;; Created: 2009
 ;; Version: 0.6.6
 ;; Package-Requires: ((markup-faces "1.0.0"))
-;; Keywords: wp AsciiDoc
+;; Keywords: AsciiDoc
 ;;
 ;; This file is not part of GNU Emacs.
 ;;
@@ -64,8 +64,9 @@ Most faces adoc-mode uses belong to the markup-faces
 customization group, see link below, and have to be customized
 there.  adoc-mode has only a few faces of its own, which can be
 customized on this page."
-  :group 'wp
-  :link '(custom-group-link markup-faces))
+  :group 'text
+  :prefix "adoc-"
+  :link '(url-link "https://github.com/emacsorphanage/adoc-mode"))
 
 (defcustom adoc-script-raise '(-0.3 0.3)
   "How much to lower and raise subscript and superscript content.
