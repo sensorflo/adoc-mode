@@ -1,3 +1,4 @@
+[![Build Status](https://github.com/emacsorphanage/adoc-mode/workflows/CI/badge.svg)](https://github.com/emacsorphanage/adoc-mode/actions?query=workflow%3ACI)
 [![MELPA][melpa-badge]][melpa-package]
 [![MELPA Stable][melpa-stable-badge]][melpa-stable-package]
 
@@ -84,6 +85,71 @@ The highlighting emphasizes on how the output will look like. _All_
 characters are visible, however meta characters are displayed in a faint way.
 
 ![screenshot](http://dl.dropbox.com/u/75789984/adoc-mode.png)
+
+## Hacking
+
+adoc-mode uses [Eldev](https://github.com/doublep/eldev) for development, so
+you should install the tool first.
+
+The easiest and "purest" way to run adoc-mode is to execute:
+
+    $ eldev emacs
+
+This will start a separate Emacs process with adoc-mode and its
+dependencies available, but _without_ your normal packages installed.
+However, you can use `Eldev-local` to add some packages with
+`(eldev-add-extra-dependencies 'emacs ...)` forms.  See Eldev
+documentation for details.
+
+Alternatively, if you want to load adoc-mode from source code in the Emacs
+you use for editing:
+
+- Generate autoloads file (that's done automatically when installing
+via `package.el` but you'll have to do it manually in this case):
+
+``` shellsession
+$ eldev build :autoloads
+```
+
+- Add to your `.emacs`:
+
+``` emacs-lisp
+;; load adoc-mode from its source code
+(add-to-list 'load-path "~/projects/adoc-mode")
+(load "adoc-mode-autoloads" t t)
+```
+
+### Changing the code
+
+It's perfectly fine to load adoc-mode from `package.el` and then to start making
+experiments by changing existing code and adding new code.
+
+A very good workflow is to just open the source code you've cloned and start
+evaluating the code you've altered/added with commands like `C-M-x`,
+`eval-buffer` and so on.
+
+Once you've evaluated the new code, you can invoke some interactive command that
+uses it internally or open a Emacs Lisp REPL and experiment with it there. You
+can open an Emacs Lisp REPL with `M-x ielm`.
+
+You can also quickly evaluate some Emacs Lisp code in the minibuffer with `M-:`.
+
+### Running the tests
+
+Run all tests with:
+
+ $ eldev test
+
+NOTE: Tests may not run correctly inside Emacs' `shell-mode` buffers. Running
+them in a terminal is recommended.
+
+You can also check for compliance with a variety of coding standards in batch mode (including docstrings):
+
+ $ eldev lint
+
+To check for byte-compilation warnings you can just compile the project with Eldev:
+
+ $ eldev compile
 
 ## License
 
