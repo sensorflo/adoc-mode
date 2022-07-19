@@ -7,7 +7,7 @@
 ;; URL: https://github.com/emacsorphanage/adoc-mode
 ;; Created: 2009
 ;; Version: 0.6.6
-;; Package-Requires: ((markup-faces "1.0.0"))
+;; Package-Requires: ((emacs "26") (markup-faces "1.0.0"))
 ;; Keywords: AsciiDoc
 ;;
 ;; This file is not part of GNU Emacs.
