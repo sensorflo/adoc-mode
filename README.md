@@ -1,70 +1,47 @@
+[![MELPA][melpa-badge]][melpa-package]
+[![MELPA Stable][melpa-stable-badge]][melpa-stable-package]
+
 # adoc-mode
+
 ## Introduction
 
-[AsciiDoc](http://www.methods.co.nz/asciidoc/) is a text document format for
+[AsciiDoc](https://asciidoc.org/) is a text document format for
 writing short documents, articles, books and UNIX man pages. AsciiDoc files
 can be translated to HTML and DocBook markups.
 
-adoc-mode is an Emacs major mode for editing AsciiDoc files. It emphasizes on
+`adoc-mode` is an Emacs major mode for editing AsciiDoc files. It emphasizes on
 the idea that the document is highlighted so it pretty much looks like the
 final output. What must be bold is bold, what must be italic is italic etc.
 Meta characters are naturally still visible, but in a faint way, so they can
 be easily ignored.
 
-
-## Download
-
-The raw file (adoc-mode.el) can be found
-[here](https://raw.github.com/emacsorphanage/adoc-mode/master/adoc-mode.el).
-Optionally you can get the sources from the [git
-repository](https://github.com/emacsorphanage/adoc-mode).
-
-You will also need to download the library
-[markup-faces](https://github.com/sensorflo/markup-faces). If you install
-adoc-mode via Emacs Lisp Packages, see below, markup-faces is installed
-automatically if you don't have it yet.
-
-
 ## Installation
 
-Installation is as usual, so if you are proficient with Emacs you don't need
-to read this.
+`adoc-mode` is available on the community-maintained
+[MELPA Stable][] and [MELPA][] repos.
 
-### Install the traditional way
+NonGNU ELPA and MELPA Stable are recommended as they have the latest stable version.
+MELPA has a development snapshot for users who don't mind breakage but
+don't want to run `adoc-mode` from a git checkout.
 
-1. Copy the file adoc-mode.el to a directory in your load-path, e.g.
-   \~/.emacs.d. To add a specific directory to the load path, add this to our
-   initialization file (probably ~/.emacs): `(add-to-list 'load-path
-   "mypath")`
+You can install `adoc-mode` using the following command:
 
-2. Add either of the two following lines to your initialization file. The
-   first only loads adoc mode when necessary, the 2nd always during startup
-   of Emacs.
+<kbd>M-x package-install [RET] adoc-mode [RET]</kbd>
 
-   * `(autoload 'adoc-mode "adoc-mode" nil t)`
+or if you'd rather keep it in your Emacs config:
 
-   * `(require 'adoc-mode)`
+```emacs-lisp
+(unless (package-installed-p 'adoc-mode)
+  (package-refresh-contents)
+  (package-install 'adoc-mode))
+```
 
-3. Optionally byte compile adoc-mode.el for faster startup: `M-x
-   byte-compile`
+If the installation doesn't work try refreshing the package list:
 
-4. To use adoc mode, call adoc-mode after you opened an AsciiDoc file: `M-x
-   adoc-mode`
-
-
-### Install via Emacs Lisp Packages (on Marmalade)
-
-For this way you either need packages.el from
-[here](https://github.com/technomancy/package.el) and or Emacs 24, where the
-packages library is already included. adoc-mode is on the
-[Marmalade](http://marmalade-repo.org/) package archive.
-
-* Type `M-x package-install RET adoc-mode RET`.
+<kbd>M-x package-refresh-contents</kbd>
 
 
-### Possible steps after installation
-
-Each of the following is optional
+## Configuration
 
 * According to an old AsciiDoc manual, .txt is the standard file extension of
   AsciiDoc files. Add the following to your initialization file to open all
@@ -93,7 +70,6 @@ Each of the following is optional
 
 - support for outline (however only with the one-line title style)
 
-
 ### Coming features
 
 The next features I plan to implement
@@ -102,10 +78,22 @@ The next features I plan to implement
 - Outline support also for two line titles
 - Correctly highlighting backslash escapes
 
-
 ## Screenshot
 
 The highlighting emphasizes on how the output will look like. _All_
 characters are visible, however meta characters are displayed in a faint way.
 
 ![screenshot](http://dl.dropbox.com/u/75789984/adoc-mode.png)
+
+## License
+
+Copyright © 2010-2013 Florian Kaufmann
+
+Distributed under the GNU General Public License; type <kbd>C-h C-c</kbd> to view it.
+
+[melpa-badge]: http://melpa.org/packages/adoc-mode-badge.svg
+[melpa-stable-badge]: http://stable.melpa.org/packages/adoc-mode-badge.svg
+[melpa-package]: http://melpa.org/#/adoc-mode
+[melpa-stable-package]: http://stable.melpa.org/#/adoc-mode
+[melpa]: http://melpa.org
+[melpa stable]: http://stable.melpa.org
