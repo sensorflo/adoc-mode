@@ -202,13 +202,13 @@ AsciiDoc config file would the probably be '^[<>]-{4,}$'"
                         (regexp :tag "start regexp")
                         (regexp :tag "end regexp")))))
 
-;; todo: limit value range to 1 or 2
+;; TODO: limit value range to 1 or 2
 (defcustom adoc-default-title-type 1
   "Default title type, see `adoc-title-descriptor'."
   :type 'integer
   :group 'adoc)
 
-;; todo: limit value range to 1 or 2
+;; TODO: limit value range to 1 or 2
 (defcustom adoc-default-title-sub-type 1
   "Default title sub type, see `adoc-title-descriptor'."
   :type 'integer
@@ -1093,7 +1093,7 @@ Subgroups of returned regexp:
     (t (adoc-re-content)))
    "\\)\\(\\]\\)" ))
 
-;; todo: use same regexps as for font lock
+;; TODO: use same regexps as for font lock
 (defun adoc-re-paragraph-separate ()
   (concat
 
@@ -1118,7 +1118,7 @@ Subgroups of returned regexp:
    "[ \t]*$"
    ))
 
-;; todo: use same regexps as for font lock
+;; TODO: use same regexps as for font lock
 (defun adoc-re-paragraph-start ()
   (concat
    paragraph-separate
@@ -1279,7 +1279,7 @@ text having adoc-reserved set to 'block-del."
                 (when (not (= 0 (car adoc-script-raise)))
                   `(display (raise ,(cadr adoc-script-raise)))))))
 
-;; todo: use & learn some more macro magic so adoc-kw-unconstrained-quote and
+;; TODO: use & learn some more macro magic so adoc-kw-unconstrained-quote and
 ;; adoc-kw-constrained-quote are less redundant and have common parts in one
 ;; macro. E.g. at least such 'lists'
 ;; (not (text-property-not-all (match-beginning 1) (match-end 1) 'adoc-reserved nil))
@@ -1303,8 +1303,8 @@ text having adoc-reserved set to 'block-del."
    '(3  '(face nil adoc-reserved block-del) t)
    '(4 '(face markup-meta-hide-face) t t)))
 
-;; todo: highlight bogous 'two line titles' with warning face
-;; todo: completly remove keyword when adoc-enable-two-line-title is nil
+;; TODO: highlight bogous 'two line titles' with warning face
+;; TODO: completly remove keyword when adoc-enable-two-line-title is nil
 (defun adoc-kw-two-line-title (del text-face)
   "Creates a keyword for font-lock which highlights two line titles"
   (list
@@ -1450,7 +1450,7 @@ meta characters."
    '(6 '(face markup-meta-face adoc-reserved t) t))) ; ]
 
 ;; largely copied from adoc-kw-inline-macro
-;; todo: output text should be affected by quotes & co, e.g. bold, emph, ...
+;; TODO: output text should be affected by quotes & co, e.g. bold, emph, ...
 (defun adoc-kw-inline-macro-urls-attribute-list ()
   (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link"))))
     (list
@@ -1490,7 +1490,7 @@ meta characters."
 ;; From asciidoc.conf:
 ;; (?su)(?<![">:\w._/-])[\\]?(?P<target>\w[\w._-]*@[\w._-]*\w)(?!["<\w_-])=mailto
 ;;
-;; todo: properly handle leading backslash escapes
+;; TODO: properly handle leading backslash escapes
 ;;
 ;; non-bugs: __flo@gmail.com__ is also in AsciiDoc *not* an emphasised email, it's
 ;;   just an emphasised text. Thats because the quote transforms happen before
@@ -1512,7 +1512,7 @@ meta characters."
      '(0 '(face markup-reference-face adoc-reserved t) append t))))
 
 ;; bug: escapes are not handled yet
-;; todo: give the inserted character a specific face. But I fear that is not
+;; TODO: give the inserted character a specific face. But I fear that is not
 ;; possible. The string inserted with the ovlerlay property after-string gets
 ;; the face of the text 'around' it, which is in this case the text following
 ;; the replacement.
@@ -1547,7 +1547,7 @@ meta characters."
         (and found (not prevented))))
 
     ;; highlighers
-    ;; todo: replacement instead warining face if resolver is not given
+    ;; TODO: replacement instead warining face if resolver is not given
     (if (and adoc-insert-replacement ,replacement)
         ;; '((1 (if adoc-replacement-failed adoc-warning adoc-hide-delimiter) t)
         ;;   (1 '(face nil adoc-reserved t) t))
@@ -1607,7 +1607,7 @@ meta characters."
   (font-lock-default-unfontify-region beg end)
 
   ;; remove overlays. Currently only used by AsciiDoc replacements
-  ;; todo: this is an extremly brute force solution and interacts very badly
+  ;; TODO: this is an extremly brute force solution and interacts very badly
   ;; with many (minor) modes using overlays such as flyspell or ediff
   (when adoc-insert-replacement
     (remove-overlays beg end))
@@ -1655,7 +1655,7 @@ meta characters."
 
    ;; block macros
    ;; ------------------------------
-   ;; todo: respect asciidoc.conf order
+   ;; TODO: respect asciidoc.conf order
 
    ;; -- system block macros
    ;;     # Default system macro syntax.
@@ -1713,7 +1713,7 @@ meta characters."
 
    ;; lists
    ;; ------------------------------
-   ;; todo: respect and insert adoc-reserved
+   ;; TODO: respect and insert adoc-reserved
    ;;
    ;; bug: for items begining with a label (i.e. user text): if might be that
    ;; the label contains a bogous end delimiter such that you get a
@@ -1862,7 +1862,7 @@ meta characters."
    ;;The double-dollar passthrough is functionally identical to the triple-plus
    ;;passthrough with one exception: special characters are escaped.
    (adoc-kw-quote 'adoc-unconstrained "$$" markup-typewriter-face nil nil t)  ;2)
-   ;; todo: add pass:[...], latexmath:[...], asciimath[...]
+   ;; TODO: add pass:[...], latexmath:[...], asciimath[...]
 
    ;; special characters
    ;; ------------------
@@ -1926,7 +1926,7 @@ meta characters."
 
    ;; inline macros (that includes anchors, links, footnotes,....)
    ;; ------------------------------
-   ;; todo: make adoc-kw-... macros to have less redundancy
+   ;; TODO: make adoc-kw-... macros to have less redundancy
    ;; Note: Some regexp/kewyords are within the macro section
    ;; TODO:
    ;; - allow multiline
@@ -1980,7 +1980,7 @@ meta characters."
          '(3 adoc-hide-delimiter))      ; >>
 
    ;; index terms
-   ;; todo:
+   ;; TODO:
    ;; - copy asciidocs regexps below
    ;; - add the indexterm2?:...[...] syntax
    ;; ifdef::asciidoc7compatible[]
@@ -1993,7 +1993,7 @@ meta characters."
    (cons "(((?\\([^\\\n]\\|\\\\.\\)*?)))?" 'adoc-delimiter)
 
    ;; passthrough. Note that quote section has some of them also
-   ;; todo: passthrough stuff
+   ;; TODO: passthrough stuff
    ;; (?su)[\\]?(?P<name>pass):(?P<subslist>\S*?)\[(?P<passtext>.*?)(?<!\\)\]=[]
    ;; (?su)[\\]?\+\+\+(?P<passtext>.*?)\+\+\+=pass[]
    ;; (?su)[\\]?\$\$(?P<passtext>.*?)\$\$=pass[specialcharacters]
@@ -2006,7 +2006,7 @@ meta characters."
    ;; manual: A plus character preceded by at least one space character at the
    ;; end of a non-blank line forces a line break.
    ;; Asciidoc bug: If has that affect also on a non blank line.
-   ;; todo: what kind of element is that? Really text formatting? Its not in asciidoc.conf
+   ;; TODO: what kind of element is that? Really text formatting? Its not in asciidoc.conf
    (list "^.*[^ \t\n].*[ \t]\\(\\+\\)[ \t]*$" '(1 adoc-delimiter)) ; bug: only if not adoc-reserved
 
    ;; -- callout anchors (references are within list)
@@ -2027,7 +2027,7 @@ meta characters."
    (adoc-kw-first-whites-fixed-width)
 
    ;; -- warnings
-   ;; todo: add tooltip explaining what is the warning all about
+   ;; TODO: add tooltip explaining what is the warning all about
    ;; bogous 'list continuation'
    (list "^\\([ \t]+\\+[ \t]*\\)$" '(1 adoc-warning t))
    ;; list continuation witch appends a literal paragraph. The user probably
@@ -2102,7 +2102,7 @@ ARG is 0, see `adoc-adjust-title-del'."
   (interactive "p")
   (adoc-promote-title (- arg)))
 
-;; todo:
+;; TODO:
 ;; - adjust while user is typing title
 ;; - tempo template which uses alreay typed text to insert a 'new' title
 ;; - auto convert one line title to two line title. is easy&fast to type, but
@@ -2172,7 +2172,7 @@ new customization demands."
          :help ,adoc-help-single-quote]
         ["``Double quote''" tempo-template-adoc-double-quote
          :help ,adoc-help-double-quote]
-        ;; todo: insert underline, overline, strikethrough, big, small
+        ;; TODO: insert underline, overline, strikethrough, big, small
         ["[attributes]##text##" tempo-template-adoc-attributed
          :help ,adoc-help-attributed])
        ("Text formatting - unconstrained quotes"
@@ -2313,12 +2313,12 @@ new customization demands."
 
 
 ;;;; tempos
-;; todo: tell user to make use of tempo-interactive
-;; todo: tell user to how to use tempo-snippets?? that there are clear methods
-;; todo: tell user to how to use tempo-snippets?? suggested customizations working best with adoc
-;; todo: after changing adoc-tempo-frwk, all adoc-tempo-define need to be
+;; TODO: tell user to make use of tempo-interactive
+;; TODO: tell user to how to use tempo-snippets?? that there are clear methods
+;; TODO: tell user to how to use tempo-snippets?? suggested customizations working best with adoc
+;; TODO: after changing adoc-tempo-frwk, all adoc-tempo-define need to be
 ;;       evaluated again. This doesn't feel right
-;; todo: titles,block titles,blockid,... should start on a new line
+;; TODO: titles,block titles,blockid,... should start on a new line
 ;; PROBLEM: snippets dont allow empty 'field', e.g. empty caption
 ;;       Workaround: mark whole 'edit-field' and delete it
 (if (eq adoc-tempo-frwk 'tempo-snippets)
@@ -2441,7 +2441,7 @@ Is influenced by customization variables such as `adoc-title-style'."))))
                    nil adoc-help-delimited-block-open-block)
 
 ;; Lists
-;; todo: customize indentation
+;; TODO: customize indentation
 (adoc-tempo-define "adoc-bulleted-list-item-1" '(bol (adoc-insert-indented "- " 1) (r "text" text)))
 (adoc-tempo-define "adoc-bulleted-list-item-2" '(bol (adoc-insert-indented "** " 2) (r "text" text)))
 (adoc-tempo-define "adoc-bulleted-list-item-3" '(bol (adoc-insert-indented "*** " 3) (r "text" text)))
@@ -2660,7 +2660,7 @@ and title's text are not preserved, afterwards its always one space."
     (if (or create (not descriptor))
         (error "Point is not on a title"))
 
-    ;; todo: set descriptor to default
+    ;; TODO: set descriptor to default
     ;; (if (not descriptor)
     ;;     (setq descriptor (list 1 1 2 ?? adoc-default-title-type adoc-default-title-sub-type)))
     (let* ((type (nth 0 descriptor))
@@ -2840,7 +2840,7 @@ LOCAL-ATTRIBUTE-FACE-ALIST before it is looked up in
 Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
 
   ;; syntax table
-  ;; todo: do it as other modes do it, eg rst-mode?
+  ;; TODO: do it as other modes do it, eg rst-mode?
   (modify-syntax-entry ?$ ".")
   (modify-syntax-entry ?% ".")
   (modify-syntax-entry ?& ".")
