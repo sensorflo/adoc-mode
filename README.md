@@ -163,4 +163,5 @@ Distributed under the GNU General Public License; type <kbd>C-h C-c</kbd> to vie
 [melpa-stable-package]: http://stable.melpa.org/#/adoc-mode
 [melpa]: http://melpa.org
 [melpa stable]: http://stable.melpa.org
+[badge-license]: https://img.shields.io/badge/license-GPL_3-green.svg
 [copying]: http://www.gnu.org/copyleft/gpl.html
