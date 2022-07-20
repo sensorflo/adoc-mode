@@ -2692,9 +2692,9 @@ and title's text are not preserved, afterwards its always one space."
                               (+ x adoc-title-max-level 1)
                             x)))
                        ((not (null new-level-abs))
-			new-level-abs)
-		       (t
-			level)))
+                        new-level-abs)
+                       (t
+                        level)))
            (start (nth 4 descriptor))
            (end (nth 5 descriptor))
            (saved-col (current-column)))
@@ -2706,15 +2706,15 @@ and title's text are not preserved, afterwards its always one space."
 
       ;; replace old title by new
       (let ((end-char (char-before end)))
-	(beginning-of-line)
-	(when (and (eq type 2) (looking-at (adoc-re-two-line-title-undlerline)))
-	  (forward-line -1)
-	  (beginning-of-line))
-	(delete-region start end)
-	(insert (adoc-make-title descriptor))
-	(when (equal end-char ?\n)
-	  (insert  "\n")
-	  (forward-line -1)))
+        (beginning-of-line)
+        (when (and (eq type 2) (looking-at (adoc-re-two-line-title-undlerline)))
+          (forward-line -1)
+          (beginning-of-line))
+        (delete-region start end)
+        (insert (adoc-make-title descriptor))
+        (when (equal end-char ?\n)
+          (insert  "\n")
+          (forward-line -1)))
 
       ;; reposition point
       (when (and (eq new-type-val 2) (eq type 1))
@@ -2750,18 +2750,18 @@ knowing it. E.g. when `adoc-unichar-name-resolver' is nil."
   (save-match-data
     (let (ch)
       (setq ch
-        (cond
-         ;; hex
-         ((string-match "&#x\\([0-9a-fA-F]+?\\);" entity)
-          (string-to-number (match-string 1 entity) 16))
-         ;; dec
-         ((string-match "&#\\([0-9]+?\\);" entity)
-          (string-to-number (match-string 1 entity)))
-         ;; name
-         ((and adoc-unichar-name-resolver
-               (string-match "&\\(.+?\\);" entity))
-          (funcall adoc-unichar-name-resolver
-                   (match-string 1 entity)))))
+            (cond
+             ;; hex
+             ((string-match "&#x\\([0-9a-fA-F]+?\\);" entity)
+              (string-to-number (match-string 1 entity) 16))
+             ;; dec
+             ((string-match "&#\\([0-9]+?\\);" entity)
+              (string-to-number (match-string 1 entity)))
+             ;; name
+             ((and adoc-unichar-name-resolver
+                   (string-match "&\\(.+?\\);" entity))
+              (funcall adoc-unichar-name-resolver
+                       (match-string 1 entity)))))
       (when (characterp ch) (make-string 1 ch)))))
 
 (defun adoc-face-for-attribute (pos-or-name &optional attribute-list-prop-val)
@@ -2796,16 +2796,16 @@ An attribute name is first looked up in
 LOCAL-ATTRIBUTE-FACE-ALIST before it is looked up in
 `adoc-attribute-face-alist'."
   (let* ((has-pos-to-name (listp attribute-list-prop-val))
-	 (has-local-alist (and has-pos-to-name (listp (car-safe attribute-list-prop-val))))
-	 (pos-to-name (cond ((not has-pos-to-name) nil)
-			  (has-local-alist (car attribute-list-prop-val))
-			  (t attribute-list-prop-val)))
-	 (local-attribute-face-alist (when has-local-alist (cadr attribute-list-prop-val)))
-	 (name (cond ((stringp pos-or-name) pos-or-name)
-		   ((numberp pos-or-name) (nth pos-or-name pos-to-name)))))
+         (has-local-alist (and has-pos-to-name (listp (car-safe attribute-list-prop-val))))
+         (pos-to-name (cond ((not has-pos-to-name) nil)
+                            (has-local-alist (car attribute-list-prop-val))
+                            (t attribute-list-prop-val)))
+         (local-attribute-face-alist (when has-local-alist (cadr attribute-list-prop-val)))
+         (name (cond ((stringp pos-or-name) pos-or-name)
+                     ((numberp pos-or-name) (nth pos-or-name pos-to-name)))))
     (or (when name (or (cdr (assoc name local-attribute-face-alist))
-		     (cdr (assoc name adoc-attribute-face-alist))))
-	markup-value-face)))
+                       (cdr (assoc name adoc-attribute-face-alist))))
+        markup-value-face)))
 
 (defun adoc-imenu-create-index ()
   (let* ((index-alist)
@@ -2873,9 +2873,9 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   ;; font lock
   (set (make-local-variable 'font-lock-defaults)
        '(adoc-font-lock-keywords
-	 nil nil nil nil
-	 (font-lock-multiline . t)
-	 (font-lock-mark-block-function . adoc-font-lock-mark-block-function)))
+         nil nil nil nil
+         (font-lock-multiline . t)
+         (font-lock-mark-block-function . adoc-font-lock-mark-block-function)))
   (make-local-variable 'font-lock-extra-managed-props)
   (setq font-lock-extra-managed-props '(adoc-reserved adoc-attribute-list))
   (make-local-variable 'font-lock-unfontify-region-function)
@@ -2901,9 +2901,9 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   ;; compilation
   (when (boundp 'compilation-error-regexp-alist-alist)
     (add-to-list 'compilation-error-regexp-alist-alist
-        '(asciidoc
-          "^asciidoc: +\\(?:ERROR\\|\\(WARNING\\|DEPRECATED\\)\\): +\\([^:\n]*\\): line +\\([0-9]+\\)"
-          2 3 nil (1 . nil))))
+                 '(asciidoc
+                   "^asciidoc: +\\(?:ERROR\\|\\(WARNING\\|DEPRECATED\\)\\): +\\([^:\n]*\\): line +\\([0-9]+\\)"
+                   2 3 nil (1 . nil))))
   (when (boundp 'compilation-error-regexp-alist)
     (make-local-variable 'compilation-error-regexp-alist)
     (add-to-list 'compilation-error-regexp-alist 'asciidoc))
