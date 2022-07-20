@@ -17,12 +17,30 @@ final output. What must be bold is bold, what must be italic is italic etc.
 Meta characters are naturally still visible, but in a faint way, so they can
 be easily ignored.
 
+## Features
+
+Here are some of the main features of `adoc-mode`:
+
+- sophisticated highlighting
+- promote / demote title
+- toggle title type between one line title and two line title
+- adjust underline length of a two line title to match title text's length
+- goto anchor defining a given id, default reading from xref at point
+- support for outline (however only with the one-line title style)
+
+### Demo
+
+The highlighting emphasizes on how the output will look like. _All_
+characters are visible, however meta characters are displayed in a faint way.
+
+![screenshot](http://dl.dropbox.com/u/75789984/adoc-mode.png)
+
 ## Installation
 
 `adoc-mode` is available on the community-maintained
 [MELPA Stable][] and [MELPA][] repos.
 
-NonGNU ELPA and MELPA Stable are recommended as they have the latest stable version.
+Using MELPA Stable is recommended as it has the latest stable version.
 MELPA has a development snapshot for users who don't mind breakage but
 don't want to run `adoc-mode` from a git checkout.
 
@@ -30,47 +48,35 @@ You can install `adoc-mode` using the following command:
 
 <kbd>M-x package-install [RET] adoc-mode [RET]</kbd>
 
-or if you'd rather keep it in your Emacs config:
+If the installation doesn't work try refreshing the package list:
+
+<kbd>M-x package-refresh-contents</kbd>
+
+Alternative, you can add something like this to your Emacs config:
 
 ```emacs-lisp
 (unless (package-installed-p 'adoc-mode)
   (package-refresh-contents)
   (package-install 'adoc-mode))
+
+;; or if you're into use-package
+(use-package adoc-mode
+  :ensure t)
 ```
-
-If the installation doesn't work try refreshing the package list:
-
-<kbd>M-x package-refresh-contents</kbd>
-
 
 ## Configuration
 
-* According to an old AsciiDoc manual, .txt is the standard file extension of
+* According to an old AsciiDoc manual, `.txt` is the standard file extension of
   AsciiDoc files. Add the following to your initialization file to open all
-  .txt files with adoc-mode as major mode automatically: `(add-to-list
+  `.txt` files with adoc-mode as major mode automatically: `(add-to-list
   'auto-mode-alist (cons "\\.txt\\'" 'adoc-mode))`.
   More recent conventions for AsciiDoc file extensions include `.adoc` and
-  `.asciidoc`, these are associated automatically.
+  `.asciidoc`, these are associated with `adoc-mode` automatically.
 
 * If your default face is a fixed pitch (monospace) face, but in AsciiDoc
   files you liked to have normal text with a variable pitch face,
-  buffer-face-mode is for you: `(add-hook 'adoc-mode-hook (lambda()
+  `buffer-face-mode` is for you: `(add-hook 'adoc-mode-hook (lambda()
   (buffer-face-mode t)))`
-
-
-## Features
-
-- sophisticated highlighting
-
-- promote / demote title
-
-- toggle title type between one line title and two line title
-
-- adjust underline length of a two line title to match title text's length
-
-- goto anchor defining a given id, default reading from xref at point
-
-- support for outline (however only with the one-line title style)
 
 ### Coming features
 
@@ -79,13 +85,6 @@ The next features I plan to implement
 - Demote / promote for list items
 - Outline support also for two line titles
 - Correctly highlighting backslash escapes
-
-## Screenshot
-
-The highlighting emphasizes on how the output will look like. _All_
-characters are visible, however meta characters are displayed in a faint way.
-
-![screenshot](http://dl.dropbox.com/u/75789984/adoc-mode.png)
 
 ## Hacking
 
