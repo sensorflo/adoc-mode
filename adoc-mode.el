@@ -136,14 +136,14 @@ configuration file."
   :group 'adoc)
 
 (defcustom adoc-delimited-block-del
-  '("^/\\{4,\\}"	 ; 0 comment
-    "^\\+\\{4,\\}"	 ; 1 pass
-    "^-\\{4,\\}"	 ; 2 listing
-    "^\\.\\{4,\\}"	 ; 3 literal
-    "^_\\{4,\\}"	 ; 4 quote
-    "^=\\{4,\\}"	 ; 5 example
-    "^\\*\\{4,\\}"	 ; 6 sidebar
-    "^--")        	 ; 7 open block
+  '("^/\\{4,\\}"         ; 0 comment
+    "^\\+\\{4,\\}"       ; 1 pass
+    "^-\\{4,\\}"         ; 2 listing
+    "^\\.\\{4,\\}"       ; 3 literal
+    "^_\\{4,\\}"         ; 4 quote
+    "^=\\{4,\\}"         ; 5 example
+    "^\\*\\{4,\\}"       ; 6 sidebar
+    "^--")               ; 7 open block
   "Regexp used for delimited blocks.
 
 WARNING: They should not contain a $. It is implied that they
@@ -161,46 +161,46 @@ delimited block with '>----' and end it with '<----', then all
 three cases can easily be distinguished. The regexp in your
 AsciiDoc config file would the probably be '^[<>]-{4,}$'"
   :type '(list
-	  (choice :tag "comment"
-		  (regexp :tag "start/end regexp")
-		  (list :tag "separate regexp"
-			(regexp :tag "start regexp")
-			(regexp :tag "end regexp")))
-	  (choice :tag "pass"
-		  (regexp :tag "start/end regexp")
-		  (list :tag "separate regexp"
-			(regexp :tag "start regexp")
-			(regexp :tag "end regexp")))
-	  (choice :tag "listing"
-		  (regexp :tag "start/end regexp")
-		  (list :tag "separate regexp"
-			(regexp :tag "start regexp")
-			(regexp :tag "end regexp")))
-	  (choice :tag "literal"
-		  (regexp :tag "start/end regexp")
-		  (list :tag "separate regexp"
-			(regexp :tag "start regexp")
-			(regexp :tag "end regexp")))
-	  (choice :tag "quote"
-		  (regexp :tag "start/end regexp")
-		  (list :tag "separate regexp"
-			(regexp :tag "start regexp")
-			(regexp :tag "end regexp")))
-	  (choice :tag "example"
-		  (regexp :tag "start/end regexp")
-		  (list :tag "separate regexp"
-			(regexp :tag "start regexp")
-			(regexp :tag "end regexp")))
-	  (choice :tag "sidebar"
-		  (regexp :tag "start/end regexp")
-		  (list :tag "separate regexp"
-			(regexp :tag "start regexp")
-			(regexp :tag "end regexp")))
-	   (choice :tag "open"
-		  (regexp :tag "start/end regexp")
-		  (list :tag "separate regexp"
-			(regexp :tag "start regexp")
-			(regexp :tag "end regexp")))))
+          (choice :tag "comment"
+                  (regexp :tag "start/end regexp")
+                  (list :tag "separate regexp"
+                        (regexp :tag "start regexp")
+                        (regexp :tag "end regexp")))
+          (choice :tag "pass"
+                  (regexp :tag "start/end regexp")
+                  (list :tag "separate regexp"
+                        (regexp :tag "start regexp")
+                        (regexp :tag "end regexp")))
+          (choice :tag "listing"
+                  (regexp :tag "start/end regexp")
+                  (list :tag "separate regexp"
+                        (regexp :tag "start regexp")
+                        (regexp :tag "end regexp")))
+          (choice :tag "literal"
+                  (regexp :tag "start/end regexp")
+                  (list :tag "separate regexp"
+                        (regexp :tag "start regexp")
+                        (regexp :tag "end regexp")))
+          (choice :tag "quote"
+                  (regexp :tag "start/end regexp")
+                  (list :tag "separate regexp"
+                        (regexp :tag "start regexp")
+                        (regexp :tag "end regexp")))
+          (choice :tag "example"
+                  (regexp :tag "start/end regexp")
+                  (list :tag "separate regexp"
+                        (regexp :tag "start regexp")
+                        (regexp :tag "end regexp")))
+          (choice :tag "sidebar"
+                  (regexp :tag "start/end regexp")
+                  (list :tag "separate regexp"
+                        (regexp :tag "start regexp")
+                        (regexp :tag "end regexp")))
+          (choice :tag "open"
+                  (regexp :tag "start/end regexp")
+                  (list :tag "separate regexp"
+                        (regexp :tag "start regexp")
+                        (regexp :tag "end regexp")))))
 
 ;; todo: limit value range to 1 or 2
 (defcustom adoc-default-title-type 1
@@ -228,8 +228,8 @@ delimited block. Note however that adoc-mode knows the AsciiDoc
 rule that the length of a two line title underline can differ at
 most 3 chars from the length of the title text."
   :type '(choice (const nil)
-		 (const t)
-		 number)
+                 (const t)
+                 number)
   :group 'adoc)
 
 (defcustom adoc-title-style 'adoc-title-style-one-line
@@ -237,14 +237,14 @@ most 3 chars from the length of the title text."
 
 See for example `tempo-template-adoc-title-1'."
   :type '(choice (const :tag "== one line" adoc-title-style-one-line)
-		 (const :tag "== one line enclosed ==" adoc-title-style-one-line-enclosed)
+                 (const :tag "== one line enclosed ==" adoc-title-style-one-line-enclosed)
                  (const :tag "two line\\n--------" adoc-title-style-two-line))
   :group 'adoc)
 
 (defcustom adoc-tempo-frwk 'tempo-vanilla
   "Tempo framework to be used by adoc's templates. "
   :type '(choice (const :tag "tempo" tempo-vanilla)
-		 (const :tag "tempo-snippets" tempo-snippets))
+                 (const :tag "tempo-snippets" tempo-snippets))
   :group 'adoc)
 
 
@@ -578,10 +578,10 @@ match-data has these sub groups:
 ---12------23------
             4--4"
   (let* ((del (if level
-                 (make-string (+ level 1) ?=)
-               (concat "=\\{1," (+ adoc-title-max-level 1) "\\}"))))
+                  (make-string (+ level 1) ?=)
+                (concat "=\\{1," (+ adoc-title-max-level 1) "\\}"))))
     (concat
-     "^\\(" del "[ \t]+\\)"		      ; 1
+     "^\\(" del "[ \t]+\\)"                   ; 1
      "\\([^ \t\n].*?\\)"                          ; 2
      ;; using \n instad $ is important so group 3 is guaranteed to be at least 1
      ;; char long (except when at the end of the buffer()). That is important to
@@ -656,8 +656,8 @@ line of the title's text. When nil it defaults to 4."
   (unless length
     (setq length 4))
   (let* ((repetition-cnt (if (>= length 2) (/ length 2) 1))
-	 (del (nth level adoc-two-line-title-del))
-	 (result ""))
+         (del (nth level adoc-two-line-title-del))
+         (result ""))
     (while (> repetition-cnt 0)
       (setq result (concat result del))
       (setq repetition-cnt (- repetition-cnt 1)))
@@ -755,25 +755,25 @@ Subgroups:
            (del (regexp-quote deluq))
            (del1st (substring deluq 0 1)))
       (concat
-       "^\\([ \t]*\\)"			; 1
-       "\\(.*[^" del1st "\n]\\)"	; 2
+       "^\\([ \t]*\\)"                  ; 1
+       "\\(.*[^" del1st "\n]\\)"        ; 2
        "\\(\\(" del "\\)\\(?:[ \t]+\\|$\\)\\)"))) ; 3 & 4
 
    ;; glossary (DEPRECATED)
    ;; ^(?P<label>.*\S):-$
    ((eq type 'adoc-labeled-qanda)
     (concat
-     "^\\([ \t]*\\)"			; 1
-     "\\(.*[^ \t\n]\\)"			; 2
-     "\\(\\(\\?\\?\\)\\)$"))		; 3 & 4
+     "^\\([ \t]*\\)"                    ; 1
+     "\\(.*[^ \t\n]\\)"                 ; 2
+     "\\(\\(\\?\\?\\)\\)$"))            ; 3 & 4
 
    ;; qanda (DEPRECATED)
    ;; ^\s*(?P<label>.*\S)\?\?$
    ((eq type 'adoc-labeled-glossary)
     (concat
-     "^\\(\\)"				; 1
-     "\\(.*[^ \t\n]\\)"			; 2
-     "\\(\\(:-\\)\\)$"))		; 3 & 4
+     "^\\(\\)"                          ; 1
+     "\\(.*[^ \t\n]\\)"                 ; 2
+     "\\(\\(:-\\)\\)$"))                ; 3 & 4
    (t (error "Unknown type/level"))))
 
 (defun adoc-re-delimited-block-line ()
@@ -796,20 +796,20 @@ Subgroups:
 ;; delimited blocks are surrounded by blank lines.
 (defun adoc-re-delimited-block (del)
   (let* ((tmp (nth del adoc-delimited-block-del))
-	 (start (if (consp tmp) (car tmp) tmp))
-	 (end (if (consp tmp) (cdr tmp) tmp)))
+         (start (if (consp tmp) (car tmp) tmp))
+         (end (if (consp tmp) (cdr tmp) tmp)))
     (concat
      "\\(" start "\\)[ \t]*\n"
      "\\("
-       ;; a single leading non-blank line
-       "[ \t]*[^ \t\n].*\n"
-       ;; optionally followed by
-       "\\(?:"
-         ;; any number of arbitrary lines followed by
-         "\\(?:.*\n\\)*?"
-         ;; a trailing non blank line
-         "[ \t]*[^ \t\n].*\n"
-       "\\)??"
+     ;; a single leading non-blank line
+     "[ \t]*[^ \t\n].*\n"
+     ;; optionally followed by
+     "\\(?:"
+     ;; any number of arbitrary lines followed by
+     "\\(?:.*\n\\)*?"
+     ;; a trailing non blank line
+     "[ \t]*[^ \t\n].*\n"
+     "\\)??"
      "\\)??"
      "\\(" end "\\)[ \t]*$")))
 
@@ -822,16 +822,16 @@ Subgroups:
 
    ;; sequence of verbatim paragraphs
    "\\(?:"
-     ;; 1st line starts with blanks, but has also non blanks, i.e. is not empty
-     "[ \t]+[^ \t\n].*"
-     ;; 2nd+ line is neither a blank line nor a list continuation line
-     "\\(?:\n\\(?:[^+ \t\n]\\|[ \t]+[^ \t\n]\\|\\+[ \t]*[^ \t\n]\\).*?\\)*?"
-     ;; paragraph delimited by blank line or list continuation or end of buffer
-     ;; NOTE: now list continuation belongs the the verbatim paragraph sequence,
-     ;; but actually we want to highlight it differently. Thus the font lock
-     ;; keywoard handling list continuation must come after verbatim paraphraph
-     ;; sequence.
-     "\\(?:\n[ \t]*\\(?:\n\\|\\'\\)\\|\n\\+[ \t]*\n\\|\\'\\)"
+   ;; 1st line starts with blanks, but has also non blanks, i.e. is not empty
+   "[ \t]+[^ \t\n].*"
+   ;; 2nd+ line is neither a blank line nor a list continuation line
+   "\\(?:\n\\(?:[^+ \t\n]\\|[ \t]+[^ \t\n]\\|\\+[ \t]*[^ \t\n]\\).*?\\)*?"
+   ;; paragraph delimited by blank line or list continuation or end of buffer
+   ;; NOTE: now list continuation belongs the the verbatim paragraph sequence,
+   ;; but actually we want to highlight it differently. Thus the font lock
+   ;; keywoard handling list continuation must come after verbatim paraphraph
+   ;; sequence.
+   "\\(?:\n[ \t]*\\(?:\n\\|\\'\\)\\|\n\\+[ \t]*\n\\|\\'\\)"
    "\\)+"
 
    "\\)" ))
@@ -891,21 +891,21 @@ this id. If ID is nil, the regexp matches any anchor."
    ((eq type 'block-id)
     ;; ^\[\[(?P<id>[\w\-_]+)(,(?P<reftext>.*?))?\]\]$
     (concat "^\\[\\["
-	    "\\(" (if id (regexp-quote id) (adoc-re-id)) "\\)"
-	    "\\(?:,\\(.*?\\)\\)?"
-	    "\\]\\][ \t]*$"))
+            "\\(" (if id (regexp-quote id) (adoc-re-id)) "\\)"
+            "\\(?:,\\(.*?\\)\\)?"
+            "\\]\\][ \t]*$"))
 
    ((eq type 'inline-special)
     ;; [\\]?\[\[(?P<attrlist>[\w"_:].*?)\]\]
     (concat "\\(\\[\\[\\)"
-	    "\\(" (if id (concat (regexp-quote id) "[ \t]*?") "[a-zA-Z0-9\"_:].*?") "\\)"
-	    "\\(\\]\\]\\)"))
+            "\\(" (if id (concat (regexp-quote id) "[ \t]*?") "[a-zA-Z0-9\"_:].*?") "\\)"
+            "\\(\\]\\]\\)"))
 
    ((eq type 'biblio)
     ;; [\\]?\[\[\[(?P<attrlist>[\w_:][\w_:.-]*?)\]\]\]
     (concat "\\(\\[\\[\\)"
-	    "\\(\\[" (if id (regexp-quote id) "[a-zA-Z0-9_:][a-zA-Z0-9_:.-]*?") "\\]\\)"
-	    "\\(\\]\\]\\)"))
+            "\\(\\[" (if id (regexp-quote id) "[a-zA-Z0-9_:][a-zA-Z0-9_:.-]*?") "\\]\\)"
+            "\\(\\]\\]\\)"))
 
    ((eq type 'inline-general)
     (adoc-re-inline-macro "anchor" id))
@@ -929,13 +929,13 @@ further tests to find a proper xref."
    ((eq type 'inline-special-with-caption)
     ;; (?su)[\\]?&lt;&lt;(?P<attrlist>[\w"].*?)&gt;&gt;=xref2
     (if for-kw
-	"\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+        "\\(<<\\)\\([a-zA-Z0-9\"].*?\\)\\(,\\)\\(.*?\\(?:\n.*?\\)??\\)\\(>>\\)"
       (concat "\\(<<\\)\\(" (adoc-re-id) "[ \t\n]*\\)\\(,\\)\\([^>\n]*?\\(?:\n[^>\n]*?\\)??\\)\\(>>\\)")))
 
    ((eq type 'inline-special-no-caption)
     ;; asciidoc.conf uses the same regexp as for without caption
     (if for-kw
-	"\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)"
+        "\\(<<\\)\\([a-zA-Z0-9\"].*?\\(?:\n.*?\\)??\\)\\(>>\\)"
       (concat "\\(<<\\)\\(" (adoc-re-id) "[ \t\n]*\\)\\(>>\\)")))
 
    ((eq type 'inline-general-macro)
@@ -959,39 +959,39 @@ Subgroups:
    ",?[ \t\n]*"
    "\\(?:\\([a-zA-Z_]+\\)[ \t\n]*=[ \t\n]*\\)?"         ; 1
    "\\(?:"
-     ;; regexp for string: See 'Mastering Regular Expressions', chapter 'The
-     ;; Real "Unrolling-the-Loop" Pattern'.
-     "\"\\([^\"\\]*\\(?:\\\\.[^\"\\]*\\)*\\)\"[ \t\n]*" "\\|"	; 2
-     "\\([^,]+\\)"					; 3
+   ;; regexp for string: See 'Mastering Regular Expressions', chapter 'The
+   ;; Real "Unrolling-the-Loop" Pattern'.
+   "\"\\([^\"\\]*\\(?:\\\\.[^\"\\]*\\)*\\)\"[ \t\n]*" "\\|"   ; 2
+   "\\([^,]+\\)"                                      ; 3
    "\\)"))
 
 (defun adoc-re-precond (&optional unwanted-chars backslash-allowed disallowed-at-bol)
   (concat
-          (when disallowed-at-bol ".")
-          "\\(?:"
-          (unless disallowed-at-bol "^\\|")
-          "[^"
-          (if unwanted-chars unwanted-chars "")
-          (if backslash-allowed "" "\\")
-          "\n"
-          "]"
-          "\\)"))
+   (when disallowed-at-bol ".")
+   "\\(?:"
+   (unless disallowed-at-bol "^\\|")
+   "[^"
+   (if unwanted-chars unwanted-chars "")
+   (if backslash-allowed "" "\\")
+   "\n"
+   "]"
+   "\\)"))
 
 (defun adoc-re-quote-precondition (not-allowed-chars)
   "Regexp that matches before a (un)constrained quote delimiter.
 
 NOT-ALLOWED-CHARS are chars not allowed before the quote."
   (concat
-     "\\(?:"
-       "^"
-     "\\|"
-       "\\="
-     "\\|"
-       ; or *not* after
-       ; - an backslash
-       ; - user defined chars
-       "[^" not-allowed-chars "\\\n]"
-     "\\)"))
+   "\\(?:"
+   "^"
+   "\\|"
+   "\\="
+   "\\|"
+                                        ; or *not* after
+                                        ; - an backslash
+                                        ; - user defined chars
+   "[^" not-allowed-chars "\\\n]"
+   "\\)"))
 
 ;; AsciiDoc src:
 ;; # Unconstrained quotes can appear anywhere.
@@ -1097,56 +1097,56 @@ Subgroups of returned regexp:
 (defun adoc-re-paragraph-separate ()
   (concat
 
-        ;; empty line
-        "[ \t]*$"
+   ;; empty line
+   "[ \t]*$"
 
-        ;; delimited blocks / two line titles
-        "\\|"
-        "\\("
-          "^+" "\\|"
-          "\\++" "\\|"
-          "/+" "\\|"
-          "-+" "\\|"
-          "\\.+" "\\|"
-          "\\*+" "\\|"
-          "_*+" "\\|"
-          "=*+" "\\|"
-          "~*+" "\\|"
-          "^*+" "\\|"
-          "--"
-        "\\)"
-        "[ \t]*$"
-        ))
+   ;; delimited blocks / two line titles
+   "\\|"
+   "\\("
+   "^+" "\\|"
+   "\\++" "\\|"
+   "/+" "\\|"
+   "-+" "\\|"
+   "\\.+" "\\|"
+   "\\*+" "\\|"
+   "_*+" "\\|"
+   "=*+" "\\|"
+   "~*+" "\\|"
+   "^*+" "\\|"
+   "--"
+   "\\)"
+   "[ \t]*$"
+   ))
 
 ;; todo: use same regexps as for font lock
 (defun adoc-re-paragraph-start ()
   (concat
-        paragraph-separate
+   paragraph-separate
 
-        ;; list items
-        "\\|"
-        "[ \t]*"
-        "\\("
-            "-"                  "\\|"
-            "\\*\\{1,5\\}"       "\\|"
-            "\\.\\{1,5\\}"       "\\|"
-            "[0-9]\\{,3\\}\\."   "\\|"
-            "[a-z]\\{,3\\}\\."   "\\|"
-            "[A-Z]\\{,3\\}\\."   "\\|"
-            "[ivxmcIVXMC]+)"     "\\|"
-            ".*?:\\{2,4\\}"
-        "\\)"
-        "\\( \\|$\\)"
+   ;; list items
+   "\\|"
+   "[ \t]*"
+   "\\("
+   "-"                  "\\|"
+   "\\*\\{1,5\\}"       "\\|"
+   "\\.\\{1,5\\}"       "\\|"
+   "[0-9]\\{,3\\}\\."   "\\|"
+   "[a-z]\\{,3\\}\\."   "\\|"
+   "[A-Z]\\{,3\\}\\."   "\\|"
+   "[ivxmcIVXMC]+)"     "\\|"
+   ".*?:\\{2,4\\}"
+   "\\)"
+   "\\( \\|$\\)"
 
-        ;; table rows
-        "\\|"
-        "|"
+   ;; table rows
+   "\\|"
+   "|"
 
-        ;; one line titles
-        "\\|"
-        "[=.].*$"
+   ;; one line titles
+   "\\|"
+   "[=.].*$"
 
-        ))
+   ))
 
 (defun adoc-re-aor(e1 e2)
   "all or: Returns a regex matching \(e1\|e2\|e1e2\)? "
@@ -1178,10 +1178,10 @@ Subgroups of returned regexp:
    "." (or qualifier "*") "?"
    ;; if content spawns multiple lines
    "\\(?:\n"
-     ;; complete non blank lines
-     "\\(?:[ \t]*\\S-.*\n\\)*?"
-     ;; leading content on last line
-     ".*?"
+   ;; complete non blank lines
+   "\\(?:[ \t]*\\S-.*\n\\)*?"
+   ;; leading content on last line
+   ".*?"
    "\\)??"
    "\\)"))
 
@@ -1201,22 +1201,22 @@ text having adoc-reserved set to 'block-del."
       (setq saved-point (point))
       (setq found (re-search-forward regexp end t))
       (setq prevented
-	    (and found
-		 (or
-		  (cl-some (lambda(x)
-			     (and (match-beginning x)
-				  (text-property-not-all (match-beginning x)
-							 (match-end x)
-							 'adoc-reserved nil)))
-			   must-free-groups)
-		  (cl-some (lambda(x)
-			     (and (match-beginning x))
-			     (text-property-any (match-beginning x)
-			         		(match-end x)
-						'adoc-reserved 'block-del))
-			no-block-del-groups))))
+            (and found
+                 (or
+                  (cl-some (lambda(x)
+                             (and (match-beginning x)
+                                  (text-property-not-all (match-beginning x)
+                                                         (match-end x)
+                                                         'adoc-reserved nil)))
+                           must-free-groups)
+                  (cl-some (lambda(x)
+                             (and (match-beginning x))
+                             (text-property-any (match-beginning x)
+                                                (match-end x)
+                                                'adoc-reserved 'block-del))
+                           no-block-del-groups))))
       (when (and found prevented (<= (point) end))
-	(goto-char (1+ saved-point))))
+        (goto-char (1+ saved-point))))
     (and found (not prevented))))
 
 (defun adoc-kwf-attribute-list (end)
@@ -1269,15 +1269,15 @@ text having adoc-reserved set to 'block-del."
 
 (defun adoc-facespec-subscript ()
   (list 'quote
-	(append '(face markup-subscript-face)
-		(when (not (= 0 (car adoc-script-raise)))
-		  `(display (raise ,(car adoc-script-raise)))))))
+        (append '(face markup-subscript-face)
+                (when (not (= 0 (car adoc-script-raise)))
+                  `(display (raise ,(car adoc-script-raise)))))))
 
 (defun adoc-facespec-superscript ()
   (list 'quote
-	(append '(face markup-superscript-face)
-		(when (not (= 0 (car adoc-script-raise)))
-		  `(display (raise ,(cadr adoc-script-raise)))))))
+        (append '(face markup-superscript-face)
+                (when (not (= 0 (car adoc-script-raise)))
+                  `(display (raise ,(cadr adoc-script-raise)))))))
 
 ;; todo: use & learn some more macro magic so adoc-kw-unconstrained-quote and
 ;; adoc-kw-constrained-quote are less redundant and have common parts in one
@@ -1298,10 +1298,10 @@ text having adoc-reserved set to 'block-del."
   "Creates a keyword for font-lock which highlights one line titles"
   (list
    `(lambda (end) (adoc-kwf-std end ,(adoc-re-one-line-title level) '(0)))
-    '(1 '(face markup-meta-hide-face adoc-reserved block-del) t)
-    `(2 ,text-face t)
-    '(3  '(face nil adoc-reserved block-del) t)
-    '(4 '(face markup-meta-hide-face) t t)))
+   '(1 '(face markup-meta-hide-face adoc-reserved block-del) t)
+   `(2 ,text-face t)
+   '(3  '(face nil adoc-reserved block-del) t)
+   '(4 '(face markup-meta-hide-face) t t)))
 
 ;; todo: highlight bogous 'two line titles' with warning face
 ;; todo: completly remove keyword when adoc-enable-two-line-title is nil
@@ -1313,8 +1313,8 @@ text having adoc-reserved set to 'block-del."
       (and adoc-enable-two-line-title
            (re-search-forward ,(adoc-re-two-line-title del) end t)
            (< (abs (- (length (match-string 2)) (length (match-string 3)))) 3)
-	   (or (not (numberp adoc-enable-two-line-title))
-	       (not (equal adoc-enable-two-line-title (length (match-string 2)))))
+           (or (not (numberp adoc-enable-two-line-title))
+               (not (equal adoc-enable-two-line-title (length (match-string 2)))))
            (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
    ;; highlighers
    `(2 ,text-face t)
@@ -1325,7 +1325,7 @@ text having adoc-reserved set to 'block-del."
 ;;    (concat
 ;;     ",?[ \t\n]*"
 ;;     "\\(?:\\([a-zA-Z_]+\\)[ \t\n]*=[ \t\n]*\\)?" ; attribute name
-;;     "\\([^" enddelchar ",]*\\|" (adoc-re-string) "\\)"))					      ; attribute value
+;;     "\\([^" enddelchar ",]*\\|" (adoc-re-string) "\\)"))                                           ; attribute value
 ;;    '(1 markup-attribute-face t)
 ;;    '(2 markup-value-face t)))
 
@@ -1344,10 +1344,10 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
   (list
    `(lambda (end)
       (when (adoc-kwf-std end ,(adoc-re-llisti sub-type level) '(0))
-	(let ((pos (match-beginning 0)))
-	  (when (> pos (point-min))
-	    (put-text-property (1- pos) pos 'adoc-reserved 'block-del)))
-	t))
+        (let ((pos (match-beginning 0)))
+          (when (> pos (point-min))
+            (put-text-property (1- pos) pos 'adoc-reserved 'block-del)))
+        t))
    '(1 '(face nil adoc-reserved block-del) t)
    '(2 markup-gen-face t)
    '(3 '(face adoc-align adoc-reserved block-del) t)
@@ -1395,12 +1395,12 @@ Concerning TYPE, LEVEL and SUB-TYPE see `adoc-re-llisti'."
 (defun adoc-kw-verbatim-paragraph-sequence ()
   "Creates a keyword which highlights a sequence of verbatim paragraphs."
   (list
-    ;; matcher function
-    `(lambda (end)
+   ;; matcher function
+   `(lambda (end)
       (and (re-search-forward ,(adoc-re-verbatim-paragraph-sequence) end t)
            (not (text-property-not-all (match-beginning 0) (match-end 0) 'adoc-reserved nil))))
-    ;; highlighers
-    '(1 '(face adoc-monospace adoc-reserved t font-lock-multiline t))))
+   ;; highlighers
+   '(1 '(face adoc-monospace adoc-reserved t font-lock-multiline t))))
 
 (defun adoc-kw-block-title ()
   (list
@@ -1420,8 +1420,8 @@ When LITERAL-P is non-nil, the contained text is literal text."
    `(2 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t)  ; open del
    `(3 ,text-face-spec append)                                               ; text
    (if literal-p
-	`(3 '(face ,markup-verbatim-face adoc-reserved t) append)
-      '(3 nil)) ; grumbl, I dont know how to get rid of it
+       `(3 '(face ,markup-verbatim-face adoc-reserved t) append)
+     '(3 nil)) ; grumbl, I dont know how to get rid of it
    `(4 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t))); close del
 
 (defun adoc-kw-inline-macro (&optional cmd-name unconstrained attribute-list-constraints cmd-face target-faces target-meta-p attribute-list)
@@ -1438,12 +1438,12 @@ meta characters."
   (list
    `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil unconstrained attribute-list-constraints) '(1 2 4 5) '(0)))
    `(1 '(face ,(or cmd-face markup-command-face) adoc-reserved t) t) ; cmd-name
-   '(2 '(face markup-meta-face adoc-reserved t) t)		     ; :
-   `(3 ,(cond ((not target-faces) markup-meta-face)		     ; target
-	      ((listp target-faces) `(if (string= (match-string 5) "") ; 5=attribute-list
-					 ,(car target-faces)
-				       ,(cadr target-faces)))
-	      (t target-faces))
+   '(2 '(face markup-meta-face adoc-reserved t) t)                   ; :
+   `(3 ,(cond ((not target-faces) markup-meta-face)                  ; target
+              ((listp target-faces) `(if (string= (match-string 5) "") ; 5=attribute-list
+                                         ,(car target-faces)
+                                       ,(cadr target-faces)))
+              (t target-faces))
        ,(if target-meta-p t 'append))
    '(4 '(face markup-meta-face adoc-reserved t) t) ; [
    `(5 '(face markup-meta-face adoc-attribute-list ,(or attribute-list t)) t)
@@ -1458,7 +1458,7 @@ meta characters."
      `(1 '(face markup-internal-reference-face adoc-reserved t) t) ; cmd-name
      `(2 '(face markup-internal-reference-face adoc-reserved t) t) ; :
      `(3 '(face markup-internal-reference-face adoc-reserved t) t) ; target
-     '(4 '(face markup-meta-face adoc-reserved t) t)		   ; [
+     '(4 '(face markup-meta-face adoc-reserved t) t)               ; [
      `(5 '(face markup-reference-face adoc-attribute-list markup-reference-face) append)
      '(6 '(face markup-meta-face adoc-reserved t) t))))            ; ]
 
@@ -1467,10 +1467,10 @@ meta characters."
     (list
      `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil nil 'empty) '(0) '(0)))
      '(1 '(face markup-reference-face adoc-reserved t) append) ; cmd-name
-     '(2 '(face markup-reference-face adoc-reserved t) append)		     ; :
-     '(3 '(face markup-reference-face adoc-reserved t) append)		     ; target
+     '(2 '(face markup-reference-face adoc-reserved t) append)               ; :
+     '(3 '(face markup-reference-face adoc-reserved t) append)               ; target
      '(4 '(face markup-meta-face adoc-reserved t) t) ; [
-					             ; 5 = attriblist is empty
+                                        ; 5 = attriblist is empty
      '(6 '(face markup-meta-face adoc-reserved t) t)))) ; ]
 
 ;; standalone url
@@ -1504,9 +1504,9 @@ meta characters."
 ;;   adoc-reserved non-nil, also because quote highlighting already happened.
 (defun adoc-kw-standalone-urls ()
   (let* ((url "\\b\\(?:https?\\|ftp\\|file\\|irc\\)://[^ \t\n<>]*[a-zA-Z0-9_/]")
-	 (url<> (concat "<\\(?:" url "\\)>"))
-	 (email "[a-zA-Z0-9_][-a-zA-Z0-9_._]*@[-a-zA-Z0-9_._]*[a-zA-Z0-9_]")
-	 (both (concat "\\(?:" url "\\)\\|\\(?:" url<> "\\)\\|\\(?:" email "\\)")))
+         (url<> (concat "<\\(?:" url "\\)>"))
+         (email "[a-zA-Z0-9_][-a-zA-Z0-9_._]*@[-a-zA-Z0-9_._]*[a-zA-Z0-9_]")
+         (both (concat "\\(?:" url "\\)\\|\\(?:" url<> "\\)\\|\\(?:" email "\\)")))
     (list
      `(lambda (end) (adoc-kwf-std end ,both '(0) '(0)))
      '(0 '(face markup-reference-face adoc-reserved t) append t))))
@@ -1582,21 +1582,21 @@ meta characters."
 (defun adoc-flf-meta-face-cleanup (end)
   (while (< (point) end)
     (let* ((next-pos (next-single-property-change (point) 'face nil end))
-	   (faces-raw (get-text-property (point) 'face))
-	   (faces (if (listp faces-raw) faces-raw (list faces-raw)))
-	   newfaces
-	   meta-p)
+           (faces-raw (get-text-property (point) 'face))
+           (faces (if (listp faces-raw) faces-raw (list faces-raw)))
+           newfaces
+           meta-p)
       (while faces
-	(if (member (car faces) '(markup-meta-hide-face markup-command-face markup-attribute-face markup-value-face markup-complex-replacement-face markup-list-face markup-table-face markup-table-row-face markup-table-cell-face markup-anchor-face markup-internal-reference-face markup-comment-face markup-preprocessor-face))
-	    (progn
-	      (setq meta-p t)
-	      (setq newfaces (cons (car faces) newfaces)))
-	  (if (not (string-match "markup-" (symbol-name (car faces))))
-	      (setq newfaces (cons (car faces) newfaces))))
-	(setq faces (cdr faces)))
+        (if (member (car faces) '(markup-meta-hide-face markup-command-face markup-attribute-face markup-value-face markup-complex-replacement-face markup-list-face markup-table-face markup-table-row-face markup-table-cell-face markup-anchor-face markup-internal-reference-face markup-comment-face markup-preprocessor-face))
+            (progn
+              (setq meta-p t)
+              (setq newfaces (cons (car faces) newfaces)))
+          (if (not (string-match "markup-" (symbol-name (car faces))))
+              (setq newfaces (cons (car faces) newfaces))))
+        (setq faces (cdr faces)))
       (if meta-p
-	  (put-text-property (point) next-pos 'face
-			     (if (= 1 (length newfaces)) (car newfaces) newfaces)))
+          (put-text-property (point) next-pos 'face
+                             (if (= 1 (length newfaces)) (car newfaces) newfaces)))
       (goto-char next-pos)))
   nil)
 
@@ -1617,12 +1617,12 @@ meta characters."
   (when (not (and (= 0 (car adoc-script-raise)) (= 0 (cadr adoc-script-raise))))
     (while (< beg end)
       (let ((next (next-single-property-change beg 'display nil end))
-	    (prop (get-text-property beg 'display)))
-	(if (and (eq (car-safe prop) 'raise)
-		 (member (car-safe (cdr prop)) adoc-script-raise)
-		 (null (cddr prop)))
-	    (put-text-property beg next 'display nil))
-	(setq beg next)))))
+            (prop (get-text-property beg 'display)))
+        (if (and (eq (car-safe prop) 'raise)
+                 (member (car-safe (cdr prop)) adoc-script-raise)
+                 (null (cddr prop)))
+            (put-text-property beg next 'display nil))
+        (setq beg next)))))
 
 (defun adoc-font-lock-mark-block-function ()
   (mark-paragraph 2)
@@ -1666,7 +1666,7 @@ meta characters."
          '(1 '(face adoc-preprocessor adoc-reserved block-del))    ; macro name
          '(2 '(face adoc-delimiter adoc-reserved block-del))       ; condition
          '(3 '(face adoc-hide-delimiter adoc-reserved block-del))  ; [
-         ; ... attribute list content = the conditionaly included text
+                                        ; ... attribute list content = the conditionaly included text
          '(4 '(face adoc-hide-delimiter adoc-reserved block-del))) ; ]
    ;; include
    (list "^\\(\\(include1?::\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(\\]\\)\\)[ \t]*$"
@@ -1698,7 +1698,7 @@ meta characters."
    ;; asciidoc manual, sub chapter 'Image macro attributes'.
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro "image") '(0)))
          '(0 '(face markup-meta-face adoc-reserved block-del) t) ; whole match
-         '(1 markup-complex-replacement-face t)	; 'image'
+         '(1 markup-complex-replacement-face t) ; 'image'
          '(2 markup-internal-reference-face t)  ; file name
          '(3 '(face markup-meta-face adoc-reserved nil adoc-attribute-list ("alt")) t)) ; attribute list
 
@@ -1708,7 +1708,7 @@ meta characters."
    ;; -- general block macro
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro) '(0)))
          '(0 '(face markup-meta-face adoc-reserved block-del)) ; whole match
-         '(1 markup-command-face t)			       ; command name
+         '(1 markup-command-face t)                            ; command name
          '(3 '(face markup-meta-face adoc-reserved nil adoc-attribute-list t) t)) ; attribute list
 
    ;; lists
@@ -1791,10 +1791,10 @@ meta characters."
    ;; quote/verse
    (list (concat
           "^\\("
-            "\\(\\[\\)"
-            "\\(quote\\|verse\\)"
-            "\\(?:\\(,\\)\\(.*?\\)\\(?:\\(,\\)\\(.*?\\)\\)?\\)?"
-            "\\(\\]\\)"
+          "\\(\\[\\)"
+          "\\(quote\\|verse\\)"
+          "\\(?:\\(,\\)\\(.*?\\)\\(?:\\(,\\)\\(.*?\\)\\)?\\)?"
+          "\\(\\]\\)"
           "\\)[ \t]*$")
          '(1 '(face nil adoc-reserved block-del)) ; whole match
          '(2 adoc-hide-delimiter)         ; [
@@ -1809,15 +1809,15 @@ meta characters."
          '(1 '(face adoc-complex-replacement adoc-reserved block-del)))
    ;; block id
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-anchor 'block-id) '(0)))
-   	 '(0 '(face markup-meta-face adoc-reserved block-del))
-   	 '(1 markup-anchor-face t)
-   	 '(2 markup-secondary-text-face t t))
+         '(0 '(face markup-meta-face adoc-reserved block-del))
+         '(1 markup-anchor-face t)
+         '(2 markup-secondary-text-face t t))
 
    ;; --- general attribute list block element
    ;; ^\[(?P<attrlist>.*)\]$
    (list '(lambda (end) (adoc-kwf-std end "^\\(\\[\\(.*\\)\\]\\)[ \t]*$" '(0)))
          '(1 '(face markup-meta-face adoc-reserved block-del))
-   	 '(2 '(face markup-meta-face adoc-attribute-list t)))
+         '(2 '(face markup-meta-face adoc-attribute-list t)))
 
 
    ;; block title
@@ -1876,7 +1876,7 @@ meta characters."
    (adoc-kw-quote 'adoc-unconstrained "**" markup-strong-face)
    (adoc-kw-quote 'adoc-constrained "*" markup-strong-face)
    (adoc-kw-quote 'adoc-constrained "``" nil adoc-replacement "''") ; double quoted text
-   (adoc-kw-quote 'adoc-constrained "'" markup-emphasis-face)	   ; single quoted text
+   (adoc-kw-quote 'adoc-constrained "'" markup-emphasis-face)      ; single quoted text
    (adoc-kw-quote 'adoc-constrained "`" nil adoc-replacement "'")
    ;; `...` , +++...+++, $$...$$ are within passthrough stuff above
    (adoc-kw-quote 'adoc-unconstrained "++" markup-typewriter-face) ; AsciiDoc manual: really onl '..are rendered in a monospaced font.'
@@ -1939,12 +1939,12 @@ meta characters."
    (adoc-kw-inline-macro-urls-attribute-list)
    (adoc-kw-inline-macro "anchor" nil nil nil markup-anchor-face t '("xreflabel"))
    (adoc-kw-inline-macro "image" nil nil markup-complex-replacement-face markup-internal-reference-face t
-     '("alt"))
+                         '("alt"))
    (adoc-kw-inline-macro "xref" nil nil nil '(markup-reference-face markup-internal-reference-face) t
-     '(("caption") (("caption" . markup-reference-face))))
+                         '(("caption") (("caption" . markup-reference-face))))
    (adoc-kw-inline-macro "footnote" t nil nil nil nil markup-secondary-text-face)
    (adoc-kw-inline-macro "footnoteref" t 'single-attribute nil nil nil
-    '(("id") (("id" . markup-internal-reference-face))))
+                         '(("id") (("id" . markup-internal-reference-face))))
    (adoc-kw-inline-macro "footnoteref" t nil nil nil nil '("id" "text"))
    (adoc-kw-standalone-urls)
 
@@ -1956,14 +1956,14 @@ meta characters."
    ;; attribute list, for simplicity adoc-mode doesn't really treat it as such.
    ;; The attrib list can only contain one element anyway.
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-anchor 'biblio) '(1 3) '(0)))
-   	 '(1 '(face markup-meta-face adoc-reserved t) t)  ; [[
-   	 '(2 markup-gen-face)				  ; [id]
-	 '(3 '(face markup-meta-face adoc-reserved t) t)) ; ]]
+         '(1 '(face markup-meta-face adoc-reserved t) t)  ; [[
+         '(2 markup-gen-face)                             ; [id]
+         '(3 '(face markup-meta-face adoc-reserved t) t)) ; ]]
    ;; anchor ala [[id]] or [[id,xreflabel]]
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-anchor 'inline-special) '(1 3) '(0)))
-   	 '(1 '(face markup-meta-face adoc-reserved t) t)
-   	 '(2 '(face markup-meta-face adoc-attribute-list ("id" "xreflabel")) t)
-	 '(3 '(face markup-meta-face adoc-reserved t) t))
+         '(1 '(face markup-meta-face adoc-reserved t) t)
+         '(2 '(face markup-meta-face adoc-attribute-list ("id" "xreflabel")) t)
+         '(3 '(face markup-meta-face adoc-reserved t) t))
 
    ;; see also xref: within inline macros
    ;; reference with own/explicit caption
@@ -2057,14 +2057,14 @@ meta characters."
   ;; the id, opposed to the start the id. Or if the xref spawns over the current
   ;; line.
   (interactive (let* ((default (adoc-xref-id-at-point))
-		      (default-str (if default (concat "(default " default ")") "")))
-		 (list
-		  (read-string
-		   (concat "Goto anchor of reference/label " default-str ": ")
-		   nil nil default))))
+                      (default-str (if default (concat "(default " default ")") "")))
+                 (list
+                  (read-string
+                   (concat "Goto anchor of reference/label " default-str ": ")
+                   nil nil default))))
   (let ((pos (save-excursion
-	       (goto-char 0)
-	       (re-search-forward (adoc-re-anchor nil id) nil t))))
+               (goto-char 0)
+               (re-search-forward (adoc-re-anchor nil id) nil t))))
     (if (null pos) (error (concat "Can't find an anchor defining '" id "'")))
     (push-mark)
     (goto-char pos)))
@@ -2159,157 +2159,157 @@ new customization demands."
       ;; names|wording / rough order/ help texts are from asciidoc manual
       ("Templates / cheat sheet"
        ("Text formatting - constrained quotes"
-	:help ,adoc-help-constrained-quotes
-	["_Emphasis_" tempo-template-adoc-emphasis
-	 :help ,adoc-help-emphasis ]
-	["*Strong*" tempo-template-adoc-strong
-	 :help ,adoc-help-strong ]
-	["+Monospaced+" tempo-template-adoc-monospace
-	 :help ,adoc-help-monospace]
-	["`Monospaced literal`" tempo-template-adoc-monospace-literal ; redundant to the one in the passthrough section
-	 :help ,adoc-help-monospace-literal]
-	["`Single quote'" tempo-template-adoc-single-quote
-	 :help ,adoc-help-single-quote]
-	["``Double quote''" tempo-template-adoc-double-quote
-	 :help ,adoc-help-double-quote]
-	;; todo: insert underline, overline, strikethrough, big, small
-	["[attributes]##text##" tempo-template-adoc-attributed
-	 :help ,adoc-help-attributed])
+        :help ,adoc-help-constrained-quotes
+        ["_Emphasis_" tempo-template-adoc-emphasis
+         :help ,adoc-help-emphasis ]
+        ["*Strong*" tempo-template-adoc-strong
+         :help ,adoc-help-strong ]
+        ["+Monospaced+" tempo-template-adoc-monospace
+         :help ,adoc-help-monospace]
+        ["`Monospaced literal`" tempo-template-adoc-monospace-literal ; redundant to the one in the passthrough section
+         :help ,adoc-help-monospace-literal]
+        ["`Single quote'" tempo-template-adoc-single-quote
+         :help ,adoc-help-single-quote]
+        ["``Double quote''" tempo-template-adoc-double-quote
+         :help ,adoc-help-double-quote]
+        ;; todo: insert underline, overline, strikethrough, big, small
+        ["[attributes]##text##" tempo-template-adoc-attributed
+         :help ,adoc-help-attributed])
        ("Text formatting - unconstrained quotes"
-	:help ,adoc-help-unconstrained-quotes
-	["^Superscript^" tempo-template-adoc-superscript]
-	["~Subscript~" tempo-template-adoc-subscript]
-	["__Emphasis__" tempo-template-adoc-emphasis-uc
-	 :help ,adoc-help-emphasis ]
-	["**Strong**" tempo-template-adoc-strong-uc
-	 :help ,adoc-help-strong ]
-	["++Monospaced++" tempo-template-adoc-monospace-uc
-	 :help ,adoc-help-monospace]
-	["[attributes]##text##" tempo-template-adoc-attributed-uc
-	 :help ,adoc-help-attributed])
+        :help ,adoc-help-unconstrained-quotes
+        ["^Superscript^" tempo-template-adoc-superscript]
+        ["~Subscript~" tempo-template-adoc-subscript]
+        ["__Emphasis__" tempo-template-adoc-emphasis-uc
+         :help ,adoc-help-emphasis ]
+        ["**Strong**" tempo-template-adoc-strong-uc
+         :help ,adoc-help-strong ]
+        ["++Monospaced++" tempo-template-adoc-monospace-uc
+         :help ,adoc-help-monospace]
+        ["[attributes]##text##" tempo-template-adoc-attributed-uc
+         :help ,adoc-help-attributed])
        ("Text formatting - misc"
-	["Line break: <SPC>+<NEWLINE>" tempo-template-adoc-line-break
-	 :help ,adoc-help-line-break]
-	["Page break: <<<" tempo-template-adoc-page-break
-	 :help ,adoc-help-page-break]
-	["Ruler line: ---" tempo-template-adoc-ruler-line
-	 :help ,adoc-help-ruler-line])
+        ["Line break: <SPC>+<NEWLINE>" tempo-template-adoc-line-break
+         :help ,adoc-help-line-break]
+        ["Page break: <<<" tempo-template-adoc-page-break
+         :help ,adoc-help-page-break]
+        ["Ruler line: ---" tempo-template-adoc-ruler-line
+         :help ,adoc-help-ruler-line])
        ("Text formatting - replacements"
-	["Copyright: (C) \u2192 \u00A9" tempo-template-adoc-copyright]
-	["Trademark: (TM) \u2192 \u2122" tempo-template-adoc-trademark]
-	["Registered trademark: (R) \u2192 \u00AE" tempo-template-adoc-registered-trademark]
-	["Dash: -- \u2192 \u2014" tempo-template-adoc-dash]
-	["Ellipsis: ... \u2192 \u2026" tempo-template-adoc-ellipsis]
-	["Right arrow: -> \u2192 \u2192" tempo-template-adoc-right-arrow]
-	["Left arrow: <- \u2192 \u2190" tempo-template-adoc-left-arrow]
-	["Right double arrow: => \u2192 \u21D2" tempo-template-adoc-right-double-arrow]
-	["Left double arrow: <= \u2192 \u21D0" tempo-template-adoc-left-double-arrow]
-	"---"
-	["Character entity reference: &...;" tempo-template-adoc-entity-reference
-	 :help ,adoc-help-entity-reference])
+        ["Copyright: (C) \u2192 \u00A9" tempo-template-adoc-copyright]
+        ["Trademark: (TM) \u2192 \u2122" tempo-template-adoc-trademark]
+        ["Registered trademark: (R) \u2192 \u00AE" tempo-template-adoc-registered-trademark]
+        ["Dash: -- \u2192 \u2014" tempo-template-adoc-dash]
+        ["Ellipsis: ... \u2192 \u2026" tempo-template-adoc-ellipsis]
+        ["Right arrow: -> \u2192 \u2192" tempo-template-adoc-right-arrow]
+        ["Left arrow: <- \u2192 \u2190" tempo-template-adoc-left-arrow]
+        ["Right double arrow: => \u2192 \u21D2" tempo-template-adoc-right-double-arrow]
+        ["Left double arrow: <= \u2192 \u21D0" tempo-template-adoc-left-double-arrow]
+        "---"
+        ["Character entity reference: &...;" tempo-template-adoc-entity-reference
+         :help ,adoc-help-entity-reference])
        ("Titles"
-	[,(concat "Document title (level 0): " (adoc-template-str-title 0))
-	 tempo-template-adoc-title-1]
-	[,(concat "Section title (level 1): " (adoc-template-str-title 1))
-	 tempo-template-adoc-title-2]
-	[,(concat "Section title (level 2): " (adoc-template-str-title 2))
-	 tempo-template-adoc-title-3]
-	[,(concat "Section title (level 3): " (adoc-template-str-title 3))
-	 tempo-template-adoc-title-4]
-	[,(concat "Section title (level 4): " (adoc-template-str-title 4))
-	 tempo-template-adoc-title-5]
-	["Block title: .foo" tempo-template-adoc-block-title]
-	["BlockId: [[id]]" tempo-template-adoc-anchor]) ; redundant to anchor below
+        [,(concat "Document title (level 0): " (adoc-template-str-title 0))
+         tempo-template-adoc-title-1]
+        [,(concat "Section title (level 1): " (adoc-template-str-title 1))
+         tempo-template-adoc-title-2]
+        [,(concat "Section title (level 2): " (adoc-template-str-title 2))
+         tempo-template-adoc-title-3]
+        [,(concat "Section title (level 3): " (adoc-template-str-title 3))
+         tempo-template-adoc-title-4]
+        [,(concat "Section title (level 4): " (adoc-template-str-title 4))
+         tempo-template-adoc-title-5]
+        ["Block title: .foo" tempo-template-adoc-block-title]
+        ["BlockId: [[id]]" tempo-template-adoc-anchor]) ; redundant to anchor below
        ("Paragraphs"
-	["Literal paragraph" tempo-template-adoc-literal-paragraph
-	 :help ,adoc-help-literal-paragraph]
-	"---"
-	["TIP: " tempo-template-adoc-paragraph-tip]
-	["NOTE: " tempo-template-adoc-paragraph-note]
-	["IMPORTANT: " tempo-template-adoc-paragraph-important]
-	["WARNING: " tempo-template-adoc-paragraph-warning]
-	["CAUTION: " tempo-template-adoc-paragraph-caution])
+        ["Literal paragraph" tempo-template-adoc-literal-paragraph
+         :help ,adoc-help-literal-paragraph]
+        "---"
+        ["TIP: " tempo-template-adoc-paragraph-tip]
+        ["NOTE: " tempo-template-adoc-paragraph-note]
+        ["IMPORTANT: " tempo-template-adoc-paragraph-important]
+        ["WARNING: " tempo-template-adoc-paragraph-warning]
+        ["CAUTION: " tempo-template-adoc-paragraph-caution])
        ("Delimited blocks"
-	:help ,adoc-help-delimited-block
-	;; BUG: example does not reflect the content of adoc-delimited-block-del
-	["Comment: ////" tempo-template-adoc-delimited-block-comment
-	 :help ,adoc-help-delimited-block-comment]
-	["Passthrough: ++++" tempo-template-adoc-delimited-block-passthrough
-	 :help ,adoc-help-delimited-block-passthrouh]
-	["Listing: ----" tempo-template-adoc-delimited-block-listing
-	 :help ,adoc-help-delimited-block-listing]
-	["Literal: ...." tempo-template-adoc-delimited-block-literal
-	 :help ,adoc-help-delimited-block-literal]
-	["Quote: ____" tempo-template-adoc-delimited-block-quote
-	 :help ,adoc-help-delimited-block-quote]
-	["Example: ====" tempo-template-adoc-delimited-block-example
-	 :help ,adoc-help-delimited-block-example]
-	["Sidebar: ****" tempo-template-adoc-delimited-block-sidebar
-	 :help ,adoc-help-delimited-block-sidebar]
-	["Open: --" tempo-template-adoc-delimited-block-open-block
-	 :help ,adoc-help-delimited-block-open-block])
+        :help ,adoc-help-delimited-block
+        ;; BUG: example does not reflect the content of adoc-delimited-block-del
+        ["Comment: ////" tempo-template-adoc-delimited-block-comment
+         :help ,adoc-help-delimited-block-comment]
+        ["Passthrough: ++++" tempo-template-adoc-delimited-block-passthrough
+         :help ,adoc-help-delimited-block-passthrouh]
+        ["Listing: ----" tempo-template-adoc-delimited-block-listing
+         :help ,adoc-help-delimited-block-listing]
+        ["Literal: ...." tempo-template-adoc-delimited-block-literal
+         :help ,adoc-help-delimited-block-literal]
+        ["Quote: ____" tempo-template-adoc-delimited-block-quote
+         :help ,adoc-help-delimited-block-quote]
+        ["Example: ====" tempo-template-adoc-delimited-block-example
+         :help ,adoc-help-delimited-block-example]
+        ["Sidebar: ****" tempo-template-adoc-delimited-block-sidebar
+         :help ,adoc-help-delimited-block-sidebar]
+        ["Open: --" tempo-template-adoc-delimited-block-open-block
+         :help ,adoc-help-delimited-block-open-block])
        ("Lists"
-	:help ,adoc-help-list
-	("Bulleted"
-	 :help ,adoc-help-bulleted-list
-	 ["Item: -" tempo-template-adoc-bulleted-list-item-1]
-	 ["Item: **" tempo-template-adoc-bulleted-list-item-2]
-	 ["Item: ***" tempo-template-adoc-bulleted-list-item-3]
-	 ["Item: ****" tempo-template-adoc-bulleted-list-item-4]
-	 ["Item: *****" tempo-template-adoc-bulleted-list-item-5])
-	("Numbered - explicit"
-	 ["Arabic (decimal) numbered item: 1." tempo-template-adoc-numbered-list-item]
-	 ["Lower case alpha (letter) numbered item: a." tempo-template-adoc-numbered-list-item]
-	 ["Upper case alpha (letter) numbered item: A." tempo-template-adoc-numbered-list-item]
-	 ["Lower case roman numbered list item: i)" tempo-template-adoc-numbered-list-item-roman]
-	 ["Upper case roman numbered list item: I)" tempo-template-adoc-numbered-list-item-roman])
-	("Numbered - implicit"
-	 ["Arabic (decimal) numbered item: ." tempo-template-adoc-implicit-numbered-list-item-1]
-	 ["Lower case alpha (letter) numbered item: .." tempo-template-adoc-implicit-numbered-list-item-2]
-	 ["Upper case alpha (letter)numbered item: ..." tempo-template-adoc-implicit-numbered-list-item-3]
-	 ["Lower case roman numbered list item: ...." tempo-template-adoc-implicit-numbered-list-item-4]
-	 ["Upper case roman numbered list item: ....." tempo-template-adoc-implicit-numbered-list-item-5])
-	["Labeled item: label:: text" tempo-template-adoc-labeled-list-item]
-	["List item continuation: <NEWLINE>+<NEWLINE>" tempo-template-adoc-list-item-continuation
-	 :help ,adoc-help-list-item-continuation])
+        :help ,adoc-help-list
+        ("Bulleted"
+         :help ,adoc-help-bulleted-list
+         ["Item: -" tempo-template-adoc-bulleted-list-item-1]
+         ["Item: **" tempo-template-adoc-bulleted-list-item-2]
+         ["Item: ***" tempo-template-adoc-bulleted-list-item-3]
+         ["Item: ****" tempo-template-adoc-bulleted-list-item-4]
+         ["Item: *****" tempo-template-adoc-bulleted-list-item-5])
+        ("Numbered - explicit"
+         ["Arabic (decimal) numbered item: 1." tempo-template-adoc-numbered-list-item]
+         ["Lower case alpha (letter) numbered item: a." tempo-template-adoc-numbered-list-item]
+         ["Upper case alpha (letter) numbered item: A." tempo-template-adoc-numbered-list-item]
+         ["Lower case roman numbered list item: i)" tempo-template-adoc-numbered-list-item-roman]
+         ["Upper case roman numbered list item: I)" tempo-template-adoc-numbered-list-item-roman])
+        ("Numbered - implicit"
+         ["Arabic (decimal) numbered item: ." tempo-template-adoc-implicit-numbered-list-item-1]
+         ["Lower case alpha (letter) numbered item: .." tempo-template-adoc-implicit-numbered-list-item-2]
+         ["Upper case alpha (letter)numbered item: ..." tempo-template-adoc-implicit-numbered-list-item-3]
+         ["Lower case roman numbered list item: ...." tempo-template-adoc-implicit-numbered-list-item-4]
+         ["Upper case roman numbered list item: ....." tempo-template-adoc-implicit-numbered-list-item-5])
+        ["Labeled item: label:: text" tempo-template-adoc-labeled-list-item]
+        ["List item continuation: <NEWLINE>+<NEWLINE>" tempo-template-adoc-list-item-continuation
+         :help ,adoc-help-list-item-continuation])
        ("Tables"
-	:help ,adoc-help-table
+        :help ,adoc-help-table
         ["Example table" tempo-template-adoc-example-table])
        ("Macros (inline & block)"
-	:help ,adoc-help-macros
-	["URL: http://foo.com" tempo-template-adoc-url
-	 :help ,adoc-help-url]
-	["URL with caption: http://foo.com[caption]" tempo-template-adoc-url-caption
-	 :help ,adoc-help-url]
-	["EMail: bob@foo.com" tempo-template-adoc-email
-	 :help ,adoc-help-url]
-	["EMail with caption: mailto:address[caption]" tempo-template-adoc-email-caption
-	 :help ,adoc-help-url]
-	["Anchor aka BlockId (syntax 1): [[id,xreflabel]]" tempo-template-adoc-anchor
-	 :help ,adoc-help-anchor]
-	["Anchor (syntax 2): anchor:id[xreflabel]" tempo-template-adoc-anchor-default-syntax
-	 :help ,adoc-help-anchor]
-	["Xref (syntax 1): <<id,caption>>" adoc-xref
-	 :help ,adoc-help-xref]
-	["Xref (syntax 2): xref:id[caption]" adoc-xref-default-syntax
-	 :help ,adoc-help-xref]
-	["Image: image:target-path[caption]" adoc-image]
-	["Comment: //" tempo-template-adoc-comment
-	 :help ,adoc-help-comment]
-	("Passthrough macros"
-	 :help adoc-help-passthrough-macros
-	 ["pass:[text]" tempo-template-adoc-pass
-	  :help ,adoc-help-pass]
-	 ["ASCIIMath: asciimath:[text]" tempo-template-adoc-asciimath
-	  :help ,adoc-help-asciimath]
-	 ["LaTeX math: latexmath[text]" tempo-template-adoc-latexmath
-	  :help ,adoc-help-latexmath]
-	 ["+++text+++" tempo-template-adoc-pass-+++
-	  :help ,adoc-help-pass-+++]
-	 ["$$text$$" tempo-template-pass-$$
-	  :help ,adoc-help-pass-$$]
-	 ["`text`" tempo-template-monospace-literal ; redundant to the one in the quotes section
-	  :help ,adoc-help-monospace-literal]))))))
+        :help ,adoc-help-macros
+        ["URL: http://foo.com" tempo-template-adoc-url
+         :help ,adoc-help-url]
+        ["URL with caption: http://foo.com[caption]" tempo-template-adoc-url-caption
+         :help ,adoc-help-url]
+        ["EMail: bob@foo.com" tempo-template-adoc-email
+         :help ,adoc-help-url]
+        ["EMail with caption: mailto:address[caption]" tempo-template-adoc-email-caption
+         :help ,adoc-help-url]
+        ["Anchor aka BlockId (syntax 1): [[id,xreflabel]]" tempo-template-adoc-anchor
+         :help ,adoc-help-anchor]
+        ["Anchor (syntax 2): anchor:id[xreflabel]" tempo-template-adoc-anchor-default-syntax
+         :help ,adoc-help-anchor]
+        ["Xref (syntax 1): <<id,caption>>" adoc-xref
+         :help ,adoc-help-xref]
+        ["Xref (syntax 2): xref:id[caption]" adoc-xref-default-syntax
+         :help ,adoc-help-xref]
+        ["Image: image:target-path[caption]" adoc-image]
+        ["Comment: //" tempo-template-adoc-comment
+         :help ,adoc-help-comment]
+        ("Passthrough macros"
+         :help adoc-help-passthrough-macros
+         ["pass:[text]" tempo-template-adoc-pass
+          :help ,adoc-help-pass]
+         ["ASCIIMath: asciimath:[text]" tempo-template-adoc-asciimath
+          :help ,adoc-help-asciimath]
+         ["LaTeX math: latexmath[text]" tempo-template-adoc-latexmath
+          :help ,adoc-help-latexmath]
+         ["+++text+++" tempo-template-adoc-pass-+++
+          :help ,adoc-help-pass-+++]
+         ["$$text$$" tempo-template-pass-$$
+          :help ,adoc-help-pass-$$]
+         ["`text`" tempo-template-monospace-literal ; redundant to the one in the quotes section
+          :help ,adoc-help-monospace-literal]))))))
 
 
 ;;;; tempos
@@ -2337,7 +2337,7 @@ new customization demands."
     (set-mark (point-min))
     (funcall (intern-soft (concat "tempo-template-adoc-title-" (number-to-string (1+ (or level 0))))))
     (replace-regexp-in-string "\n" "\\\\n"
-			      (buffer-substring-no-properties (point-min) (point-max)))))
+                              (buffer-substring-no-properties (point-min) (point-max)))))
 
 ;; Text formatting - constrained quotes
 (adoc-tempo-define "adoc-emphasis" '("_" (r "text" text) "_") nil adoc-help-emphasis)
@@ -2388,17 +2388,17 @@ new customization demands."
      ;; see adoc-tempo-handler for what the (tr ...) does.
      (list
       `(cond
-	((eq adoc-title-style 'adoc-title-style-one-line)
-	 '(tr bol ,one-line-del " " (r "text" text)))
-	((eq adoc-title-style 'adoc-title-style-one-line-enclosed)
-	 '(tr bol ,one-line-del " " (r "text" text) " " ,one-line-del))
-	;; BUG in tempo: when first thing is a tempo element which introduces a marker, that
-	;; marker is skipped
-	((eq adoc-title-style 'adoc-title-style-two-line)
-	 '(tr bol (r "text" text) "\n"
-	      (adoc-make-two-line-title-underline ,level (if on-region (- tempo-region-stop tempo-region-start)))))
-	(t
-	 (error "Unknown title style"))))
+        ((eq adoc-title-style 'adoc-title-style-one-line)
+         '(tr bol ,one-line-del " " (r "text" text)))
+        ((eq adoc-title-style 'adoc-title-style-one-line-enclosed)
+         '(tr bol ,one-line-del " " (r "text" text) " " ,one-line-del))
+        ;; BUG in tempo: when first thing is a tempo element which introduces a marker, that
+        ;; marker is skipped
+        ((eq adoc-title-style 'adoc-title-style-two-line)
+         '(tr bol (r "text" text) "\n"
+              (adoc-make-two-line-title-underline ,level (if on-region (- tempo-region-stop tempo-region-start)))))
+        (t
+         (error "Unknown title style"))))
      nil
      (concat
       "Inserts a level " (number-to-string (1+ level)) " (starting at 1) title.
@@ -2416,29 +2416,29 @@ Is influenced by customization variables such as `adoc-title-style'."))))
 
 ;; delimited blocks
 (adoc-tempo-define "adoc-delimited-block-comment"
-  '(bol (make-string 50 ?/) n (r-or-n "text" text) bol (make-string 50 ?/) %)
-  nil adoc-help-delimited-block-comment)
+                   '(bol (make-string 50 ?/) n (r-or-n "text" text) bol (make-string 50 ?/) %)
+                   nil adoc-help-delimited-block-comment)
 (adoc-tempo-define "adoc-delimited-block-passthrough"
- '(bol (make-string 50 ?+) n (r-or-n "text" text) bol (make-string 50 ?+) %)
- nil adoc-help-delimited-block-passthrouh)
+                   '(bol (make-string 50 ?+) n (r-or-n "text" text) bol (make-string 50 ?+) %)
+                   nil adoc-help-delimited-block-passthrouh)
 (adoc-tempo-define "adoc-delimited-block-listing"
-  '(bol (make-string 50 ?-) n (r-or-n "text" text) bol (make-string 50 ?-) %)
-  nil adoc-help-delimited-block-listing)
+                   '(bol (make-string 50 ?-) n (r-or-n "text" text) bol (make-string 50 ?-) %)
+                   nil adoc-help-delimited-block-listing)
 (adoc-tempo-define "adoc-delimited-block-literal"
-  '(bol (make-string 50 ?.) n (r-or-n "text" text) bol (make-string 50 ?.) %)
-  nil adoc-help-delimited-block-literal)
+                   '(bol (make-string 50 ?.) n (r-or-n "text" text) bol (make-string 50 ?.) %)
+                   nil adoc-help-delimited-block-literal)
 (adoc-tempo-define "adoc-delimited-block-quote"
-  '(bol (make-string 50 ?_) n (r-or-n "text" text) bol (make-string 50 ?_) %)
-  nil adoc-help-delimited-block-quote)
+                   '(bol (make-string 50 ?_) n (r-or-n "text" text) bol (make-string 50 ?_) %)
+                   nil adoc-help-delimited-block-quote)
 (adoc-tempo-define "adoc-delimited-block-example"
-  '(bol (make-string 50 ?=) n (r-or-n "text" text) bol (make-string 50 ?=) %)
-  nil adoc-help-delimited-block-example)
+                   '(bol (make-string 50 ?=) n (r-or-n "text" text) bol (make-string 50 ?=) %)
+                   nil adoc-help-delimited-block-example)
 (adoc-tempo-define "adoc-delimited-block-sidebar"
-  '(bol (make-string 50 ?*) n (r-or-n "text" text) bol (make-string 50 ?*) %)
-  nil adoc-help-delimited-block-sidebar)
+                   '(bol (make-string 50 ?*) n (r-or-n "text" text) bol (make-string 50 ?*) %)
+                   nil adoc-help-delimited-block-sidebar)
 (adoc-tempo-define "adoc-delimited-block-open-block"
-  '(bol "--" n (r-or-n "text" text) bol "--" %)
-  nil adoc-help-delimited-block-open-block)
+                   '(bol "--" n (r-or-n "text" text) bol "--" %)
+                   nil adoc-help-delimited-block-open-block)
 
 ;; Lists
 ;; todo: customize indentation
@@ -2459,10 +2459,10 @@ Is influenced by customization variables such as `adoc-title-style'."))))
 
 ;; tables
 (adoc-tempo-define "adoc-example-table"
-  '(bol "|====================\n"
-    "| cell 11 | cell 12\n"
-    "| cell 21 | cell 22\n"
-    "|====================\n" % ))
+                   '(bol "|====================\n"
+                         "| cell 11 | cell 12\n"
+                         "| cell 21 | cell 22\n"
+                         "|====================\n" % ))
 
 ;; Macros (inline & block)
 (adoc-tempo-define "adoc-url" '("http://foo.com") nil adoc-help-url)
@@ -2481,7 +2481,7 @@ Is influenced by customization variables such as `adoc-title-style'."))))
 (adoc-tempo-define "adoc-latexmath" '("latexmath:[" (r "text" text) "]") nil adoc-help-latexmath)
 (adoc-tempo-define "adoc-pass-+++" '("+++" (r "text" text) "+++") nil adoc-help-pass-+++)
 (adoc-tempo-define "adoc-pass-$$" '("$$" (r "text" text) "$$") nil adoc-help-pass-$$)
-; backticks handled in tempo-template-adoc-monospace-literal
+                                        ; backticks handled in tempo-template-adoc-monospace-literal
 
 
 ;;;; misc
@@ -2504,7 +2504,7 @@ Is influenced by customization variables such as `adoc-title-style'."))))
 
      ;; tr / tempo-recurse : tempo-insert the remaining args of the list
      ((and (listp element)
-	   (memq (car element) '(tr tempo-recurse)))
+           (memq (car element) '(tr tempo-recurse)))
       (mapc (lambda (elt) (tempo-insert elt on-region)) (cdr element))
       "")
 
@@ -2517,7 +2517,7 @@ Is influenced by customization variables such as `adoc-title-style'."))))
       (if on-region 'r '(tr p n)))
      ;; (r-or-n ...)
      ((and (consp element)
-	   (eq (car element) 'r-or-n))
+           (eq (car element) 'r-or-n))
       (if on-region (cons 'r (cdr element)) '(tr p n))))))
 
 (add-to-list 'tempo-user-elements 'adoc-tempo-handler)
@@ -2528,24 +2528,24 @@ Is influenced by customization variables such as `adoc-title-style'."))))
 Is a workaround the problem that tempo's user handlers don't get
 passed the on-region argument."
   (let* (
-	 ;; try to determine the arg with which the tempo-template-xxx was
-	 ;; called that eventually brought us here. If we came here not by an
-	 ;; interactive call to tempo-template-xxx we can't have a clue - assume
-	 ;; nil.
-	 (arg (if (string-match "^tempo-template-" (symbol-name this-command))
-		  current-prefix-arg
-		nil))
-	 ;; copy from tempo-define-template
-	 (on-region (if tempo-insert-region
-			(not arg)
-		      arg)))
+         ;; try to determine the arg with which the tempo-template-xxx was
+         ;; called that eventually brought us here. If we came here not by an
+         ;; interactive call to tempo-template-xxx we can't have a clue - assume
+         ;; nil.
+         (arg (if (string-match "^tempo-template-" (symbol-name this-command))
+                  current-prefix-arg
+                nil))
+         ;; copy from tempo-define-template
+         (on-region (if tempo-insert-region
+                        (not arg)
+                      arg)))
     ;; copy from tempo-insert-template
     (if (or (and (boundp 'transient-mark-mode) ; For Emacs
-		 transient-mark-mode
-		 mark-active)
-	    (if (featurep 'xemacs)
-		(and zmacs-regions (mark))))
-	(setq on-region t))
+                 transient-mark-mode
+                 mark-active)
+            (if (featurep 'xemacs)
+                (and zmacs-regions (mark))))
+        (setq on-region t))
     on-region))
 
 (defun adoc-forward-xref (&optional bound)
@@ -2555,7 +2555,7 @@ Match data is the one of the found xref. Returns nil if there was
 no xref found."
   (cond
    ((or (re-search-forward (adoc-re-xref 'inline-special-with-caption) bound t)
-	(re-search-forward (adoc-re-xref 'inline-special-no-caption) bound t))
+        (re-search-forward (adoc-re-xref 'inline-special-no-caption) bound t))
     (match-string-no-properties 2))
    ((re-search-forward (adoc-re-xref 'inline-general-macro) bound t)
     (match-string-no-properties 3))
@@ -2569,12 +2569,12 @@ Returns nil if there was no xref found."
     ;; search the xref within +-1 one line. I.e. if the xref spawns more than
     ;; two lines, it wouldn't be found.
     (let ((id)
-	  (saved-point (point))
-	  (end (save-excursion (forward-line 1) (line-end-position))))
+          (saved-point (point))
+          (end (save-excursion (forward-line 1) (line-end-position))))
       (forward-line -1)
       (while (and (setq id (adoc-forward-xref end))
-		  (or (< saved-point (match-beginning 0))
-		      (> saved-point (match-end 0)))))
+                  (or (< saved-point (match-beginning 0))
+                      (> saved-point (match-end 0)))))
       id)))
 
 (defun adoc-title-descriptor()
@@ -2611,10 +2611,10 @@ trailing delimiter ('== my title ==').
          ;; due to adoc-adjust-title-del we sometimes want to find a title which has
          ;; the wrong underline length.
          ((or (looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))
-	      (save-excursion
-		(forward-line -1)
-		(beginning-of-line)
-		(looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))))
+              (save-excursion
+                (forward-line -1)
+                (beginning-of-line)
+                (looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))))
           (setq type 2)
           (setq text (match-string 2))
           (setq found t))
@@ -2665,33 +2665,33 @@ and title's text are not preserved, afterwards its always one space."
     ;;     (setq descriptor (list 1 1 2 ?? adoc-default-title-type adoc-default-title-sub-type)))
     (let* ((type (nth 0 descriptor))
            (new-type-val (cond
-			  ((eq new-type 1) 2)
-			  ((eq new-type 2) 1)
-			  ((not (or (eq type 1) (eq type 2)))
-			   (error "Invalid title type"))
-			  ((eq new-type nil) type)
-			  ((eq new-type t) (if (eq type 1) 2 1))
-			  (t (error "NEW-TYPE has invalid value"))))
+                          ((eq new-type 1) 2)
+                          ((eq new-type 2) 1)
+                          ((not (or (eq type 1) (eq type 2)))
+                           (error "Invalid title type"))
+                          ((eq new-type nil) type)
+                          ((eq new-type t) (if (eq type 1) 2 1))
+                          (t (error "NEW-TYPE has invalid value"))))
            (sub-type (nth 1 descriptor))
            (new-sub-type-val (cond
-			      ((eq new-sub-type 1) 2)
-			      ((eq new-sub-type 2) 1)
-			      ((null sub-type) adoc-default-title-sub-type) ; there wasn't a sub-type before
-			      ((not (or (eq sub-type 1) (eq sub-type 2)))
-			       (error "Invalid title sub-type"))
-			      ((eq new-sub-type nil) sub-type)
-			      ((eq new-sub-type t) (if (eq sub-type 1) 2 1))
-			      (t (error "NEW-SUB-TYPE has invalid value"))))
+                              ((eq new-sub-type 1) 2)
+                              ((eq new-sub-type 2) 1)
+                              ((null sub-type) adoc-default-title-sub-type) ; there wasn't a sub-type before
+                              ((not (or (eq sub-type 1) (eq sub-type 2)))
+                               (error "Invalid title sub-type"))
+                              ((eq new-sub-type nil) sub-type)
+                              ((eq new-sub-type t) (if (eq sub-type 1) 2 1))
+                              (t (error "NEW-SUB-TYPE has invalid value"))))
            (level (nth 2 descriptor))
            (new-level (cond
-		       ((or (null new-level-rel) (eq new-level-rel 0))
-			level)
-		       ((not (null new-level-rel))
-			(let ((x (% (+ level new-level-rel) (+ adoc-title-max-level 1))))
-			  (if (< x 0)
-			      (+ x adoc-title-max-level 1)
-			    x)))
-		       ((not (null new-level-abs))
+                       ((or (null new-level-rel) (eq new-level-rel 0))
+                        level)
+                       ((not (null new-level-rel))
+                        (let ((x (% (+ level new-level-rel) (+ adoc-title-max-level 1))))
+                          (if (< x 0)
+                              (+ x adoc-title-max-level 1)
+                            x)))
+                       ((not (null new-level-abs))
 			new-level-abs)
 		       (t
 			level)))
