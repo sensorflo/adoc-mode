@@ -6,7 +6,7 @@
 ;; Author: Florian Kaufmann <sensorflo@gmail.com>
 ;; URL: https://github.com/emacsorphanage/adoc-mode
 ;; Created: 2009
-;; Version: 0.6.6
+;; Version: 0.7.0-snapshot
 ;; Package-Requires: ((emacs "26") (markup-faces "1.0.0"))
 ;; Keywords: AsciiDoc
 ;;
@@ -49,7 +49,7 @@
 ;; tempo or tempo-snippet is required later below
 
 
-(defconst adoc-mode-version "0.6.6"
+(defconst adoc-mode-version "0.7.0-snapshot"
   "adoc mode version number.
 
 Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are
