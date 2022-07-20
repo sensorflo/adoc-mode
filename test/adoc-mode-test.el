@@ -205,7 +205,7 @@ removed before TRANSFORM is evaluated.
 ;; Don't mistake text between two same delimited blocks as a delimited block,
 ;; i.e. wrongly treating the end of block 1 as a beginning and wrongly
 ;; treating the beginning of block 2 as ending.
-(ert-deftest adoctest-test-delimited-blocks-simple ()
+(ert-deftest adoctest-test-delimited-blocks-special-case ()
   (adoctest-faces "delimited-blocks-special-case"
 
    "--------" markup-meta-hide-face "\n" nil
@@ -220,7 +220,7 @@ removed before TRANSFORM is evaluated.
    "\n" nil
    "ipsum" 'no-face "\n" nil))
 
-(ert-deftest adoctest-test-delimited-blocks-simple ()
+(ert-deftest adoctest-test-delimited-blocks-empty ()
   (adoctest-faces "delimited-blocks-empty"
     "////////" markup-meta-hide-face "\n" nil
     "////////" markup-meta-hide-face "\n" nil
@@ -525,7 +525,7 @@ removed before TRANSFORM is evaluated.
    ;; unconstrained from beginning to end
    "__" markup-meta-hide-face " lorem " markup-emphasis-face "__" markup-meta-hide-face "\n" nil
    "\n" nil
-   
+
    ;; test wheter quotes can nest
    ;; done by meta-face-cleanup
 
@@ -923,7 +923,7 @@ removed before TRANSFORM is evaluated.
   (should (equal (adoc-repeat-string "lorem" 0) ""))
   (should (equal (adoc-repeat-string "lorem" 1) "lorem"))
   (should (equal (adoc-repeat-string "lorem" 2) "loremlorem")))
-    
+
 (ert-deftest adoctest-test-indent-by-example ()
   (let ((tab-width 2)
   	(indent-tabs-mode nil))
@@ -965,7 +965,7 @@ removed before TRANSFORM is evaluated.
 ;;   corresponding .el is edited regulary; dangerous because it's not unlikely
 ;;   that the .el is newer than the .elc, but load-library takes the outdated
 ;;   .elc.
-;; 
+;;
 ;; todo: also test for warnings
 (defun adoctest-save-compile-load ()
   "Todo document adoctest-save-compile-load."
