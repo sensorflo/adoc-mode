@@ -1,6 +1,7 @@
 [![Build Status](https://github.com/emacsorphanage/adoc-mode/workflows/CI/badge.svg)](https://github.com/emacsorphanage/adoc-mode/actions?query=workflow%3ACI)
 [![MELPA][melpa-badge]][melpa-package]
 [![MELPA Stable][melpa-stable-badge]][melpa-stable-package]
+[![License GPL 3][badge-license]][copying]
 
 # adoc-mode
 
@@ -163,3 +164,4 @@ Distributed under the GNU General Public License; type <kbd>C-h C-c</kbd> to vie
 [melpa-stable-package]: http://stable.melpa.org/#/adoc-mode
 [melpa]: http://melpa.org
 [melpa stable]: http://stable.melpa.org
+[copying]: http://www.gnu.org/copyleft/gpl.html
