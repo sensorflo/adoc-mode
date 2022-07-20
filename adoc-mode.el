@@ -86,7 +86,7 @@ You need to call `adoc-calc' after a change."
 ;; adoc-unfontify-region-function removes ALL overlays, not only those which
 ;; where insered by adoc-mode.
 (defcustom adoc-insert-replacement nil
-  "When non-nil the character/string a replacment/entity stands for is displayed.
+  "When non-nil the character/string a replacement/entity stands for is displayed.
 
 E.g. after '&amp;' an '&' is displayed, after '(C)' the copy right
 sign is displayed. It's only about display, neither the file nor
@@ -103,11 +103,11 @@ overlays."
   :group 'adoc)
 
 (defcustom adoc-unichar-name-resolver nil
-  "Function taking a unicode char name and returing it's codepoint.
+  "Function taking a unicode char name and returning it's codepoint.
 
 E.g. when given \"amp\" (as in the character entity reference
 \"&amp;\"), it shall return 38 (#x26). Is used to insert the
-character a character entity reference is refering to after the
+character a character entity reference is referring to after the
 entity. When adoc-unichar-name-resolver is nil, or when its
 function returns nil, nothing is done with named character
 entities. Note that if `adoc-insert-replacement' is nil,
@@ -218,11 +218,11 @@ AsciiDoc config file would the probably be '^[<>]-{4,}$'"
   "Wether or not two line titles shall be fontified.
 
 nil means never fontify. t means always fontify. A number means
-only fontify if the line below has NOT the lenght of the given
+only fontify if the line below has NOT the length of the given
 number. You could use a number for example when all your
 delimited block lines have a certain length.
 
-This is usefull because adoc-mode has troubles to properly
+This is useful because adoc-mode has troubles to properly
 distinguish between two line titles and a line of text before a
 delimited block. Note however that adoc-mode knows the AsciiDoc
 rule that the length of a two line title underline can differ at
@@ -326,8 +326,8 @@ To become a customizable variable when regexps for list items become customizabl
 (defvar adoc-unichar-alist nil
   "An alist, key=unicode character name as string, value=codepoint.")
 
-;; altough currently always the same face is used, I prefer an alist over a
-;; list. It is faster to find out wheter any attribute id is in the alist or
+;; although currently always the same face is used, I prefer an alist over a
+;; list. It is faster to find out whether any attribute id is in the alist or
 ;; not. And maybe markup-faces splits up markup-secondary-text-face into more
 ;; specific faces.
 (defvar adoc-attribute-face-alist
@@ -401,7 +401,7 @@ To become a customizable variable when regexps for list items become customizabl
   the AsciiDoc source. Example both `&amp;` and `&#38;` are
   replace by an & (ampersand).")
 (defconst adoc-help-literal-paragraph
-  "Verbatim in a monospaced font. Applyied to paragraphs where
+  "Verbatim in a monospaced font. Applied to paragraphs where
   the first line is indented by one or more space or tab
   characters")
 (defconst adoc-help-delimited-block
@@ -583,7 +583,7 @@ match-data has these sub groups:
     (concat
      "^\\(" del "[ \t]+\\)"                   ; 1
      "\\([^ \t\n].*?\\)"                          ; 2
-     ;; using \n instad $ is important so group 3 is guaranteed to be at least 1
+     ;; using \n instead $ is important so group 3 is guaranteed to be at least 1
      ;; char long (except when at the end of the buffer()). That is important to
      ;; to have a place to put the text property adoc-reserved on.
      "\\(\\([ \t]+" del "\\)?[ \t]*\\(?:\n\\|\\'\\)\\)" ))) ; 3 & 4
@@ -613,7 +613,7 @@ a two line title underline, see also `adoc-re-two-line-title'."
        (regexp-quote (substring x 0 1)) "?"
        "\\)"))
     (if del (list del) adoc-two-line-title-del) "\\|")
-   ;; adoc-re-two-line-title shall have same behaviour als one line, thus
+   ;; adoc-re-two-line-title shall have same behaviour also one line, thus
    ;; also here use \n instead $
    "\\)[ \t]*\\(?:\n\\|\\'\\)"))
 
@@ -623,7 +623,7 @@ a two line title underline, see also `adoc-re-two-line-title'."
   "Returns a regexps that matches a two line title.
 
 Note that even if this regexp matches it still doesn't mean it is
-a two line title. You additionaly have to test if the underline
+a two line title. You additionally have to test if the underline
 has the correct length.
 
 DEL is described in `adoc-re-two-line-title-undlerline'.
@@ -858,11 +858,11 @@ Subgroups:
    "\\(\n\\|\\'\\)"))
 
 ;; (?u)^(?P<name>image|unfloat|toc)::(?P<target>\S*?)(\[(?P<attrlist>.*?)\])$
-;; note that altough it hasn't got the s Python regular expression flag, it
+;; note that although it hasn't got the s Python regular expression flag, it
 ;; still can spawn multiple lines. Probably asciidoc removes newlines before
 ;; it applies the regexp above
 (defun adoc-re-block-macro (&optional cmd-name)
-  "Returns a regexp matching an attribute list elment.
+  "Returns a regexp matching an attribute list element.
 Subgroups:
 1 cmd name
 2 target
@@ -923,7 +923,7 @@ this id. If ID is nil, the regexp matches any anchor."
   "Returns a regexp matching a reference.
 
 If TYPE is nil, any type is matched. If FOR-KW is true, the
-regexp is intendet for a font lock keyword, which has to make
+regexp is intended for a font lock keyword, which has to make
 further tests to find a proper xref."
   (cond
    ((eq type 'inline-special-with-caption)
@@ -950,7 +950,7 @@ further tests to find a proper xref."
    (t (error "unknown type"))))
 
 (defun adoc-re-attribute-list-elt ()
-  "Returns a regexp matching an attribute list elment.
+  "Returns a regexp matching an attribute list element.
 Subgroups:
 1 attribute name
 2 attribute value if given as string
@@ -1068,7 +1068,7 @@ itself in order to match multiple commands. If TARGET is nil, any
 target is matched. When UNCONSTRAINED is nil, the returned regexp
 begins with '\<', i.e. it will _not_ match when CMD-NAME is part
 of a previous word. When ATTRIBUTE-LIST-CONSTRAINTS is 'empty,
-only an empty attribut list is matched, if it's
+only an empty attribute list is matched, if it's
 'single-attribute, only an attribute list with exactly one
 attribute is matched.
 
@@ -1188,7 +1188,7 @@ Subgroups of returned regexp:
 
 ;;;; font lock keywords
 (defun adoc-kwf-std (end regexp &optional must-free-groups no-block-del-groups)
-  "Standart function for keywords
+  "Standard function for keywords
 
 Intendent to be called from font lock keyword functions. END is
 the limit of the search. REXEXP the regexp to be searched.
@@ -1290,7 +1290,7 @@ text having adoc-reserved set to 'block-del."
 ;; BUG: Remember that if a matcher function returns nil, font-lock does not
 ;; further call it and abandons that keyword. Thus in adoc-mode in general,
 ;; there should be a loop around (and (re-search-forward ...) (not
-;; (text-property-not-all...)) ...). Currently if say a constrained quote cant
+;; (text-property-not-all...)) ...). Currently if say a constrained quote can't
 ;; match because of adoc-reserved, following quotes of the same type which
 ;; should be highlighed are not, because font-lock abandons that keyword.
 
@@ -1304,7 +1304,7 @@ text having adoc-reserved set to 'block-del."
    '(4 '(face markup-meta-hide-face) t t)))
 
 ;; TODO: highlight bogous 'two line titles' with warning face
-;; TODO: completly remove keyword when adoc-enable-two-line-title is nil
+;; TODO: completely remove keyword when adoc-enable-two-line-title is nil
 (defun adoc-kw-two-line-title (del text-face)
   "Creates a keyword for font-lock which highlights two line titles"
   (list
@@ -1421,7 +1421,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
    `(3 ,text-face-spec append)                                               ; text
    (if literal-p
        `(3 '(face ,markup-verbatim-face adoc-reserved t) append)
-     '(3 nil)) ; grumbl, I dont know how to get rid of it
+     '(3 nil)) ; grumbl, I don't know how to get rid of it
    `(4 '(face ,(or del-face markup-meta-hide-face) adoc-reserved t) t))); close del
 
 (defun adoc-kw-inline-macro (&optional cmd-name unconstrained attribute-list-constraints cmd-face target-faces target-meta-p attribute-list)
@@ -1493,13 +1493,13 @@ meta characters."
 ;; TODO: properly handle leading backslash escapes
 ;;
 ;; non-bugs: __flo@gmail.com__ is also in AsciiDoc *not* an emphasised email, it's
-;;   just an emphasised text. Thats because the quote transforms happen before
+;;   just an emphasised text. That's because the quote transforms happen before
 ;;   the url transform, thus the middle stage is something like
 ;;   ...>flo@gmail.com<... According to asciidoc.conf regexps a leading > or a
 ;;   trailing < are not allowed. In adoc-mode, the fontification is as in
 ;;   AsciiDoc, but that's coincidence. The reason in adoc-mode is that the
 ;;   regexps quantifier are greedy instead lazy, thus the trailing __ behind the
-;;   email are taken part as the email adress, and then adoc-kwf-std cant match
+;;   email are taken part as the email address, and then adoc-kwf-std can't match
 ;;   because part of the match (the __) contains text properties with
 ;;   adoc-reserved non-nil, also because quote highlighting already happened.
 (defun adoc-kw-standalone-urls ()
@@ -1526,7 +1526,7 @@ meta characters."
           (setq saved-point (point))
           (setq found
                 (re-search-forward ,regexp end t))
-          (setq prevented ; prevented is only meaningfull wenn found is non-nil
+          (setq prevented ; prevented is only meaningful wenn found is non-nil
                 (or
                  (not found) ; the following is only needed when found
                  (text-property-not-all (match-beginning 1) (match-end 1) 'adoc-reserved nil)))
@@ -1564,7 +1564,7 @@ meta characters."
 (defun adoc-flf-first-whites-fixed-width(end)
   ;; it makes no sense to do something with a blank line, so require at least one non blank char.
   (and (re-search-forward "\\(^[ \t]+\\)[^ \t\n]" end t)
-       ;; dont replace a face with with adoc-align which already is a fixed with
+       ;; don't replace a face with with adoc-align which already is a fixed with
        ;; font (most probably), because then it also won't look aligned
        (text-property-not-all (match-beginning 1) (match-end 1) 'face 'markup-typewriter-face)
        (text-property-not-all (match-beginning 1) (match-end 1) 'face 'markup-code-face)
@@ -1607,7 +1607,7 @@ meta characters."
   (font-lock-default-unfontify-region beg end)
 
   ;; remove overlays. Currently only used by AsciiDoc replacements
-  ;; TODO: this is an extremly brute force solution and interacts very badly
+  ;; TODO: this is an extremely brute force solution and interacts very badly
   ;; with many (minor) modes using overlays such as flyspell or ediff
   (when adoc-insert-replacement
     (remove-overlays beg end))
@@ -1666,7 +1666,7 @@ meta characters."
          '(1 '(face adoc-preprocessor adoc-reserved block-del))    ; macro name
          '(2 '(face adoc-delimiter adoc-reserved block-del))       ; condition
          '(3 '(face adoc-hide-delimiter adoc-reserved block-del))  ; [
-                                        ; ... attribute list content = the conditionaly included text
+                                        ; ... attribute list content = the conditionally included text
          '(4 '(face adoc-hide-delimiter adoc-reserved block-del))) ; ]
    ;; include
    (list "^\\(\\(include1?::\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(\\]\\)\\)[ \t]*$"
@@ -1680,12 +1680,12 @@ meta characters."
 
    ;; -- special block macros
    ;; ruler line.
-   ;; Is a block marcro in asciidoc.conf, altough manual has it in the "text formatting" section
+   ;; Is a block marcro in asciidoc.conf, although manual has it in the "text formatting" section
    ;; ^'{3,}$=#ruler
    (list "^\\('\\{3,\\}+\\)[ \t]*$"
          '(1 '(face adoc-complex-replacement adoc-reserved block-del)))
    ;; forced pagebreak
-   ;; Is a block marcro in asciidoc.conf, altough manual has it in the "text formatting" section
+   ;; Is a block marcro in asciidoc.conf, although manual has it in the "text formatting" section
    ;; ^<{3,}$=#pagebreak
    (list "^\\(<\\{3,\\}+\\)[ \t]*$"
          '(1 '(face adoc-delimiter adoc-reserved block-del)))
@@ -1715,7 +1715,7 @@ meta characters."
    ;; ------------------------------
    ;; TODO: respect and insert adoc-reserved
    ;;
-   ;; bug: for items begining with a label (i.e. user text): if might be that
+   ;; bug: for items beginning with a label (i.e. user text): if might be that
    ;; the label contains a bogous end delimiter such that you get a
    ;; highlighting that starts in the line before the label item and ends
    ;; within the label. Example:
@@ -1723,7 +1723,7 @@ meta characters."
    ;; bla bli 2 ** 8 is 256                   quote starts at this **
    ;; that is **important**:: bla bla         ends at the first **
    ;;
-   ;; similary:
+   ;; similarly:
    ;;
    ;; bla 2 ** 3:: bla bla 2 ** 3 gives       results in an untwanted unconstrained quote
    ;;
@@ -1733,7 +1733,7 @@ meta characters."
    ;; maybe the solution is invent a new value for adoc-reserved, or a new
    ;; property alltogether. That would also be used for the trailing \n in other
    ;; block elements. Text is not allowed to contain them. All font lock
-   ;; keywords standing for asciidoc inline substituions would have to be
+   ;; keywords standing for asciidoc inline substitutions would have to be
    ;; adapted.
    ;;
    ;;
@@ -1835,7 +1835,7 @@ meta characters."
    ;; ==========================================
    ;; Inline substitutions within block elements are performed in the
    ;; following default order:
-   ;; -. Passtrough stuff removal (seen in asciidoc source)
+   ;; -. Passthrough stuff removal (seen in asciidoc source)
    ;; 1. Special characters
    ;; 2. Quotes
    ;; 3. Special words
@@ -1879,7 +1879,7 @@ meta characters."
    (adoc-kw-quote 'adoc-constrained "'" markup-emphasis-face)      ; single quoted text
    (adoc-kw-quote 'adoc-constrained "`" nil adoc-replacement "'")
    ;; `...` , +++...+++, $$...$$ are within passthrough stuff above
-   (adoc-kw-quote 'adoc-unconstrained "++" markup-typewriter-face) ; AsciiDoc manual: really onl '..are rendered in a monospaced font.'
+   (adoc-kw-quote 'adoc-unconstrained "++" markup-typewriter-face) ; AsciiDoc manual: really only '..are rendered in a monospaced font.'
    (adoc-kw-quote 'adoc-constrained "+" markup-typewriter-face)
    (adoc-kw-quote 'adoc-unconstrained  "__" markup-emphasis-face)
    (adoc-kw-quote 'adoc-constrained "_" markup-emphasis-face)
@@ -1896,7 +1896,7 @@ meta characters."
 
    ;; replacements
    ;; --------------------------------
-   ;; Asciidoc.conf surounds em dash with thin spaces. I think that does not
+   ;; Asciidoc.conf surrounds em dash with thin spaces. I think that does not
    ;; make sense here, all that spaces you would see in the buffer would at best
    ;; be confusing.
    (adoc-kw-replacement "\\((C)\\)" "\u00A9")
@@ -1920,7 +1920,7 @@ meta characters."
 
    ;; attributes
    ;; ---------------------------------
-   ;; attribute refrence
+   ;; attribute reference
    (cons "{\\(\\w+\\(?:\\w*\\|-\\)*\\)\\([=?!#%@$][^}\n]*\\)?}" 'adoc-replacement)
 
 
@@ -2010,7 +2010,7 @@ meta characters."
    (list "^.*[^ \t\n].*[ \t]\\(\\+\\)[ \t]*$" '(1 adoc-delimiter)) ; bug: only if not adoc-reserved
 
    ;; -- callout anchors (references are within list)
-   ;; commented out because they are only witin (literal?) blocks
+   ;; commented out because they are only within (literal?) blocks
    ;; asciidoc.conf: [\\]?&lt;(?P<index>\d+)&gt;=callout
    ;; (list "^\\(<\\)\\([0-9+]\\)\\(>\\)" '(1 adoc-delimiter) '(3 adoc-delimiter))
 
@@ -2032,7 +2032,7 @@ meta characters."
    (list "^\\([ \t]+\\+[ \t]*\\)$" '(1 adoc-warning t))
    ;; list continuation witch appends a literal paragraph. The user probably
    ;; wanted to add a normal paragraph. List paragraphs are appended
-   ;; implicitely.
+   ;; implicitly.
    (list "^\\(\\+[ \t]*\\)\n\\([ \t]+\\)[^ \t\n]" '(1 adoc-warning t) '(2 adoc-warning t))
 
    ;; content of attribute lists
@@ -2098,13 +2098,13 @@ ARG is 0, see `adoc-adjust-title-del'."
   (adoc-modify-title arg))
 
 (defun adoc-demote-title (&optional arg)
-  "Completely analgous to `adoc-promote-title'."
+  "Completely analogous to `adoc-promote-title'."
   (interactive "p")
   (adoc-promote-title (- arg)))
 
 ;; TODO:
 ;; - adjust while user is typing title
-;; - tempo template which uses alreay typed text to insert a 'new' title
+;; - tempo template which uses already typed text to insert a 'new' title
 ;; - auto convert one line title to two line title. is easy&fast to type, but
 ;;   gives two line titles for those liking them
 (defun adoc-adjust-title-del ()
@@ -2319,7 +2319,7 @@ new customization demands."
 ;; TODO: after changing adoc-tempo-frwk, all adoc-tempo-define need to be
 ;;       evaluated again. This doesn't feel right
 ;; TODO: titles,block titles,blockid,... should start on a new line
-;; PROBLEM: snippets dont allow empty 'field', e.g. empty caption
+;; PROBLEM: snippets don't allow empty 'field', e.g. empty caption
 ;;       Workaround: mark whole 'edit-field' and delete it
 (if (eq adoc-tempo-frwk 'tempo-snippets)
     (require 'tempo-snippets)
@@ -2647,7 +2647,7 @@ line title or two line title respectively.
 
 NEW-SUB-TYPE is analogous to NEW-TYPE. However when the actual
 title has no sub type, only the absolute values of NEW-SUB-TYPE
-apply, otherise the new sub type becomes
+apply, otherwise the new sub type becomes
 `adoc-default-title-sub-type'.
 
 If CREATE is nil, an error is signaled if point is not on a
@@ -2772,7 +2772,7 @@ unless that alist is overwritten by the content of
 ATTRIBUTE-LIST-PROP-VAL.
 
 POS-OR-NAME identifies the attribute for which the face is
-returned. When POS-OR-NAME satifies numberp, it is the number of
+returned. When POS-OR-NAME satisfies numberp, it is the number of
 the positional attribute, where as the first positinal attribute
 has position 0. Otherwise POS-OR-NAME is the name of the named
 attribute.
