@@ -15,7 +15,7 @@ image:{melpa-badge}[link="{melpa-package}"]
 image:{melpa-stable-badge}[link="{melpa-stable-package}"]
 image:{license-badge}[link="{copying}"]
 
-= `adoc-mode`
+= adoc-mode
 
 == Introduction
 
@@ -184,4 +184,3 @@ $ eldev compile
 Copyright © 2010-2013 Florian Kaufmann
 
 Distributed under the link:{copying}[GNU General Public License]; type kbd:[C-h] kbd:[C-c] to view it.
-
