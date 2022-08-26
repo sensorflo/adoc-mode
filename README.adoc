@@ -10,7 +10,7 @@
 :copying: http://www.gnu.org/copyleft/gpl.html
 
 
-image:https://github.com/emacsorphanage/adoc-mode/workflows/CI/badge.svg[link="https://github.com/emacsorphanage/adoc-mode/actions?query=workflow%3ACI"]
+image:https://github.com/bbatsov/adoc-mode/workflows/CI/badge.svg[link="https://github.com/bbatsov/adoc-mode/actions?query=workflow%3ACI"]
 image:{melpa-badge}[link="{melpa-package}"]
 image:{melpa-stable-badge}[link="{melpa-stable-package}"]
 image:{license-badge}[link="{copying}"]

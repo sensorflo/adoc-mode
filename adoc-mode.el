@@ -1,10 +1,11 @@
 ;;; adoc-mode.el --- a major-mode for editing AsciiDoc files in Emacs
 ;;
 ;; Copyright 2009-2014 Florian Kaufmann <sensorflo@gmail.com>
-;; Copyright 2022 adoc-mode contributors
+;; Copyright 2022 Bozhidar Batsov <bozhidar@batsov.dev> and adoc-mode contributors
 ;;
 ;; Author: Florian Kaufmann <sensorflo@gmail.com>
-;; URL: https://github.com/emacsorphanage/adoc-mode
+;; URL: https://github.com/bbatsov/adoc-mode
+;; Maintainer: Bozhidar Batsov <bozhidar@batsov.dev>
 ;; Created: 2009
 ;; Version: 0.7.0-snapshot
 ;; Package-Requires: ((emacs "26") (markup-faces "1.0.0"))
@@ -66,7 +67,7 @@ there.  adoc-mode has only a few faces of its own, which can be
 customized on this page."
   :group 'text
   :prefix "adoc-"
-  :link '(url-link "https://github.com/emacsorphanage/adoc-mode"))
+  :link '(url-link "https://github.com/bbatsov/adoc-mode"))
 
 (defcustom adoc-script-raise '(-0.3 0.3)
   "How much to lower and raise subscript and superscript content.
