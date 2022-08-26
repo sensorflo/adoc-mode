@@ -2834,31 +2834,32 @@ LOCAL-ATTRIBUTE-FACE-ALIST before it is looked up in
            (cons (cons title-text title-pos) index-alist)))))
     (nreverse index-alist)))
 
+(defvar adoc-mode-syntax-table
+  (let ((table (make-syntax-table)))
+    (modify-syntax-entry ?$ "." table)
+    (modify-syntax-entry ?% "." table)
+    (modify-syntax-entry ?& "." table)
+    (modify-syntax-entry ?' "." table)
+    (modify-syntax-entry ?` "." table)
+    (modify-syntax-entry ?\" "." table)
+    (modify-syntax-entry ?* "." table)
+    (modify-syntax-entry ?+ "." table)
+    (modify-syntax-entry ?. "." table)
+    (modify-syntax-entry ?/ "." table)
+    (modify-syntax-entry ?< "." table)
+    (modify-syntax-entry ?= "." table)
+    (modify-syntax-entry ?> "." table)
+    (modify-syntax-entry ?\\ "." table)
+    (modify-syntax-entry ?| "." table)
+    (modify-syntax-entry ?_ "." table)
+    table)
+  "Syntax table to use in adoc-mode.")
+
 
 ;;;###autoload
 (define-derived-mode adoc-mode text-mode "adoc"
   "Major mode for editing AsciiDoc text files.
 Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
-
-  ;; syntax table
-  ;; TODO: do it as other modes do it, eg rst-mode?
-  (modify-syntax-entry ?$ ".")
-  (modify-syntax-entry ?% ".")
-  (modify-syntax-entry ?& ".")
-  (modify-syntax-entry ?' ".")
-  (modify-syntax-entry ?` ".")
-  (modify-syntax-entry ?\" ".")
-  (modify-syntax-entry ?* ".")
-  (modify-syntax-entry ?+ ".")
-  (modify-syntax-entry ?. ".")
-  (modify-syntax-entry ?/ ".")
-  (modify-syntax-entry ?< ".")
-  (modify-syntax-entry ?= ".")
-  (modify-syntax-entry ?> ".")
-  (modify-syntax-entry ?\\ ".")
-  (modify-syntax-entry ?| ".")
-  (modify-syntax-entry ?_ ".")
-
   ;; comments
   (set (make-local-variable 'comment-column) 0)
   (set (make-local-variable 'comment-start) "// ")
