@@ -182,5 +182,6 @@ $ eldev compile
 == License
 
 Copyright © 2010-2013 Florian Kaufmann
+Copyright © 2022 Bozhidar Batsov and `adoc-mode` contributors
 
 Distributed under the link:{copying}[GNU General Public License]; type kbd:[C-h] kbd:[C-c] to view it.
