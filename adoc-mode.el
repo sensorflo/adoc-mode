@@ -2861,44 +2861,41 @@ LOCAL-ATTRIBUTE-FACE-ALIST before it is looked up in
   "Major mode for editing AsciiDoc text files.
 Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
   ;; comments
-  (set (make-local-variable 'comment-column) 0)
-  (set (make-local-variable 'comment-start) "// ")
-  (set (make-local-variable 'comment-end) "")
-  (set (make-local-variable 'comment-start-skip) "^//[ \t]*")
-  (set (make-local-variable 'comment-end-skip) "[ \t]*\\(?:\n\\|\\'\\)")
+  (setq-local comment-column 0)
+  (setq-local comment-start "// ")
+  (setq-local comment-end "")
+  (setq-local comment-start-skip "^//[ \t]*")
+  (setq-local comment-end-skip "[ \t]*\\(?:\n\\|\\'\\)")
 
   ;; paragraphs
-  (set (make-local-variable 'paragraph-separate) (adoc-re-paragraph-separate))
-  (set (make-local-variable 'paragraph-start) (adoc-re-paragraph-start))
-  (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
+  (setq-local paragraph-separate (adoc-re-paragraph-separate))
+  (setq-local paragraph-start (adoc-re-paragraph-start))
+  (setq-local paragraph-ignore-fill-prefix t)
 
   ;; font lock
-  (set (make-local-variable 'font-lock-defaults)
+  (setq-local font-lock-defaults
        '(adoc-font-lock-keywords
          nil nil nil nil
          (font-lock-multiline . t)
          (font-lock-mark-block-function . adoc-font-lock-mark-block-function)))
-  (make-local-variable 'font-lock-extra-managed-props)
-  (setq font-lock-extra-managed-props '(adoc-reserved adoc-attribute-list))
-  (make-local-variable 'font-lock-unfontify-region-function)
-  (setq font-lock-unfontify-region-function 'adoc-unfontify-region-function)
+  (setq-local font-lock-extra-managed-props '(adoc-reserved adoc-attribute-list))
+  (setq-local font-lock-unfontify-region-function 'adoc-unfontify-region-function)
 
   ;; outline mode
   ;; BUG: if there are many spaces\tabs after =, level becomes wrong
   ;; Ideas make it work for two line titles: Investigate into
   ;; outline-heading-end-regexp. It seams like outline-regexp could also contain
   ;; newlines.
-  (set (make-local-variable 'outline-regexp) "=\\{1,5\\}[ \t]+[^ \t\n]")
+  (setq-local outline-regexp "=\\{1,5\\}[ \t]+[^ \t\n]")
 
   ;; misc
-  (set (make-local-variable 'page-delimiter) "^<<<+$")
-  (set (make-local-variable 'require-final-newline) mode-require-final-newline)
-  (set (make-local-variable 'parse-sexp-lookup-properties) t)
+  (setq-local page-delimiter "^<<<+$")
+  (setq-local require-final-newline mode-require-final-newline)
+  (setq-local parse-sexp-lookup-properties t)
 
   ;; it's the user's decision whether he wants to set imenu-sort-function to
   ;; nil, or even something else. See also similar comment in sgml-mode.
-  (set (make-local-variable 'imenu-create-index-function)
-       'adoc-imenu-create-index)
+  (setq-local imenu-create-index-function 'adoc-imenu-create-index)
 
   ;; compilation
   (when (boundp 'compilation-error-regexp-alist-alist)
