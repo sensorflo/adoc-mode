@@ -45,7 +45,7 @@ Here are some of the main features of `adoc-mode`:
 The highlighting emphasizes on how the output will look like. _All_
 characters are visible, however meta characters are displayed in a faint way.
 
-image:http://dl.dropbox.com/u/75789984/adoc-mode.png[alt=screenshot]
+image:images/adoc-mode.png[alt=screenshot]
 
 == Installation
 
