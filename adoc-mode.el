@@ -2900,9 +2900,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
                    2 3 nil (1 . nil))))
   (when (boundp 'compilation-error-regexp-alist)
     (make-local-variable 'compilation-error-regexp-alist)
-    (add-to-list 'compilation-error-regexp-alist 'asciidoc))
-
-  (easy-menu-add adoc-mode-menu))
+    (add-to-list 'compilation-error-regexp-alist 'asciidoc)))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.a\\(?:scii\\)?doc\\'" . adoc-mode))
