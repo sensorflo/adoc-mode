@@ -72,10 +72,10 @@ customized on this page."
 (defcustom adoc-script-raise '(-0.3 0.3)
   "How much to lower and raise subscript and superscript content.
 
-This is a list of two floats. The first is negative and specifies
+This is a list of two floats.  The first is negative and specifies
 how much subscript is lowered, the second is positive and
-specifies how much superscript is raised. Heights are measured
-relative to that of the normal text. The faces used are
+specifies how much superscript is raised.  Heights are measured
+relative to that of the normal text.  The faces used are
 markup-superscript-face and markup-subscript-face respectively.
 
 You need to call `adoc-calc' after a change."
@@ -90,11 +90,11 @@ You need to call `adoc-calc' after a change."
   "When non-nil the character/string a replacement/entity stands for is displayed.
 
 E.g. after '&amp;' an '&' is displayed, after '(C)' the copy right
-sign is displayed. It's only about display, neither the file nor
+sign is displayed.  It's only about display, neither the file nor
 the buffer content is affected.
 
 You need to call `adoc-calc' after you change
-`adoc-insert-replacement'. For named character entities (e.g.
+`adoc-insert-replacement'.  For named character entities (e.g.
 '&amp;', in contrast to '&#20;' or '(C)' ) to be displayed you
 need to set `adoc-unichar-name-resolver'.
 
