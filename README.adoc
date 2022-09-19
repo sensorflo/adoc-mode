@@ -179,9 +179,17 @@ To check for byte-compilation warnings you can just compile the project with Eld
 $ eldev compile
 ----
 
+== History
+
+`adoc-mode` was created by https://github.com/sensorflo/[Florian Kaufmann] in 2009. Eventually the development
+was halted in 2016 and the mode was dormant for the next 6 years. In 2016
+https://github.com/TobiasZawada[Tobias Zawada] encouraged the Emacs community to revive the development and after a brief period under the https://github.com/emacsorphanage[Emacs Orphanage] org, https://github.com/bbatsov/[Bozhidar Batsov] assumed the project's maintenance.
+
+These days all upstream packages (e.g. on MELPA) are build from Bozhidar's fork.
+
 == License
 
-Copyright © 2010-2013 Florian Kaufmann
+Copyright © 2009-2016 Florian Kaufmann
 Copyright © 2022 Bozhidar Batsov and `adoc-mode` contributors
 
 Distributed under the link:{copying}[GNU General Public License]; type kbd:[C-h] kbd:[C-c] to view it.

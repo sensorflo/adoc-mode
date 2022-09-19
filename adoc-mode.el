@@ -1,6 +1,6 @@
 ;;; adoc-mode.el --- a major-mode for editing AsciiDoc files in Emacs
 ;;
-;; Copyright 2009-2014 Florian Kaufmann <sensorflo@gmail.com>
+;; Copyright 2009-2016 Florian Kaufmann <sensorflo@gmail.com>
 ;; Copyright 2022 Bozhidar Batsov <bozhidar@batsov.dev> and adoc-mode contributors
 ;;
 ;; Author: Florian Kaufmann <sensorflo@gmail.com>
