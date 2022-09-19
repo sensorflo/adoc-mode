@@ -2402,8 +2402,11 @@ Returns nil if there was no xref found."
                       (> saved-point (match-end 0)))))
       id)))
 
-(defun adoc-title-descriptor()
+(defun adoc-title-descriptor (&optional strict-match )
   "Returns title descriptor of title point is in.
+
+When STRICT-MATCH is t, and 2 line title is used, the lengths of the underline
+text and title must not differ by more than 2 characters.
 
 Title descriptor looks like this: (TYPE SUB-TYPE LEVEL TEXT START END)
 
@@ -2435,11 +2438,17 @@ trailing delimiter ('== my title ==').
          ;; method ensuring the correct length of the underline, be aware that
          ;; due to adoc-adjust-title-del we sometimes want to find a title which has
          ;; the wrong underline length.
-         ((or (looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))
-              (save-excursion
-                (forward-line -1)
-                (beginning-of-line)
-                (looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))))
+         ((and (or (looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))
+                   (save-excursion
+                     (forward-line -1)
+                     (beginning-of-line)
+                     (looking-at (adoc-re-two-line-title (nth level adoc-two-line-title-del)))))
+               ;; If strict-mode, expect title and underline text lengths to be at most +-2 characters different
+               (or (not strict-match)
+                   (<= (abs (- (length (match-string 3))
+                               (length (match-string 2))))
+                       2))
+               (not (string-prefix-p "[" (match-string 2))))
           (setq type 2)
           (setq text (match-string 2))
           (setq found t))
@@ -2650,12 +2659,13 @@ LOCAL-ATTRIBUTE-FACE-ALIST before it is looked up in
       (goto-char 0)
       (while (re-search-forward re-all-titles nil t)
         (backward-char) ; skip backwards the trailing \n of a title
-        (let* ((descriptor (adoc-title-descriptor))
+        (let* ((descriptor (adoc-title-descriptor t))
                (title-text (nth 3 descriptor))
                (title-pos (nth 4 descriptor)))
-          (setq
-           index-alist
-           (cons (cons title-text title-pos) index-alist)))))
+          (unless (null title-text)
+            (setq
+             index-alist
+             (cons (cons title-text title-pos) index-alist))))))
     (nreverse index-alist)))
 
 (defvar adoc-mode-syntax-table
