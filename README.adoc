@@ -182,7 +182,7 @@ $ eldev compile
 == History
 
 `adoc-mode` was created by https://github.com/sensorflo/[Florian Kaufmann] in 2009. Eventually the development
-was halted in 2016 and the mode was dormant for the next 6 years. In 2016
+was halted in 2016 and the mode was dormant for the next 6 years. In 2022
 https://github.com/TobiasZawada[Tobias Zawada] encouraged the Emacs community to revive the development and after a brief period under the https://github.com/emacsorphanage[Emacs Orphanage] org, https://github.com/bbatsov/[Bozhidar Batsov] assumed the project's maintenance.
 
 These days all upstream packages (e.g. on MELPA) are build from Bozhidar's fork.
