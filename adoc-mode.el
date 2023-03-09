@@ -7,7 +7,7 @@
 ;; URL: https://github.com/bbatsov/adoc-mode
 ;; Maintainer: Bozhidar Batsov <bozhidar@batsov.dev>
 ;; Created: 2009
-;; Version: 0.7.0-snapshot
+;; Version: 0.7.0
 ;; Package-Requires: ((emacs "26"))
 ;; Keywords: docs, wp
 ;;
@@ -42,15 +42,11 @@
 
 ;;; Code:
 
-
-;;; Variables:
-
 (require 'cl-lib)
 (require 'tempo)
 
-
-(defconst adoc-mode-version "0.7.0-snapshot"
-  "adoc mode version number.
+(defconst adoc-mode-version "0.7.0"
+  "Adoc-mode version number.
 
 Based upon AsciiDoc version 8.5.2. I.e. regexeps and rules are
 taken from that version's asciidoc.conf / manual.")
@@ -2358,6 +2354,8 @@ meta characters."
   "Show the version number in the minibuffer."
   (interactive)
   (message "adoc-mode, version %s" adoc-mode-version))
+
+(defalias 'adoc-mode-version #'adoc-show-version)
 
 (defun adoc-goto-ref-label (id)
   "Goto the anchor defining the id ID."
