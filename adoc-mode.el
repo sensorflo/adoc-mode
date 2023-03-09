@@ -2635,7 +2635,7 @@ Is influenced by customization variables such as `adoc-title-style'."))))
 (defun adoc-repeat-string (str n)
   "Returns str n times concatenated"
   (let ((retval ""))
-    (dotimes (i n)
+    (dotimes (_i n)
       (setq retval (concat retval str)))
     retval))
 
