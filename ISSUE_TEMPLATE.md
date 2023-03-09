@@ -18,7 +18,7 @@ a problem will expedite its solution.*
 ### Adoc-Mode version information
 
 *Include here the version string displayed by `M-x
-adoc-mode-version`. Here's an example:*
+adoc-show-version`. Here's an example:*
 
 ```
 Adoc-Mode version: 0.7
