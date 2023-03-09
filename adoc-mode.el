@@ -1,4 +1,4 @@
-;;; adoc-mode.el --- a major-mode for editing AsciiDoc files
+;;; adoc-mode.el --- a major-mode for editing AsciiDoc files -*- lexical-binding: t; -*-
 ;;
 ;; Copyright 2009-2016 Florian Kaufmann <sensorflo@gmail.com>
 ;; Copyright 2022-2023 Bozhidar Batsov <bozhidar@batsov.dev> and adoc-mode contributors
