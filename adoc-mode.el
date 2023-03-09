@@ -2691,7 +2691,7 @@ passed the on-region argument."
     on-region))
 
 (defun adoc-forward-xref (&optional bound)
-  "Move forward to next xref and return it's id.
+  "Move forward to next xref and return its id.
 
 Match data is the one of the found xref. Returns nil if there was
 no xref found."
