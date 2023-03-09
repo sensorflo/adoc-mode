@@ -190,6 +190,7 @@ These days all upstream packages (e.g. on MELPA) are build from Bozhidar's fork.
 == License
 
 Copyright © 2009-2016 Florian Kaufmann
-Copyright © 2022 Bozhidar Batsov and `adoc-mode` contributors
+
+Copyright © 2022-2023 Bozhidar Batsov and `adoc-mode` contributors
 
 Distributed under the link:{copying}[GNU General Public License]; type kbd:[C-h] kbd:[C-c] to view it.

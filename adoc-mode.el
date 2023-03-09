@@ -1,7 +1,7 @@
 ;;; adoc-mode.el --- a major-mode for editing AsciiDoc files
 ;;
 ;; Copyright 2009-2016 Florian Kaufmann <sensorflo@gmail.com>
-;; Copyright 2022 Bozhidar Batsov <bozhidar@batsov.dev> and adoc-mode contributors
+;; Copyright 2022-2023 Bozhidar Batsov <bozhidar@batsov.dev> and adoc-mode contributors
 ;;
 ;; Author: Florian Kaufmann <sensorflo@gmail.com>
 ;; URL: https://github.com/bbatsov/adoc-mode
