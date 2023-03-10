@@ -131,13 +131,15 @@ Example
 Of course, this is only one way to do it. Emacs has a few ways to
 customize faces. Simply, pick the one you prefer.
 
-=== Coming features
+== Roadmap
 
-The next features I plan to implement
+Here are some features that we're considering to add in the future:
 
 - Demote / promote for list items
 - Outline support also for two line titles
 - Correctly highlighting backslash escapes
+
+Check out the issue tracker for more details.
 
 == Hacking
 
