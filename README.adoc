@@ -73,7 +73,7 @@ Alternative, you can add something like this to your Emacs config:
   (package-install 'adoc-mode))
 ----
 
-or if you're into use-package
+or if you're into `use-package`:
 
 [source,emacs-lisp]
 ----
@@ -97,7 +97,7 @@ or if you're into use-package
   `buffer-face-mode` is for you: `(add-hook 'adoc-mode-hook (lambda()
   (buffer-face-mode t)))`
 
-=== Customization
+=== Syntax Highlighting Customization
 
 It is possible to customize the way `adoc-mode` renders different text
 elements (faces) like section titles, text or punctuation styles. For
@@ -105,13 +105,13 @@ example, if you would like a level 1 section title to have a different
 text color or height you can achieve this by using standard Emacs
 functionality.
 
-First of all, list all available faces by running 
+First of all, list all available faces by running
 
 kbd:[M-x] `list-faces-display`
 
 and searching for lines with the `adoc-` prefix.
 
-Alternatively, you can get information about the face under point by calling 
+Alternatively, you can get information about the face under point by calling
 
 kbd:[M-x] `describe-face`
 
