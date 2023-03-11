@@ -1998,7 +1998,7 @@ START-SRC and END-SRC delimit the actual source code."
     (when (fboundp lang-mode)
       (let ((string (buffer-substring-no-properties start-src end-src))
             (modified (buffer-modified-p))
-            (adoc-buffer (current-buffer)) int pos next)
+            (adoc-buffer (current-buffer)) int)
         (remove-text-properties start-block end-block '(face nil adoc-code-block nil font-lock-fontified nil font-lock-multiline nil))
         (with-current-buffer
             (get-buffer-create
@@ -2011,7 +2011,6 @@ START-SRC and END-SRC delimit the actual source code."
             (insert string))
           (unless (eq major-mode lang-mode) (funcall lang-mode))
           (font-lock-ensure)
-          (setq pos (point-min))
           (cl-loop for int being the intervals property 'face
                    for pos = (car int)
                    for next = (cdr int)
@@ -2108,11 +2107,7 @@ Use this function as matching function MATCHER in `font-lock-keywords'."
 		 (start-src (match-beginning 1))
 		 (end-src (match-end 1))
                  (end-src+nl (if (eq (char-after end-src) ?\n) (1+ end-src) end-src))
-		 (size (1+ (- end-src start-src)))
-		 (bol-prev (progn (goto-char start-block)
-                                  (if (bolp) (line-beginning-position 0) (line-beginning-position))))
-		 (eol-next (progn (goto-char end-block)
-                                  (if (bolp) (line-beginning-position 2) (line-beginning-position 3)))))
+		 (size (1+ (- end-src start-src))))
             (if (if (numberp adoc-fontify-code-blocks-natively)
 		    (<= size adoc-fontify-code-blocks-natively)
 		  adoc-fontify-code-blocks-natively)
