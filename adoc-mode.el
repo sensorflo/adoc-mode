@@ -251,8 +251,8 @@ If the value is another non-nil value then code blocks
 are fontified natively regardless of their size."
   :group 'adoc
   :type '(choice :tag "Fontify code blocks " :format "\n%{%t%}: %[Size%] %v"
-	  (integer :tag "limited to")
-	  (boolean :tag "unlimited"))
+                 (integer :tag "limited to")
+                 (boolean :tag "unlimited"))
   :safe '(lambda (x) (or (booleanp x) (numberp x)))
   :package-version '(adoc-mode . "0.8.0"))
 
@@ -1971,7 +1971,8 @@ meta characters."
   nil)
 
 
-;;; Natively highlite source code blocks.
+;;; Natively highlight source code blocks.
+;;
 ;; The code is an adaption of the code in markdown-mode.el.
 
 (defun adoc-get-lang-mode (lang)
@@ -2019,22 +2020,22 @@ START-SRC and END-SRC delimit the actual source code."
                    (put-text-property
                     (+ start-src (1- pos)) (1- (+ start-src next)) 'face
                     val adoc-buffer)))
-	(add-text-properties start-block start-src '(face adoc-meta-face))
-	(add-text-properties end-src end-block '(face adoc-meta-face))
+        (add-text-properties start-block start-src '(face adoc-meta-face))
+        (add-text-properties end-src end-block '(face adoc-meta-face))
         (add-text-properties
          start-block end-block
          '(font-lock-fontified t fontified t font-lock-multiline t
-	   adoc-code-block t adoc-reserved t))
+                               adoc-code-block t adoc-reserved t))
         (set-buffer-modified-p modified)))))
 
 (defconst adoc-code-block-begin-regexp
   (cl-flet ((rx-or (first second) (format "\\(?:%s\\|%s\\)" first second))
-	    (rx-optional (stuff) (format "\\(?:%s\\)?" stuff))
-	    (outer-brackets-and-delimiter (&rest stuff)
-					  (format "^\\[%s\\]\n\\(?2:----+\\)\n"
-						  (apply #'concat stuff)))
-	    (lang () ",\\(?1:[^],]+\\)")
-	    (optional-other-args () "\\(?:,[^]]+\\)?"))
+            (rx-optional (stuff) (format "\\(?:%s\\)?" stuff))
+            (outer-brackets-and-delimiter (&rest stuff)
+                                          (format "^\\[%s\\]\n\\(?2:----+\\)\n"
+                                                  (apply #'concat stuff)))
+            (lang () ",\\(?1:[^],]+\\)")
+            (optional-other-args () "\\(?:,[^]]+\\)?"))
     (outer-brackets-and-delimiter
      (rx-or
       (concat
@@ -2065,10 +2066,10 @@ actual source code."
   (let (start-header start-src end-src end-block lang)
     (save-match-data
       (and (setq start-src (re-search-forward adoc-code-block-begin-regexp last noerror))
-	   (setq lang (or (match-string 1) t)
-		 start-header (match-beginning 0))
-	   (setq end-block (re-search-forward (format "\n%s$" (match-string 2))))
-	   (setq end-src (match-beginning 0)))
+           (setq lang (or (match-string 1) t)
+                 start-header (match-beginning 0))
+           (setq end-block (re-search-forward (format "\n%s$" (match-string 2))))
+           (setq end-src (match-beginning 0)))
       )
     (when end-block
       (set-match-data (list start-header end-block start-src end-src (current-buffer)))
@@ -2084,16 +2085,16 @@ Returns a cons (BEG . END) with the updated limits of the region."
       (goto-char beg)
       ;; Maybe edits in header line: Skip to body
       (cl-case (char-after (line-beginning-position))
-	(?\[ (forward-line 2))
-	(?- (forward-line 1)))
+        (?\[ (forward-line 2))
+        (?- (forward-line 1)))
       ;; Search backward for header:
       (let ((beg-block (re-search-backward adoc-code-block-begin-regexp (max 0 (- (point) adoc-font-lock-extend-after-change-max)) t))
-	    end-block)
-	(when beg-block
-	  (goto-char (match-end 0))
-	  (setq end-block (or (re-search-forward (format "\n%s$" (match-string 2)) (+ (point) adoc-font-lock-extend-after-change-max) t) end))
-	  (when (and end-block (> end-block beg)) ;; block reaches really into edited area
-	    (cons (min beg beg-block) (max end end-block))))))))
+            end-block)
+        (when beg-block
+          (goto-char (match-end 0))
+          (setq end-block (or (re-search-forward (format "\n%s$" (match-string 2)) (+ (point) adoc-font-lock-extend-after-change-max) t) end))
+          (when (and end-block (> end-block beg)) ;; block reaches really into edited area
+            (cons (min beg beg-block) (max end end-block))))))))
 
 (defun adoc-fontify-code-blocks (last)
   "Add text properties to next code block from point to LAST.
@@ -2101,17 +2102,17 @@ Use this function as matching function MATCHER in `font-lock-keywords'."
   (let ((lang (adoc-search-forward-code-block last 'noError)))
     (when lang
       (save-excursion
-	(save-match-data
+        (save-match-data
           (let* ((start-block (match-beginning 0))
-		 (end-block (match-end 0))
-		 (start-src (match-beginning 1))
-		 (end-src (match-end 1))
+                 (end-block (match-end 0))
+                 (start-src (match-beginning 1))
+                 (end-src (match-end 1))
                  (end-src+nl (if (eq (char-after end-src) ?\n) (1+ end-src) end-src))
-		 (size (1+ (- end-src start-src))))
+                 (size (1+ (- end-src start-src))))
             (if (if (numberp adoc-fontify-code-blocks-natively)
-		    (<= size adoc-fontify-code-blocks-natively)
-		  adoc-fontify-code-blocks-natively)
-		(adoc-fontify-code-block-natively lang start-block end-block start-src end-src)
+                    (<= size adoc-fontify-code-blocks-natively)
+                  adoc-fontify-code-blocks-natively)
+                (adoc-fontify-code-block-natively lang start-block end-block start-src end-src)
               (add-text-properties
                start-src
                end-src
@@ -2119,7 +2120,7 @@ Use this function as matching function MATCHER in `font-lock-keywords'."
             ;; Set background for block as well as opening and closing lines.
             (font-lock-append-text-property
              start-src end-src+nl 'face 'adoc-native-code-face)
-	    )))
+            )))
       t)))
 
 
@@ -3433,10 +3434,10 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
 
   ;; font lock
   (setq-local font-lock-defaults
-       '(adoc-font-lock-keywords
-         nil nil nil nil
-         (font-lock-multiline . t)
-         (font-lock-mark-block-function . adoc-font-lock-mark-block-function)))
+              '(adoc-font-lock-keywords
+                nil nil nil nil
+                (font-lock-multiline . t)
+                (font-lock-mark-block-function . adoc-font-lock-mark-block-function)))
   (setq-local font-lock-extra-managed-props '(adoc-reserved adoc-attribute-list adoc-code-block))
   (setq-local font-lock-unfontify-region-function 'adoc-unfontify-region-function)
   (setq-local font-lock-extend-after-change-region-function #'adoc-font-lock-extend-after-change-region)
