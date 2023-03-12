@@ -2,6 +2,10 @@
 
 ## master (unreleased)
 
+### New features
+
+- [#21](https://github.com/bbatsov/adoc-mode/pull/21): Add support for native font-locking in code blocks.
+
 ## 0.7.0 (2023-03-09)
 
 ### New features
