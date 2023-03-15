@@ -206,7 +206,7 @@ AsciiDoc config file would the probably be '^[<>]-{4,}$'"
   :group 'adoc)
 
 (defcustom adoc-enable-two-line-title t
-  "Wether or not two line titles shall be fontified.
+  "Whether or not two line titles shall be fontified.
 
 nil means never fontify. t means always fontify. A number means
 only fontify if the line below has NOT the length of the given
