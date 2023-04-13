@@ -691,7 +691,7 @@ AsciiDoc: *bold emphasis text* or _emphasis text_
 (defvar adoc-attribute-face 'adoc-attribute-face)
 
 (defface adoc-anchor-face
-  '((t :inherid adoc-meta-face :overline t))
+  '((t :inherit adoc-meta-face :overline t))
   "For the name/id of an anchor."
   :group 'adoc-faces)
 (defvar adoc-anchor-face 'adoc-anchor-face)
