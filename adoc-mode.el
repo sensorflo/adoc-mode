@@ -914,11 +914,10 @@ or for footnotes, or for floating text."
 (defvar adoc-secondary-text-face 'adoc-secondary-text-face)
 
 (defface adoc-native-code-face
-  '((((background light))
-     (:background "cornsilk" :extend t))
-    (((background dark))
-     (:background "saddlebrown" :extend t)))
-  "For code blocks that are highlighted natively."
+  '((t (:inherit fixed-pitch)))
+  "For code blocks that are highlighted natively.
+
+Use it to change the background of the code blocks."
   :group 'adoc-faces)
 (defvar adoc-native-code-face 'adoc-native-code-face)
 
