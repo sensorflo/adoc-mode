@@ -611,7 +611,7 @@ customizable.")
   "Generic/base face for text with special formatting.
 
 Typically `adoc-title-0-face', `adoc-bold-face' etc.
-inherit from it. Also used for generic text thas hasn't got it's
+inherit from it.  Also used for generic text thas hasn't got its
 own dedicated face, e.g. if a markup command imposes arbitrary
 colors/sizes/fonts upon it."
   :group 'adoc-faces)
@@ -642,7 +642,7 @@ easier for major mode to write font lock regular expressions."
 
 (defface adoc-value-face
   '((t :inherit adoc-meta-face))
-  "For attribute values"
+  "For attribute values."
   :group 'adoc-faces)
 (defvar adoc-value-face 'adoc-value-face)
 
@@ -686,7 +686,7 @@ AsciiDoc: *bold emphasis text* or _emphasis text_
 
 (defface adoc-attribute-face
   '((t :inherit adoc-meta-face :slant italic))
-  "For attribute names"
+  "For attribute names."
   :group 'adoc-faces)
 (defvar adoc-attribute-face 'adoc-attribute-face)
 
