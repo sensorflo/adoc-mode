@@ -1,0 +1,7 @@
+/images/
+/test/
+/adoc-mode-autoloads.el
+/adoc-mode-pkg.el
+Eldev
+*.md
+/.github/
