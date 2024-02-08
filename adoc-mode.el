@@ -44,6 +44,10 @@
 
 (require 'cl-lib)
 (require 'tempo)
+(require 'subr-x)
+
+(declare-function imagep "image.c")
+(declare-function image-flush "image.c")
 
 (defconst adoc-mode-version "0.8.0-snapshot"
   "adoc mode version number.
@@ -300,6 +304,27 @@ Also used to delimit the scan for the end delimiter."
   :type 'integer
   :group 'adoc
   :package-version '(adoc-mode . "0.8.0"))
+
+(defcustom adoc-max-image-size nil
+  "Maximum width and height for displayed images.
+This variable may be nil or a cons cell (MAX-WIDTH . MAX-HEIGHT).
+When nil, use the actual size.  Otherwise, use ImageMagick to
+resize larger images to be of the given maximum dimensions.  This
+requires Emacs to be built with ImageMagick support."
+  :group 'adoc
+  :package-version '(adoc-mode . "0.9.0")
+  :type '(choice
+          (const :tag "Use actual image width" nil)
+          (cons (choice (sexp :tag "Maximum width in pixels")
+                        (const :tag "No maximum width" nil))
+                (choice (sexp :tag "Maximum height in pixels")
+                        (const :tag "No maximum height" nil)))))
+
+(defcustom adoc-display-images t
+  "Run `adoc-display-images' in function `adoc-mode'."
+  :group 'adoc
+  :package-version '(adoc-mode . "0.9.0")
+  :type 'boolean)
 
 
 ;;;; faces / font lock
@@ -1806,7 +1831,7 @@ When LITERAL-P is non-nil, the contained text is literal text."
      '(3 nil)) ; grumbl, I don't know how to get rid of it
    `(4 '(face ,(or del-face adoc-meta-hide-face) adoc-reserved t) t))); close del
 
-(defun adoc-kw-inline-macro (&optional cmd-name unconstrained attribute-list-constraints cmd-face target-faces target-meta-p attribute-list)
+(defun adoc-kw-inline-macro (&optional cmd-name unconstrained attribute-list-constraints cmd-face target-faces target-meta-p attribute-list textprops)
   "Returns a kewyword which highlights an inline macro.
 
 For CMD-NAME and UNCONSTRAINED see
@@ -1816,20 +1841,22 @@ determines face for the target text. If nil `adoc-meta-face' is
 used. If a list, the first is used if the attribute list is the
 empty string, the second is used if its not the empty string. If
 TARGET-META-P is non-nil, the target text is considered to be
-meta characters."
+meta characters.
+TEXTPROPS is an additional plist with textproperties."
   (list
    `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil unconstrained attribute-list-constraints) '(1 2 4 5) '(0)))
+   `(0 '(face nil . ,textprops) t)
    `(1 '(face ,(or cmd-face adoc-command-face) adoc-reserved t) t) ; cmd-name
-   '(2 '(face adoc-meta-face adoc-reserved t) t)                   ; :
+   '(2 '(face adoc-meta-face adoc-reserved t . ,textprops) t)                   ; :
    `(3 ,(cond ((not target-faces) adoc-meta-face)                  ; target
               ((listp target-faces) `(if (string= (match-string 5) "") ; 5=attribute-list
                                          ,(car target-faces)
                                        ,(cadr target-faces)))
               (t target-faces))
        ,(if target-meta-p t 'append))
-   '(4 '(face adoc-meta-face adoc-reserved t) t) ; [
-   `(5 '(face adoc-meta-face adoc-attribute-list ,(or attribute-list t)) t)
-   '(6 '(face adoc-meta-face adoc-reserved t) t))) ; ]
+   '(4 '(face adoc-meta-face adoc-reserved t . ,textprops) t) ; [
+   `(5 '(face adoc-meta-face adoc-attribute-list ,(or attribute-list t) . ,textprops) t)
+   '(6 '(face adoc-meta-face adoc-reserved t . ,textprops) t))) ; ]
 
 ;; largely copied from adoc-kw-inline-macro
 ;; TODO: output text should be affected by quotes & co, e.g. bold, emph, ...
@@ -2257,7 +2284,7 @@ Use this function as matching function MATCHER in `font-lock-keywords'."
    ;; image. The first positional attribute is per definition 'alt', see
    ;; asciidoc manual, sub chapter 'Image macro attributes'.
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro "image") '(0)))
-         '(0 '(face adoc-meta-face adoc-reserved block-del) t) ; whole match
+         '(0 '(face adoc-meta-face adoc-reserved block-del keymap adoc-image-link-map) t) ; whole match
          '(1 adoc-complex-replacement-face t) ; 'image'
          '(2 adoc-internal-reference-face t)  ; file name
          '(3 '(face adoc-meta-face adoc-reserved nil adoc-attribute-list ("alt")) t)) ; attribute list
@@ -2498,11 +2525,12 @@ Use this function as matching function MATCHER in `font-lock-keywords'."
    ;; - same order as in asciidoc.conf (is that in 'reverse'? cause 'default syntax' comes first)
 
    ;; Macros using default syntax, but having special highlighting in adoc-mode
+   ;; Remote inline images may contain an url.  So they must be fontified before general urls.
+   (adoc-kw-inline-macro "image" nil nil adoc-complex-replacement-face adoc-internal-reference-face t
+                         '("alt") '(keymap adoc-image-link-map))
    (adoc-kw-inline-macro-urls-no-attribute-list)
    (adoc-kw-inline-macro-urls-attribute-list)
    (adoc-kw-inline-macro "anchor" nil nil nil adoc-anchor-face t '("xreflabel"))
-   (adoc-kw-inline-macro "image" nil nil adoc-complex-replacement-face adoc-internal-reference-face t
-                         '("alt"))
    (adoc-kw-inline-macro "xref" nil nil nil '(adoc-reference-face adoc-internal-reference-face) t
                          '(("caption") (("caption" . adoc-reference-face))))
    (adoc-kw-inline-macro "footnote" t nil nil nil nil adoc-secondary-text-face)
@@ -2877,6 +2905,257 @@ Is influenced by customization variables such as `adoc-title-style'."))))
 (adoc-tempo-define "adoc-pass-+++" '("+++" (r "text" text) "+++") nil adoc-help-pass-+++)
 (adoc-tempo-define "adoc-pass-$$" '("$$" (r "text" text) "$$") nil adoc-help-pass-$$)
                                         ; backticks handled in tempo-template-adoc-monospace-literal
+
+;;;; Images
+;; Disclaimer: Most of the following stuff is copied from `markdown-mode' and adapted to `adoc-mode'.
+(require 'url-parse)
+
+(defvar adoc-image-overlays nil)
+(make-variable-buffer-local 'adoc-image-overlays)
+
+(defcustom adoc-display-remote-images nil
+  "If non-nil, download and display remote images.
+See also `adoc-image-overlays'.
+
+Only image URLs specified with a protocol listed in
+`adoc-remote-image-protocols' are displayed."
+  :group 'adoc
+  :type 'boolean)
+
+(defcustom adoc-remote-image-protocols '("https")
+  "List of protocols to use to download remote images.
+See also `adoc-display-remote-images'."
+  :group 'adoc
+  :type '(repeat string))
+
+(defvar adoc--remote-image-cache
+  (make-hash-table :test 'equal)
+  "A map from URLs to image paths.")
+
+(defun adoc--get-remote-image (url)
+  "Retrieve the image path for a given URL."
+  (or (gethash url adoc--remote-image-cache)
+      (let ((dl-path (make-temp-file "adoc-mode--image")))
+        (require 'url)
+        (url-copy-file url dl-path t)
+        (puthash url dl-path adoc--remote-image-cache))))
+
+(defconst adoc-re-image "\\<image::?\\(\\_<[^]]+\\)\\(\\[[^]]*\\]\\)"
+  "Regexp matching block- and inline-images.")
+
+(defvar adoc-image-overlay-functions nil
+  "Functions called after the creation of an image overlay.
+Each function is called with the created overlay as argument.")
+
+(defvar adoc-image-menu (make-sparse-keymap "Image")
+  "Common menu of image links and image overlays.")
+
+(defvar adoc-image-link-menu
+  (let ((map (make-sparse-keymap "Image")))
+    (set-keymap-parent map adoc-image-menu)
+    (easy-menu-add-item map nil ["Generate Preview At Point"
+                                 (lambda (e) (interactive "e") (adoc-display-image-at e))
+                                 t])
+    map)
+  "Context menu of image links.")
+
+(defvar adoc-image-link-map
+  (let ((map (make-sparse-keymap "Image")))
+    (define-key map (kbd "<down-mouse-3>")
+                (lambda () (interactive) (popup-menu adoc-image-link-menu)))
+    map)
+  "Keymap for image links.")
+
+(fset 'adoc-image-link-map adoc-image-link-map)
+
+(defvar adoc-image-overlay-menu
+  (let ((map (make-sparse-keymap "Image")))
+    (set-keymap-parent map adoc-image-menu)
+    (easy-menu-add-item map nil ["Remove Preview At Point"
+                                 (lambda (e) (interactive "e") (adoc-remove-image-overlay-at e))
+                                 t])
+    map)
+  "Context menu of image overlays.")
+
+(defvar adoc-image-overlay-map
+  (let ((map (make-sparse-keymap "Image")))
+    (define-key map (kbd "<down-mouse-3>")
+                (lambda () (interactive) (popup-menu adoc-image-overlay-menu)))
+    map)
+  "Keymap for image overlays.")
+
+(defun adoc-create-image-overlay (file start end)
+  "Create image overlay with START and END displaying image FILE."
+  (when (not (zerop (length file)))
+            (unless (file-exists-p file)
+              (when (and adoc-display-remote-images
+                         (member (downcase (url-type (url-generic-parse-url file)))
+                                 adoc-remote-image-protocols))
+                (setq file (adoc--get-remote-image file))))
+            (when (file-exists-p file)
+              (let* ((abspath (if (file-name-absolute-p file)
+                                  file
+                                (concat default-directory file)))
+                     (image
+                      (if (and adoc-max-image-size
+                               (image-type-available-p 'imagemagick))
+                          (create-image
+                           abspath 'imagemagick nil
+                           :max-width (car adoc-max-image-size)
+                           :max-height (cdr adoc-max-image-size))
+                        (create-image abspath))))
+                (when image
+                  (let ((ov (make-overlay start end)))
+                    (overlay-put ov 'adoc-image t)
+                    (overlay-put ov 'display image)
+                    (overlay-put ov 'face 'default)
+                    (overlay-put ov 'keymap adoc-image-overlay-map)
+                    (run-hook-with-args 'adoc-image-overlay-functions ov)))))))
+
+(defun adoc-display-images ()
+  "Add inline image overlays to image links in the buffer.
+This can be toggled with `adoc-toggle-images'
+or \\[adoc-toggle-images]."
+  (interactive)
+  (unless (display-images-p)
+    (error "Cannot show images"))
+  (adoc-remove-images)
+  (save-excursion
+    (save-restriction
+      (widen)
+      (goto-char (point-min))
+      (while (re-search-forward adoc-re-image nil t)
+        (let ((start (match-beginning 0))
+              (end (match-end 0))
+              (file (match-string-no-properties 1)))
+          (adoc-create-image-overlay file start end)
+          )))))
+
+(defun adoc-image-overlays (&optional begin end)
+  "Return list of image overlays in region from BEGIN to END.
+BEGIN and END default to the buffer boundaries
+ignoring any restrictions."
+  (save-restriction
+    (widen)
+    (unless begin (setq begin (point-min)))
+    (unless end (setq end (point-max)))
+    (let (image-overlays)
+      (dolist (ov (overlays-in begin end))
+        (when (overlay-get ov 'adoc-image)
+          (push ov image-overlays)))
+      image-overlays)))
+
+(defun adoc-remove-images ()
+  "Remove image overlays from image links in the buffer.
+This can be toggled with `adoc-toggle-images'
+or \\[adoc-toggle-images]."
+  (interactive)
+  (let ((image-list (adoc-image-overlays)))
+    (when image-list
+      (dolist (ov image-list)
+        (delete-overlay ov))
+      t)))
+
+(defun adoc-toggle-images ()
+  "Toggle the display of images."
+  (interactive)
+  (unless (adoc-remove-images)
+    (adoc-display-images)
+    ))
+
+(defmacro adoc-with-point-at-event (location &rest body)
+  "Execute BODY like `progn'.
+If LOCATION is an event run BODY in the event's buffer
+and set LOCATION to the event position.
+
+If LOCATION is number or marker just run BODY with
+LOCATION untouched.
+
+Otherwise set LOCATION to current point."
+  (declare (indent 1) (debug (symbolp form body)))
+  (let ((posn (make-symbol "posn")))
+    `(if (mouse-event-p ,location)
+         (let* ((,posn (event-start ,location)))
+           (with-current-buffer (window-buffer (posn-window ,posn))
+             (setq ,location (posn-point ,posn))
+             ,@body))
+       (unless (number-or-marker-p ,location)
+         (setq ,location (point)))
+       ,@body)))
+
+(defun adoc-bounds-of-image-link-at (&optional location)
+  "Get bounds of image link at LOCATION.
+Return \\(START . END) giving the start and the end
+positions of the image link found.
+
+If an image link is identified `match-data' is set as follows:
+0. whole link inclusive \"image::?\" and attributes
+1. image path
+2. bracketed attribute list."
+  (adoc-with-point-at-event location
+    (save-excursion
+      (when location (goto-char location))
+      (setq location (point))
+      (if (looking-at "[[:alpha:]]*::?\\_<")
+          (skip-chars-backward "[:alpha:]")
+        (re-search-backward "\\_<image:" (line-beginning-position) t))
+      (when (looking-at adoc-re-image)
+        (cons (match-beginning 0) (match-end 0))))))
+
+(cl-defstruct adoc-image-link
+  "Data from an image link."
+  begin end uri begin-uri end-uri begin-attributes end-attributes)
+
+(defun adoc-image-link-at (&optional location)
+  "Return image link at LOCATION if there is one.
+LOCATION can be a buffer position or a mouse event.
+It defaults to \\(point)."
+  (adoc-with-point-at-event location
+    (when (adoc-bounds-of-image-link-at location)
+      (make-adoc-image-link
+       :begin (match-beginning 0)
+       :end (match-end 0)
+       :begin-uri (match-beginning 1)
+       :end-uri (match-end 1)
+       :begin-attributes (match-beginning 2)
+       :end-attributes (match-end 2)
+       :uri (match-string 1)))))
+
+(put 'adoc-image 'bounds-of-thing-at-point #'adoc-bounds-of-image-link-at)
+
+(defun adoc-display-image-at (&optional location)
+  "Create image overlay at LOCATION.
+LOCATION can be a buffer position like `point'
+or an event.  It defaults to \\(point)."
+  (interactive "d")
+  (adoc-with-point-at-event location
+    (when-let ((link (adoc-image-link-at location)))
+      (adoc-create-image-overlay
+       (adoc-image-link-uri link)
+       (adoc-image-link-begin link)
+       (adoc-image-link-end link)
+       ))))
+
+(defun adoc-image-overlay-at (location)
+  "Get image overlay at LOCATION."
+  (adoc-with-point-at-event location
+    (cl-loop for ov being the overlays from (1- location) to (1+ location)
+             when (overlay-get ov 'adoc-image)
+             return ov)))
+
+(defun adoc-remove-image-overlay-at (&optional location flush)
+  "Delete overlay at LOCATION.
+POINT defaults to `point'.
+POINT can also be a mouse event.
+If FLUSH is non-nil also flush the cache for this image."
+  (interactive "d")
+  (adoc-with-point-at-event location
+    (let ((ov (adoc-image-overlay-at location)))
+      (when ov
+        (when-let ((image (and flush (overlay-get ov 'display)))
+                   ((imagep image)))
+          (image-flush image))
+        (delete-overlay ov)))))
 
 
 ;;;; misc
@@ -3437,7 +3716,9 @@ LOCAL-ATTRIBUTE-FACE-ALIST before it is looked up in
            ["$$text$$" tempo-template-pass-$$
             :help ,adoc-help-pass-$$]
            ["`text`" tempo-template-monospace-literal ; redundant to the one in the quotes section
-            :help ,adoc-help-monospace-literal])))))
+            :help ,adoc-help-monospace-literal])))
+        "---"
+        ["Toggle display of images" adoc-toggle-images t]))
     map)
   "Keymap used in adoc mode.")
 
@@ -3492,7 +3773,9 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
                    2 3 nil (1 . nil))))
   (when (boundp 'compilation-error-regexp-alist)
     (make-local-variable 'compilation-error-regexp-alist)
-    (add-to-list 'compilation-error-regexp-alist 'asciidoc)))
+    (add-to-list 'compilation-error-regexp-alist 'asciidoc))
+  (when (and (display-graphic-p) adoc-display-images)
+    (adoc-display-images)))
 
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.a\\(?:scii\\)?doc\\'" . adoc-mode))
