@@ -1846,13 +1846,17 @@ TEXTPROPS is an additional plist with textproperties."
   (list
    `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil unconstrained attribute-list-constraints) '(1 2 4 5) '(0)))
    `(0 '(face nil . ,textprops) t)
-   `(1 '(face ,(or cmd-face adoc-command-face) adoc-reserved t) t) ; cmd-name
-   '(2 '(face adoc-meta-face adoc-reserved t . ,textprops) t)                   ; :
-   `(3 ,(cond ((not target-faces) adoc-meta-face)                  ; target
-              ((listp target-faces) `(if (string= (match-string 5) "") ; 5=attribute-list
-                                         ,(car target-faces)
-                                       ,(cadr target-faces)))
-              (t target-faces))
+   `(1 '(face ,(or cmd-face adoc-command-face) adoc-reserved t adoc-flyspell-ignore t) t) ; cmd-name
+   '(2 '(face adoc-meta-face adoc-reserved t. ,textprops) t)                   ; :
+   `(3 (list 'face
+             ,(cond
+               ((not target-faces) adoc-meta-face)                      ; target
+               ((listp target-faces)
+                `(if (string= (match-string 5) "") ; 5=attribute-list
+                     ,(car target-faces)
+                   ,(cadr target-faces)))
+               (t target-faces))
+             'adoc-flyspell-ignore t)
        ,(if target-meta-p t 'append))
    '(4 '(face adoc-meta-face adoc-reserved t . ,textprops) t) ; [
    `(5 '(face adoc-meta-face adoc-attribute-list ,(or attribute-list t) . ,textprops) t)
@@ -1864,9 +1868,9 @@ TEXTPROPS is an additional plist with textproperties."
   (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link"))))
     (list
      `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name) '(0) '(0)))
-     `(1 '(face adoc-internal-reference-face adoc-reserved t) t) ; cmd-name
+     `(1 '(face adoc-internal-reference-face adoc-reserved t adoc-flyspell-ignore t) t) ; cmd-name
      `(2 '(face adoc-internal-reference-face adoc-reserved t) t) ; :
-     `(3 '(face adoc-internal-reference-face adoc-reserved t) t) ; target
+     `(3 '(face adoc-internal-reference-face adoc-reserved t adoc-flyspell-ignore t) t) ; target
      '(4 '(face adoc-meta-face adoc-reserved t) t)               ; [
      `(5 '(face adoc-reference-face adoc-attribute-list adoc-reference-face) append)
      '(6 '(face adoc-meta-face adoc-reserved t) t))))            ; ]
@@ -1875,9 +1879,9 @@ TEXTPROPS is an additional plist with textproperties."
   (let ((cmd-name (regexp-opt '("http" "https" "ftp" "file" "irc" "mailto" "callto" "link"))))
     (list
      `(lambda (end) (adoc-kwf-std end ,(adoc-re-inline-macro cmd-name nil nil 'empty) '(0) '(0)))
-     '(1 '(face adoc-reference-face adoc-reserved t) append) ; cmd-name
+     '(1 '(face adoc-reference-face adoc-reserved t adoc-flyspell-ignore t) append) ; cmd-name
      '(2 '(face adoc-reference-face adoc-reserved t) append)               ; :
-     '(3 '(face adoc-reference-face adoc-reserved t) append)               ; target
+     '(3 '(face adoc-reference-face adoc-reserved t adoc-flyspell-ignore t) append)               ; target
      '(4 '(face adoc-meta-face adoc-reserved t) t) ; [
                                         ; 5 = attriblist is empty
      '(6 '(face adoc-meta-face adoc-reserved t) t)))) ; ]
@@ -1918,7 +1922,7 @@ TEXTPROPS is an additional plist with textproperties."
          (both (concat "\\(?:" url "\\)\\|\\(?:" url<> "\\)\\|\\(?:" email "\\)")))
     (list
      `(lambda (end) (adoc-kwf-std end ,both '(0) '(0)))
-     '(0 '(face adoc-reference-face adoc-reserved t) append t))))
+     '(0 '(face adoc-reference-face adoc-reserved t adoc-flyspell-ignore t) append t))))
 
 ;; bug: escapes are not handled yet
 ;; TODO: give the inserted character a specific face. But I fear that is not
@@ -2258,8 +2262,8 @@ Use this function as matching function MATCHER in `font-lock-keywords'."
    ;; include
    (list "^\\(\\(include1?::\\)\\([^ \t\n]*?\\)\\(\\[\\)\\(.*?\\)\\(\\]\\)\\)[ \t]*$"
          '(1 '(face nil adoc-reserved block-del)) ; the whole match
-         '(2 adoc-preprocessor-face)      ; macro name
-         '(3 adoc-delimiter)              ; file name
+         '(2 '(face adoc-preprocessor-face adoc-flyspell-ignore t))      ; macro name
+         '(3 '(face adoc-delimiter adoc-flyspell-ignore t))              ; file name
          '(4 adoc-hide-delimiter)         ; [
          '(5 adoc-delimiter)              ;   attribute list content
          '(6 adoc-hide-delimiter))        ; ]
@@ -2284,9 +2288,9 @@ Use this function as matching function MATCHER in `font-lock-keywords'."
    ;; image. The first positional attribute is per definition 'alt', see
    ;; asciidoc manual, sub chapter 'Image macro attributes'.
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro "image") '(0)))
-         '(0 '(face adoc-meta-face adoc-reserved block-del keymap adoc-image-link-map) t) ; whole match
-         '(1 adoc-complex-replacement-face t) ; 'image'
-         '(2 adoc-internal-reference-face t)  ; file name
+         '(0 '(face adoc-meta-face adoc-reserved block-del keymap adoc-image-link-map)) ; whole match
+         '(1 '(face adoc-complex-replacement-face adoc-flyspell-ignore t) t) ; 'image'
+         '(2 '(face adoc-internal-reference-face adoc-flyspell-ignore t) t)  ; file name
          '(3 '(face adoc-meta-face adoc-reserved nil adoc-attribute-list ("alt")) t)) ; attribute list
 
    ;; passthrough: (?u)^(?P<name>pass)::(?P<subslist>\S*?)(\[(?P<passtext>.*?)\])$
@@ -2295,7 +2299,7 @@ Use this function as matching function MATCHER in `font-lock-keywords'."
    ;; -- general block macro
    (list `(lambda (end) (adoc-kwf-std end ,(adoc-re-block-macro) '(0)))
          '(0 '(face adoc-meta-face adoc-reserved block-del)) ; whole match
-         '(1 adoc-command-face t)                            ; command name
+         '(1 '(face adoc-command-face adoc-flyspell-ignore t) t)                            ; command name
          '(3 '(face adoc-meta-face adoc-reserved nil adoc-attribute-list t) t)) ; attribute list
 
    ;; lists
@@ -3745,7 +3749,7 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
                 nil nil nil nil
                 (font-lock-multiline . t)
                 (font-lock-mark-block-function . adoc-font-lock-mark-block-function)))
-  (setq-local font-lock-extra-managed-props '(adoc-reserved adoc-attribute-list adoc-code-block))
+  (setq-local font-lock-extra-managed-props '(adoc-reserved adoc-attribute-list adoc-code-block adoc-flyspell-ignore))
   (setq-local font-lock-unfontify-region-function 'adoc-unfontify-region-function)
   (setq-local font-lock-extend-after-change-region-function #'adoc-font-lock-extend-after-change-region)
 
@@ -3782,6 +3786,17 @@ Turning on Adoc mode runs the normal hook `adoc-mode-hook'."
 
 ;;;; non-definitions evaluated during load
 (adoc-calc)
+
+
+;; Flyspell
+
+(defun adoc-flyspell-p ()
+  "Function for `flyspell-mode-predicate' property of `adoc-mode'.
+Returns t if word at point should be checked, nil otherwise."
+  (font-lock-ensure (line-beginning-position) (line-end-position))
+  (null (get-text-property (point) 'adoc-flyspell-ignore)))
+
+(put 'adoc-mode 'flyspell-mode-predicate 'adoc-flyspell-p)
 
 (provide 'adoc-mode)
 
